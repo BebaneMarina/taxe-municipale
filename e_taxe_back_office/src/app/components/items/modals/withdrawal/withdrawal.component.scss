@@ -1,0 +1,11 @@
+.form-withdrawal{
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(50px);
+  transition: .5s;
+  &.active{
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+  }
+}

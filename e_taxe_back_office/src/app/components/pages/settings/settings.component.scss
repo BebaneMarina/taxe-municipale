@@ -1,0 +1,32 @@
+.btn-onglet{
+  position: relative;
+  padding: 0 10px;
+  &:hover{
+    color: black;
+  }
+  &.active{
+    color: rgba(74, 158, 31, 1);
+    &::after{
+      position: absolute;
+      content: "";
+      height: 2px;
+      width: 100%;
+      background: rgba(74, 158, 31, 1);
+      bottom: 0;
+      left: 0;
+      border-radius: 4px;
+      transform: translateY(50%);
+    }
+  }
+}
+.content-onglet{
+  opacity: 0;
+  pointer-events: none;
+  transition: 0.5s;
+  transform: translateY(100px);
+  &.active{
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(0);
+  }
+}

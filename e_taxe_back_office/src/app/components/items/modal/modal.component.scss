@@ -1,0 +1,14 @@
+.modal{
+  pointer-events: none;
+  transition: .4s;
+  .modal-content{
+    transition: .4s;
+  }
+  &.active{
+    pointer-events: auto;
+    background: rgb(0,0,0,.5);
+    .modal-content {
+      transform: translateX(0);
+    }
+  }
+}

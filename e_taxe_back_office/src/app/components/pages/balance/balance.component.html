@@ -1,0 +1,15 @@
+<app-contener>
+  <div class="mb-6">
+    <h1 class="text-2xl font-bold text-gray-900">Gestion des Contribuables</h1>
+    <p class="text-gray-600 mt-1">Gérez les contribuables (clients) de la mairie de Libreville avec leur géolocalisation</p>
+  </div>
+  
+  <app-modal [(active)]="activeModal" title="Créer un contribuable">
+    <app-create-client (clientCreated)="onClientCreated()"/>
+  </app-modal>
+  <app-clients-table 
+    [(activeModal)]="activeModal" 
+    (activeModalChange)="onActiveModal($event)"
+    (clientCreated)="onClientCreated()"
+  />
+</app-contener>

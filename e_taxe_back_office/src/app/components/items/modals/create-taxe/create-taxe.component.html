@@ -1,0 +1,42 @@
+<div class="w-[450px]">
+  <h2 class="text-2xl text-main font-medium">Ajout de la taxe</h2>
+  <p>Saisissez les informations complementaire pour <br> ajouter une nouvelle taxe</p>
+  <form class="w-full grid gap-3 mt-8">
+    <!--    Input sans icone -->
+    <div>
+      <label for="name" class="block text-sm/6 font-medium text-gray-900">
+        Nom de la taxe <sup>*</sup>
+      </label>
+      <div class="mt-2">
+        <input type="text" name="name" id="name" class="block w-full rounded-lg px-3 py-3 bg-background text-base text-gray-900 placeholder:text-gray-400 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-main sm:text-sm/6" placeholder="Exdras Shop">
+      </div>
+
+    </div>
+    <!--    Input sans icone -->
+    <div>
+      <label for="adress" class="block text-sm/6 font-medium text-gray-900">
+        Montant
+      </label>
+      <div class="mt-2">
+        <input type="text" name="name" id="adress" class="block w-full rounded-lg px-3 py-3 bg-background text-base text-gray-900 placeholder:text-gray-400 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-main sm:text-sm/6" placeholder="Libreville">
+      </div>
+    </div>
+    <!--    Fin input sans icone-->
+    <!--    Input sans icone -->
+    <div>
+      <label for="pays" class="block text-sm/6 font-medium text-gray-900">
+        Descriptif
+      </label>
+      <div class="mt-2">
+        <textarea name="name" id="pays" class="block w-full rounded-lg px-3 py-3 bg-background text-base text-gray-900 placeholder:text-gray-400 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-main sm:text-sm/6" placeholder="Gabon"></textarea>
+      </div>
+    </div>
+    <!--    Fin input sans icone-->
+    <!--      button -->
+    <div class="grid grid-cols-2 gap-3 mt-5">
+      <button class="rounded-lg py-2 border-main border-2 text-main font-medium">Annuler</button>
+      <button class="rounded-lg py-2 bg-main text-white font-medium">Enregistrer</button>
+    </div>
+    <!--      Fin button -->
+  </form>
+</div>

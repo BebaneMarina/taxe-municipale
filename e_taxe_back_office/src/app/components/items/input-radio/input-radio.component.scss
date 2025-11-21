@@ -1,0 +1,14 @@
+.input-radio{
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.55) inset;
+  transition: .3s;
+  &.active{
+    background: rgba(74, 158, 31, 1);
+  }
+  .radio{
+    transition: .3s;
+  }
+  .radio.active{
+    right: 0;
+    transform: translateX(100%);
+  }
+}

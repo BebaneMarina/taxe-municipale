@@ -1,0 +1,102 @@
+<div class="flex flex-col gap-5">
+  <!--  -->
+  <app-modal title="Créer un lien de paiement" [(active)]="active">
+    <app-create-paiement-link />
+  </app-modal>
+  <!--  -->
+  <app-modal [(active)]="activeModalDetail" title="Modal details">
+    <app-transaction-details />
+  </app-modal>
+
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 p-4">
+    <!-- Carte 1 -->
+    <div class="relative bg-white rounded-xl shadow p-4">
+      <div class="text-sm text-gray-500">Collecte total</div>
+      <div class="mt-2 text-2xl font-bold text-black">
+        @if (loading) {
+          <span class="text-gray-400">Chargement...</span>
+        } @else {
+          {{ formatNumber(totalCollecte) }} FCFA
+        }
+      </div>
+      <div class="absolute top-4 right-4 w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+        <!-- Icône ligne (ex. chart) -->
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-green-500" fill="none" viewBox="0 0 24 24"
+          stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3 17l6-6 4 4 8-8" />
+        </svg>
+      </div>
+    </div>
+
+    <!-- Carte 2 -->
+    <div class="relative bg-white rounded-xl shadow p-4">
+      <div class="text-sm text-gray-500">Nombre de collecteur</div>
+      <div class="mt-2 text-2xl font-bold text-black">
+        @if (loading) {
+          <span class="text-gray-400">Chargement...</span>
+        } @else {
+          {{ nombreCollecteurs }}
+        }
+      </div>
+      <div class="absolute top-4 right-4 w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-red-400" fill="none" viewBox="0 0 24 24"
+          stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M10 20l-4-4m0 0l4-4m-4 4h12" />
+        </svg>
+      </div>
+    </div>
+
+    <!-- Carte 3 -->
+    <div class="relative bg-white rounded-xl shadow p-4">
+      <div class="text-sm text-gray-500">Transaction validée</div>
+      <div class="mt-2 text-2xl font-bold text-black">
+        @if (loading) {
+          <span class="text-gray-400">Chargement...</span>
+        } @else {
+          {{ transactionsValidees }}
+        }
+      </div>
+      <div class="absolute top-4 right-4 w-10 h-10 bg-yellow-100 rounded-full flex items-center justify-center">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-yellow-500" fill="none" viewBox="0 0 24 24"
+          stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+        </svg>
+      </div>
+    </div>
+
+    <!-- Carte 4 -->
+    <div class="relative bg-white rounded-xl shadow p-4">
+      <div class="text-sm text-gray-500">Clients total</div>
+      <div class="mt-2 text-2xl font-bold text-black">
+        @if (loading) {
+          <span class="text-gray-400">Chargement...</span>
+        } @else {
+          {{ totalClients }}
+        }
+      </div>
+      <div class="absolute top-4 right-4 w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-purple-500" fill="none" viewBox="0 0 24 24"
+          stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round"
+            d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87M16 7a4 4 0 11-8 0 4 4 0 018 0z" />
+        </svg>
+      </div>
+    </div>
+  </div>
+
+  <app-chart [chartData]="chartData" />
+
+  <app-contener>
+    <div class="flex justify-between pb-10 pt-3">
+      <app-h1>Transactions récente</app-h1>
+      <a href="/transactions" class="flex justify-between gap-2 items-center text-lg text-main-text-color">
+        <p>Voir plus</p>
+        <svg class="size-6" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+          <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+            d="m9 5l2 2.333M9 19l6-7l-1.5-1.75" />
+        </svg>
+      </a>
+    </div>
+    <app-transactions-table [(activeModalItem)]="activeModalDetail" />
+  </app-contener>
+</div>

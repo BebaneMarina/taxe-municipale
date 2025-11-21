@@ -1,0 +1,87 @@
+<app-contener>
+  <div class="mb-6">
+    <h1 class="text-2xl font-bold text-gray-900">Historique des Collectes</h1>
+    <p class="text-gray-600 mt-1">Consultez toutes les collectes effectuées avec leurs détails complets</p>
+  </div>
+  
+  <app-modal [(active)]="activeModal" title="Détails de la collecte">
+    <app-transaction-details [collecte]="transactionsTable?.getSelectedCollecte() || null"/>
+  </app-modal>
+  <!-- Filtres -->
+  <div class="bg-background rounded-lg mb-8 p-4">
+    <div class="flex flex-wrap gap-4 items-end">
+      <!-- Recherche par téléphone -->
+      <div class="flex-1 min-w-[200px]">
+        <label class="block text-sm font-medium text-gray-700 mb-1">Téléphone contribuable</label>
+        <div class="relative">
+          <input 
+            type="text" 
+            [(ngModel)]="filters.telephone"
+            (keyup.enter)="applyFilters()"
+            class="block w-full rounded-md bg-white py-2 pl-10 pr-3 text-sm text-gray-900 outline outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600" 
+            placeholder="+241 06 12 34 56 78">
+          <svg class="pointer-events-none absolute left-3 top-2.5 size-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path fill="currentColor" d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24c1.12.37 2.33.57 3.57.57c.55 0 1 .45 1 1V20c0 .55-.45 1-1 1c-9.39 0-17-7.61-17-17c0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1c0 1.25.2 2.45.57 3.57c.11.35.03.74-.25 1.02z"/>
+          </svg>
+        </div>
+      </div>
+
+      <!-- Date début -->
+      <div class="min-w-[150px]">
+        <label class="block text-sm font-medium text-gray-700 mb-1">Date début</label>
+        <input 
+          type="date" 
+          [(ngModel)]="filters.dateDebut"
+          (change)="applyFilters()"
+          class="block w-full rounded-md bg-white py-2 px-3 text-sm text-gray-900 outline outline-1 -outline-offset-1 outline-gray-300 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600">
+      </div>
+
+      <!-- Date fin -->
+      <div class="min-w-[150px]">
+        <label class="block text-sm font-medium text-gray-700 mb-1">Date fin</label>
+        <input 
+          type="date" 
+          [(ngModel)]="filters.dateFin"
+          (change)="applyFilters()"
+          class="block w-full rounded-md bg-white py-2 px-3 text-sm text-gray-900 outline outline-1 -outline-offset-1 outline-gray-300 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600">
+      </div>
+
+      <!-- Statut -->
+      <div class="min-w-[150px]">
+        <label class="block text-sm font-medium text-gray-700 mb-1">Statut</label>
+        <select 
+          [(ngModel)]="filters.statut"
+          (change)="applyFilters()"
+          class="block w-full rounded-md bg-white py-2 px-3 text-sm text-gray-900 outline outline-1 -outline-offset-1 outline-gray-300 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600">
+          <option value="">Tous</option>
+          <option value="pending">En cours</option>
+          <option value="completed">Validé</option>
+          <option value="cancelled">Annulé</option>
+          <option value="failed">Échec</option>
+        </select>
+      </div>
+
+      <!-- Boutons d'action -->
+      <div class="flex gap-2">
+        <button 
+          (click)="applyFilters()"
+          class="flex gap-2 items-center px-4 bg-main text-white py-2 rounded-lg hover:bg-main/90 transition">
+          <svg class="size-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path fill="none" stroke="currentColor" stroke-width="1.5" d="M19 3H5c-1.414 0-2.121 0-2.56.412S2 4.488 2 5.815v.69c0 1.037 0 1.556.26 1.986s.733.698 1.682 1.232l2.913 1.64c.636.358.955.537 1.183.735c.474.411.766.895.898 1.49c.064.284.064.618.064 1.285v2.67c0 .909 0 1.364.252 1.718c.252.355.7.53 1.594.88c1.879.734 2.818 1.101 3.486.683S15 19.452 15 17.542v-2.67c0-.666 0-1 .064-1.285a2.68 2.68 0 0 1 .899-1.49c.227-.197.546-.376 1.182-.735l2.913-1.64c.948-.533 1.423-.8 1.682-1.23c.26-.43.26-.95.26-1.988v-.69c0-1.326 0-1.99-.44-2.402C21.122 3 20.415 3 19 3Z"/>
+          </svg>
+          <span>Filtrer</span>
+        </button>
+        <button 
+          (click)="resetFilters()"
+          class="flex gap-2 items-center px-4 bg-gray-200 text-gray-700 py-2 rounded-lg hover:bg-gray-300 transition">
+          <svg class="size-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path fill="none" stroke="currentColor" stroke-width="1.5" d="M20 4v5h-5M4 20v-5h5"/>
+            <path fill="none" stroke="currentColor" stroke-width="1.5" d="M4 4l16 16M20 4L4 20"/>
+          </svg>
+          <span>Réinitialiser</span>
+        </button>
+      </div>
+    </div>
+  </div>
+  <app-transactions-table #transactionsTable [(activeModalItem)]="activeModal" (activeModalItemChange)="onActiveModal($event)"/>
+</app-contener>

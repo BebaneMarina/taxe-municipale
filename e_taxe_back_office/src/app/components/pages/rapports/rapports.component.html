@@ -1,0 +1,164 @@
+<app-contener>
+  <div class="mb-6">
+    <h1 class="text-2xl font-bold text-gray-900 mb-4">Rapports et Statistiques</h1>
+    
+    <!-- Filtres -->
+    <div class="bg-white p-4 rounded-lg shadow mb-6">
+      <h2 class="text-lg font-semibold mb-4">Filtres</h2>
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Date début</label>
+          <input
+            type="date"
+            [(ngModel)]="dateDebut"
+            (change)="onFilterChange()"
+            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-main"
+          />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Date fin</label>
+          <input
+            type="date"
+            [(ngModel)]="dateFin"
+            (change)="onFilterChange()"
+            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-main"
+          />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Collecteur</label>
+          <select
+            [(ngModel)]="collecteurId"
+            (change)="onFilterChange()"
+            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-main"
+          >
+            <option [value]="null">Tous</option>
+            @for (collecteur of collecteurs; track collecteur.id) {
+              <option [value]="collecteur.id">{{ collecteur.nom }} {{ collecteur.prenom }}</option>
+            }
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Taxe</label>
+          <select
+            [(ngModel)]="taxeId"
+            (change)="onFilterChange()"
+            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-main"
+          >
+            <option [value]="null">Toutes</option>
+            @for (taxe of taxes; track taxe.id) {
+              <option [value]="taxe.id">{{ taxe.nom }}</option>
+            }
+          </select>
+        </div>
+      </div>
+      
+      <!-- Boutons d'export -->
+      <div class="flex gap-3 mt-4">
+        <button
+          (click)="exportExcel()"
+          class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center gap-2"
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+          Exporter Excel
+        </button>
+        <button
+          (click)="exportPDF()"
+          class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 flex items-center gap-2"
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+          </svg>
+          Exporter PDF
+        </button>
+      </div>
+    </div>
+
+    @if (loading) {
+      <div class="text-center py-8">
+        <p class="text-gray-500">Chargement des rapports...</p>
+      </div>
+    } @else {
+      <!-- Statistiques générales -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+        <div class="bg-white p-6 rounded-lg shadow">
+          <h3 class="text-lg font-semibold mb-4">Total collecté</h3>
+          <p class="text-3xl font-bold text-main">{{ formatNumber(totalCollecte) }} FCFA</p>
+        </div>
+        <div class="bg-white p-6 rounded-lg shadow">
+          <h3 class="text-lg font-semibold mb-4">Nombre de transactions</h3>
+          <p class="text-3xl font-bold text-main">{{ nombreTransactions }}</p>
+        </div>
+      </div>
+
+      <!-- Graphique -->
+      @if (chartData) {
+        <div class="bg-white p-6 rounded-lg shadow mb-6">
+          <h3 class="text-lg font-semibold mb-4">Évolution de la collecte</h3>
+          <app-chart [chartData]="chartData" />
+        </div>
+      }
+
+      <!-- Collecte par moyen de paiement -->
+      <div class="bg-white p-6 rounded-lg shadow mb-6">
+        <h3 class="text-lg font-semibold mb-4">Collecte par moyen de paiement</h3>
+        <div class="space-y-2">
+          @for (moyen of getCollecteParMoyenKeys(); track moyen) {
+            <div class="flex justify-between items-center p-3 bg-gray-50 rounded">
+              <span class="font-medium">{{ getMoyenPaiementLabel(moyen) }}</span>
+              <span class="font-bold text-main">{{ formatNumber(collecteParMoyen[moyen]) }} FCFA</span>
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- Top 10 collecteurs -->
+      <div class="bg-white p-6 rounded-lg shadow mb-6">
+        <h3 class="text-lg font-semibold mb-4">Top 10 Collecteurs</h3>
+        <div class="overflow-x-auto">
+          <table class="min-w-full">
+            <thead class="bg-main text-white">
+              <tr>
+                <th class="px-4 py-2 text-left">Collecteur</th>
+                <th class="px-4 py-2 text-right">Montant collecté</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (item of collecteParCollecteur; track item.nom) {
+                <tr class="border-b">
+                  <td class="px-4 py-2">{{ item.nom }}</td>
+                  <td class="px-4 py-2 text-right font-semibold">{{ formatNumber(item.montant) }} FCFA</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Top 10 taxes -->
+      <div class="bg-white p-6 rounded-lg shadow">
+        <h3 class="text-lg font-semibold mb-4">Top 10 Taxes</h3>
+        <div class="overflow-x-auto">
+          <table class="min-w-full">
+            <thead class="bg-main text-white">
+              <tr>
+                <th class="px-4 py-2 text-left">Taxe</th>
+                <th class="px-4 py-2 text-right">Montant collecté</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (item of collecteParTaxe; track item.nom) {
+                <tr class="border-b">
+                  <td class="px-4 py-2">{{ item.nom }}</td>
+                  <td class="px-4 py-2 text-right font-semibold">{{ formatNumber(item.montant) }} FCFA</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    }
+  </div>
+</app-contener>
+

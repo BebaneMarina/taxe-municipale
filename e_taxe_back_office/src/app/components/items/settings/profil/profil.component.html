@@ -1,0 +1,99 @@
+<div>
+  <div class="flex justify-between">
+    <div class="flex items-end gap-3">
+      <div>
+        <img class="size-28 rounded-lg object-contain" src="/assets/images/user.jpg" alt="profil user">
+      </div>
+      <div>
+        @if (!disableInput){
+          <div class="flex gap-5">
+            <button type="button" class="inline-flex items-center gap-x-3 rounded-md bg-main px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-main/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
+              <svg class="size-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 4.5v10m0-10c-.7 0-2.008 1.994-2.5 2.5M12 4.5c.7 0 2.008 1.994 2.5 2.5m5.5 9.5c0 2.482-.518 3-3 3H7c-2.482 0-3-.518-3-3" color="currentColor"/>
+              </svg>
+              Ajouter une photo
+            </button>
+            <button type="button" class="rounded-md bg-[#C7E1BA] px-5 py-1.5 text-sm font-semibold text-[#4A9E1F] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-main">
+              Supprimer
+            </button>
+          </div>
+          <p>Format PNG,JPEG | taille au maximum 10 mb</p>
+        }
+      </div>
+    </div>
+    <div>
+      @if (disableInput){
+        <button (click)="onEnableInput()" type="button" class="inline-flex items-center gap-x-3 rounded-md bg-background text-gray-700 px-5 py-2.5 text-sm font-semibold shadow-sm hover:bg-gray-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
+          <svg class="size-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="m15.214 5.982l1.402-1.401a1.982 1.982 0 0 1 2.803 2.803l-1.401 1.402m-2.804-2.804L6.98 14.216c-1.045 1.046-1.568 1.568-1.924 2.205S4.342 18.561 4 20c1.438-.342 2.942-.7 3.579-1.056s1.16-.879 2.205-1.924l8.234-8.234m-2.804-2.804l2.804 2.804M11 20h6" color="currentColor"/></svg>
+          Modifier
+        </button>
+      } @else {
+        <button type="button" class="inline-flex items-center gap-x-3 rounded-md bg-main px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-main/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
+          <svg class="size-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5.5 8.9V8c0-2.828 0-4.243.879-5.121C7.257 2 8.672 2 11.5 2h3c2.828 0 4.243 0 5.121.879c.879.878.879 2.293.879 5.121v6c0 3.771 0 5.657-1.172 6.828S16.271 22 12.5 22h-1.875c-2.928 0-4.392 0-5.428-.73a4 4 0 0 1-.967-.966c-.73-1.037-.73-2.5-.73-5.43v-.273c0-.542 0-.813.046-1.073a3 3 0 0 1 .32-.911c.126-.232.295-.444.634-.867s.508-.635.634-.867a3 3 0 0 0 .32-.91c.046-.26.046-.532.046-1.074M16.5 6v3M13 6v3M9.5 6v3" color="currentColor"/>
+          </svg>
+          Enregistrer
+        </button>
+      }
+    </div>
+  </div>
+<!--  inputs -->
+  <form class="w-full max-w-[600px] grid grid-cols-2 gap-3 mt-8">
+<!--    Input sans icone -->
+    <div>
+      <label for="name" class="block text-sm/6 font-medium text-gray-900">
+        Nom de l'entreprise
+      </label>
+      <div class="mt-2">
+        <input [attr.disabled]="disableInput ? '' : null" type="text" name="name" id="name" class="block w-full rounded-lg px-3 py-3 bg-background text-base text-gray-900 placeholder:text-gray-400 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-main sm:text-sm/6" placeholder="Exdras Shop">
+      </div>
+    </div>
+<!--    Fin input sans icone-->
+    <!--    Input sans icone -->
+    <div>
+      <label for="email" class="block text-sm/6 font-medium text-gray-900">
+        Adresse e-mail professionnelle
+      </label>
+      <div class="mt-2">
+        <input [attr.disabled]="disableInput ? '' : null" type="email" name="name" id="email" class="block w-full rounded-lg px-3 py-3 bg-background text-base text-gray-900 placeholder:text-gray-400 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-main sm:text-sm/6" placeholder="contact@exdrashop.com">
+      </div>
+    </div>
+    <!--    Fin input sans icone-->
+<!--    Input avec icone -->
+    <div>
+      <label for="numero" class="block text-sm/6 font-medium text-gray-900">
+        Numéro de télephone
+      </label>
+      <div class="mt-2 grid grid-cols-1 items-center">
+        <input [attr.disabled]="disableInput ? '' : null" type="tel" name="email" id="numero" class="col-start-1 row-start-1 block w-full rounded-md bg-background py-3 pl-10 pr-3 text-base text-gray-900 placeholder:text-gray-400 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-main sm:pl-9 sm:text-sm/6" placeholder="+241  066 00 00 00">
+        <svg class="pointer-events-none col-start-1 row-start-1 ml-3 size-5 self-center text-gray-400 sm:size-4" xmlns="http://www.w3.org/2000/svg">
+          <rect fill="#3a75c4" width="16" height="15"/>
+          <rect fill="#fcd116" width="16" height="10"/>
+          <rect fill="#009e60" width="16" height="5"/>
+        </svg>
+
+      </div>
+    </div>
+<!--    Fin input avec icone-->
+    <!--    Input sans icone -->
+    <div>
+      <label for="adress" class="block text-sm/6 font-medium text-gray-900">
+        Adresse
+      </label>
+      <div class="mt-2">
+        <input [attr.disabled]="disableInput ? '' : null" type="text" name="name" id="adress" class="block w-full rounded-lg px-3 py-3 bg-background text-base text-gray-900 placeholder:text-gray-400 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-main sm:text-sm/6" placeholder="Libreville">
+      </div>
+    </div>
+    <!--    Fin input sans icone-->
+    <!--    Input sans icone -->
+    <div>
+      <label for="pays" class="block text-sm/6 font-medium text-gray-900">
+        Pays
+      </label>
+      <div class="mt-2">
+        <input [attr.disabled]="disableInput ? '' : null" type="text" name="name" id="pays" class="block w-full rounded-lg px-3 py-3 bg-background text-base text-gray-900 placeholder:text-gray-400 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-main sm:text-sm/6" placeholder="Gabon">
+      </div>
+    </div>
+    <!--    Fin input sans icone-->
+  </form>
+</div>

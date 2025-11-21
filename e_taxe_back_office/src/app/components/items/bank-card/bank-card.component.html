@@ -1,0 +1,27 @@
+<div class="relative bg-main p-4 rounded-lg w-full min-w-[300px] max-w-[400px] h-[184px] inline-block">
+<!--  calque : cercles transaparent-->
+  <div class="absolute overflow-hidden w-full h-full left-0 top-0 rounded-lg">
+    <div class="absolute bg-black/5 bottom-0 left-0 translate-x-[-40%] translate-y-[70%] size-[300px] rounded-full"></div>
+    <div class="absolute bg-black/5 right-0 top-0 translate-x-[40%] translate-y-[-70%] size-[300px] rounded-full"></div>
+  </div>
+<!--  calque : texte et logo -->
+  <div>
+    <div class="relative left-0 top-0">
+<!--      texte : solde-->
+      <div class="flex flex-col gap-3 pt-3">
+        <div>
+          <p class="text-white text-[12px]">Solde du compte</p>
+          <p class="text-white text-4xl">2 500 000 <br> XAF</p>
+        </div>
+        <p class="text-white">
+          <span>N compte </span>
+          <span class="font-medium">{{hiddenLetters('000504570609')}}</span>
+        </p>
+      </div>
+<!--      logo : bamboo -->
+      <div class="absolute right-0 top-0">
+        <img class="h-[25px]" src="/assets/logo/card.png" alt="logo des cartes">
+      </div>
+    </div>
+  </div>
+</div>

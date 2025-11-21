@@ -1,0 +1,14 @@
+<div class="w-[450px] h-full relative">
+  <div (click)="setIndex(2)" class="absolute {{checkIndex(1)}} cursor-pointer form-withdrawal opacity-0 left-0 top-0 w-full h-full">
+    <app-demande-retrait/>
+  </div>
+  <div (click)="setIndex(3)" class="absolute {{checkIndex(2)}} cursor-pointer form-withdrawal opacity-0 left-0 top-0 w-full h-full">
+    <app-recap-transaction/>
+  </div>
+  <div (click)="setIndex(4)" class="absolute {{checkIndex(3)}} cursor-pointer form-withdrawal opacity-0 left-0 top-0 w-full h-full">
+    <app-otp-code/>
+  </div>
+  <div (click)="setIndex(1)" class="absolute {{checkIndex(4)}} cursor-pointer form-withdrawal opacity-0 left-0 top-0 w-full h-full">
+    <app-status-modal/>
+  </div>
+</div>

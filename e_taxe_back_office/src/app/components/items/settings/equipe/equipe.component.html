@@ -1,0 +1,43 @@
+<div class="mt-2">
+  <div class="flex justify-end rounded-lg mb-5 px-4">
+    <button (click)="onActiveChange()" type="button" class="inline-flex items-center gap-x-3 rounded-md bg-main px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-main/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
+      <svg class="size-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5.18 15.296c-1.258.738-4.555 2.243-2.547 4.126c.982.92 2.074 1.578 3.448 1.578h7.838c1.374 0 2.467-.658 3.447-1.578c2.009-1.883-1.288-3.389-2.546-4.126a9.61 9.61 0 0 0-9.64 0M14 7a4 4 0 1 1-8 0a4 4 0 0 1 8 0m5.5-3v5M22 6.5h-5" color="currentColor"/></svg>
+      Ajouter un utilisateur
+    </button>
+  </div>
+  <div class="flow-root rounded overflow-hidden">
+    <div class="-mx-4 -my-2 sm:-mx-6 lg:-mx-8">
+      <div class="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
+        <table class="min-w-full">
+          <thead>
+          <tr>
+            <th scope="col" class="py-3.5 pl-10 text-left text-sm font-semibold bg-main text-white rounded-l-lg">Nom complet</th>
+            <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold bg-main text-white">Roles</th>
+            <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold bg-main text-white">E-mail</th>
+            <th scope="col" class="pr-10 py-3.5 text-sm font-semibold bg-main text-white text-right rounded-r-lg">Action</th>
+          </tr>
+          </thead>
+          <tbody class="bg-white my-3">
+          <tr class="py-2 h-[15px]"><td></td><td></td><td></td><td></td></tr>
+          <!-- DEBUT -->
+          <tr (click)="onActiveModalUser(true)" class="bg-background cursor-pointer">
+            <td class="whitespace-nowrap pl-10 py-3 text-sm text-main-text-color rounded-l-lg">Alma Lawson</td>
+            <td class="whitespace-nowrap px-3 py-4 text-sm text-main-text-color">Propriétaire</td>
+            <td class="whitespace-nowrap px-3 text-sm text-main-text-color">alma.lawson&#64;gmail.com</td>
+            <td class="whitespace-nowrap text-sm text-main-text-color pr-10 rounded-r-lg">
+              <span class="w-full flex justify-end">
+                <svg class="size-6" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="m9 5l6 7l-6 7"/>
+              </svg>
+              </span>
+            </td>
+          </tr>
+          <!-- FIN -->
+          <tr class="py-2 h-[15px]"><td></td><td></td><td></td><td></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div>

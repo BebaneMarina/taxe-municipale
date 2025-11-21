@@ -1,0 +1,32 @@
+<div>
+  <div class="flex justify-end">
+    <button type="button" class="inline-flex items-center gap-x-3 rounded-md bg-main px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-main/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
+      <svg class="size-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+        <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5.5 8.9V8c0-2.828 0-4.243.879-5.121C7.257 2 8.672 2 11.5 2h3c2.828 0 4.243 0 5.121.879c.879.878.879 2.293.879 5.121v6c0 3.771 0 5.657-1.172 6.828S16.271 22 12.5 22h-1.875c-2.928 0-4.392 0-5.428-.73a4 4 0 0 1-.967-.966c-.73-1.037-.73-2.5-.73-5.43v-.273c0-.542 0-.813.046-1.073a3 3 0 0 1 .32-.911c.126-.232.295-.444.634-.867s.508-.635.634-.867a3 3 0 0 0 .32-.91c.046-.26.046-.532.046-1.074M16.5 6v3M13 6v3M9.5 6v3" color="currentColor"/>
+      </svg>
+      Enregistrer
+    </button>
+  </div>
+  <form class="w-full max-w-[600px] grid grid-cols-2 gap-3 mt-8">
+    <!--    Input sans icone -->
+    <div>
+      <label for="name" class="block text-sm/6 font-medium text-gray-900">
+        Mot de passe
+      </label>
+      <div class="mt-2">
+        <input type="text" name="name" id="name" class="block w-full rounded-lg px-3 py-3 bg-background text-base text-gray-900 placeholder:text-gray-400 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-main sm:text-sm/6" placeholder="*********">
+      </div>
+    </div>
+    <!--    Fin input sans icone-->
+    <!--    Input sans icone -->
+    <div>
+      <label for="email" class="block text-sm/6 font-medium text-gray-900">
+        Confirmer le mot de passe
+      </label>
+      <div class="mt-2">
+        <input type="email" name="name" id="email" class="block w-full rounded-lg px-3 py-3 bg-background text-base text-gray-900 placeholder:text-gray-400 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-main sm:text-sm/6" placeholder="Cliquez pour saisir">
+      </div>
+    </div>
+    <!--    Fin input sans icone-->
+  </form>
+</div>

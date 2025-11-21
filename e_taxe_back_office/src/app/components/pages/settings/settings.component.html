@@ -1,0 +1,39 @@
+<app-modal [(active)]="activeModal">
+  <app-user-invitation/>
+</app-modal>
+<app-modal [(active)]="activeModalUser">
+  <app-user-details/>
+</app-modal>
+<app-contener>
+  <div class="min-h-[80vh]">
+    <nav class="bg-white border-b-2">
+      <div class="mx-auto">
+        <div class="flex h-10 justify-between">
+          <div class="flex">
+            <div class="flex space-x-5">
+              <button (click)="setIndex(0)" class="btn-onglet {{checkIndex(0)}} inline-flex items-center text-sm font-medium text-gray-400">Profil</button>
+              <button (click)="setIndex(1)" class="btn-onglet {{checkIndex(1)}} inline-flex items-center text-sm font-medium text-gray-400">Notification</button>
+              <button (click)="setIndex(2)" class="btn-onglet {{checkIndex(2)}} inline-flex items-center text-sm font-medium text-gray-400">Sécurié</button>
+              <button (click)="setIndex(3)" class="btn-onglet {{checkIndex(3)}} inline-flex items-center text-sm font-medium text-gray-400">Equipe</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </nav>
+<!--    Onglets -->
+    <div class="relative my-5">
+      <div class="absolute opacity-0 content-onglet {{checkIndex(0)}} left-0 top-0 w-full">
+        <app-profil/>
+      </div>
+      <div class="absolute opacity-0 content-onglet {{checkIndex(1)}} left-0 top-0 w-full">
+        <app-notification/>
+      </div>
+      <div class="absolute opacity-0 content-onglet {{checkIndex(2)}} left-0 top-0 w-full">
+        <app-securite/>
+      </div>
+      <div class="absolute opacity-0 content-onglet {{checkIndex(3)}} left-0 top-0 w-full">
+        <app-equipe [(activeModalUser)]="activeModalUser" (activeModalUserChange)="onActiveModalUser($event)" [(active)]="activeModal" (activeChange)="openModal($event)"/>
+      </div>
+    </div>
+  </div>
+</app-contener>

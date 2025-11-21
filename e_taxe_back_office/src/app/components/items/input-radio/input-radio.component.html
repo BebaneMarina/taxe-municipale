@@ -1,0 +1,13 @@
+<div class="flex justify-between items-center py-2">
+  <div>
+    <p class="font-medium">{{title}}</p>
+    <p class="text-gray-600"><ng-content/></p>
+  </div>
+  <button (click)="toggleActive()">
+    <div class="input-radio w-[48px] h-[25px] bg-gray-500 {{active ? 'active' : ''}} rounded-full px-[3px] py-[2px]">
+      <div class="relative w-full h-full">
+        <div class="absolute radio {{active ? 'active' : ''}} left-0 top-0 w-[21px] h-full bg-white rounded-full"></div>
+      </div>
+    </div>
+  </button>
+</div>

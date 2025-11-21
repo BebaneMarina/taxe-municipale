@@ -1,0 +1,109 @@
+<div class="">
+  <div class="flow-root rounded overflow-hidden">
+    <div class="-mx-4 -my-2 sm:-mx-6 lg:-mx-8">
+      <div class="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
+        <table class="min-w-full">
+          <thead>
+          <tr>
+            <th scope="col" class="py-3.5 pl-10 text-left text-sm font-semibold bg-main text-white rounded-l-lg">Date</th>
+            <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold bg-main text-white">Contribuable</th>
+            <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold bg-main text-white">Taxe</th>
+            <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold bg-main text-white">Collecteur</th>
+            <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold bg-main text-white">Montant</th>
+            <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold bg-main text-white">Moyen de paiement</th>
+            <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold bg-main text-white">Référence</th>
+            <th scope="col" class="pr-10 py-3.5 text-sm font-semibold bg-main text-white text-right rounded-r-lg">Statut</th>
+          </tr>
+          </thead>
+          <tbody class="bg-white">
+          @if (loading) {
+            <tr>
+              <td colspan="8" class="px-6 py-8 text-center text-gray-500">
+                Chargement...
+              </td>
+            </tr>
+          } @else {
+            @for (collecte of collectes; track collecte.id) {
+              <tr (click)="onActiveModalItem(true, collecte)" class="even:bg-gray-50 cursor-pointer hover:bg-gray-100">
+                <td class="whitespace-nowrap py-4 pl-10 text-sm text-main-text-color">
+                  <div>{{ dateFormater(collecte.date_collecte, "/") }}</div>
+                  @if (collecte.date_collecte) {
+                    <div class="text-xs text-gray-500">{{ getTimeFromDate(collecte.date_collecte) }}</div>
+                  }
+                </td>
+                <td class="whitespace-nowrap px-3 py-4 text-sm text-main-text-color">
+                  <div class="font-medium">{{ collecte.contribuable?.nom || 'N/A' }} {{ collecte.contribuable?.prenom || '' }}</div>
+                  @if (collecte.contribuable?.telephone) {
+                    <div class="text-xs text-gray-500">{{ collecte.contribuable?.telephone }}</div>
+                  }
+                </td>
+                <td class="whitespace-nowrap px-3 py-4 text-sm text-main-text-color">
+                  <div class="font-medium">{{ collecte.taxe?.nom || 'N/A' }}</div>
+                  @if (collecte.taxe?.code) {
+                    <div class="text-xs text-gray-500">{{ collecte.taxe?.code }}</div>
+                  }
+                </td>
+                <td class="whitespace-nowrap px-3 py-4 text-sm text-main-text-color">
+                  <div>{{ collecte.collecteur?.nom || 'N/A' }} {{ collecte.collecteur?.prenom || '' }}</div>
+                  @if (collecte.collecteur?.matricule) {
+                    <div class="text-xs text-gray-500">Mat: {{ collecte.collecteur?.matricule }}</div>
+                  }
+                </td>
+                <td class="whitespace-nowrap px-3 py-4 text-sm text-main-text-color">
+                  <div class="font-semibold text-main">{{ parseMount(collecte.montant.toString(), ',') }} XAF</div>
+                  @if (collecte.commission > 0) {
+                    <div class="text-xs text-gray-500">Commission: {{ parseMount(collecte.commission.toString(), ',') }} XAF</div>
+                  }
+                </td>
+                <td class="whitespace-nowrap px-3 py-4 text-sm text-main-text-color">
+                  <div class="flex items-center gap-2">
+                    @if (collecte.type_paiement === 'mobile_money') {
+                      <img src="{{paiementLogo[0]}}" alt="Mobile Money" class="size-6 rounded-full object-contain">
+                      <span class="text-xs">Mobile Money</span>
+                    } @else if (collecte.type_paiement === 'carte') {
+                      <img src="{{paiementLogo[1]}}" alt="Carte" class="size-6 rounded-full object-contain">
+                      <span class="text-xs">Carte</span>
+                    } @else {
+                      <span class="text-xs">Espèces</span>
+                    }
+                  </div>
+                </td>
+                <td class="whitespace-nowrap px-3 py-4 text-sm text-main-text-color">
+                  <div class="font-mono text-xs">{{ collecte.reference }}</div>
+                </td>
+                <td class="whitespace-nowrap py-4 text-sm text-main-text-color text-right pr-10">
+                  <app-badge 
+                    [text]="collecte.statut === 'completed' ? 'Succès' : collecte.statut === 'pending' ? 'En cours' : collecte.statut === 'cancelled' ? 'Annulé' : 'Échec'" 
+                    [type]="collecte.statut === 'completed' ? statusBilling[1] : collecte.statut === 'pending' ? statusBilling[2] : statusBilling[0]"
+                  />
+                  @if (collecte.annule && collecte.raison_annulation) {
+                    <div class="text-xs text-red-600 mt-1">Annulé: {{ collecte.raison_annulation }}</div>
+                  }
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="8" class="px-6 py-8 text-center text-gray-500">
+                  Aucune collecte trouvée
+                </td>
+              </tr>
+            }
+          }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Pagination -->
+  @if (!loading && collectes.length > 0) {
+    <app-pagination
+      [currentPage]="currentPage"
+      [totalPages]="totalPages"
+      [pageSize]="pageSize"
+      [totalItems]="totalItems"
+      (pageChange)="onPageChange($event)"
+      (pageSizeChange)="onPageSizeChange($event)"
+    />
+  }
+</div>

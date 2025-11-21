@@ -1,0 +1,96 @@
+.map-container {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.map-controls {
+  z-index: 1000;
+}
+
+.map-view {
+  width: 100%;
+  height: 100%;
+  min-height: 650px;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 2px solid #e5e7eb;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+// Styles pour les marqueurs personnalisés
+:host ::ng-deep .custom-marker {
+  background: transparent;
+  border: none;
+}
+
+.marker-pin {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: white;
+  border-radius: 50%;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3), 0 2px 4px rgba(0, 0, 0, 0.2);
+  border: 3px solid #10B981;
+  transition: transform 0.2s ease;
+}
+
+.marker-pin:hover {
+  transform: scale(1.2);
+  z-index: 1000;
+}
+
+.marker-icon {
+  font-size: 24px;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.2));
+}
+
+.marker-pin-collecteur {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: #3B82F6;
+  border-radius: 50%;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3), 0 2px 4px rgba(0, 0, 0, 0.2);
+  border: 3px solid #1E40AF;
+  transition: transform 0.2s ease;
+}
+
+.marker-pin-collecteur:hover {
+  transform: scale(1.2);
+  z-index: 1000;
+}
+
+.marker-icon-collecteur {
+  font-size: 22px;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.2));
+}
+
+// Styles pour les popups
+:host ::ng-deep .leaflet-popup-content {
+  margin: 15px 20px;
+  min-width: 250px;
+  max-width: 350px;
+}
+
+:host ::ng-deep .leaflet-popup-content-wrapper {
+  border-radius: 12px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2), 0 10px 10px -5px rgba(0, 0, 0, 0.1);
+}
+
+.popup-content {
+  font-family: system-ui, -apple-system, sans-serif;
+}
+
+.popup-content img {
+  border-radius: 8px;
+  margin-top: 8px;
+}
+
+// Les styles Leaflet sont importés dans angular.json
+

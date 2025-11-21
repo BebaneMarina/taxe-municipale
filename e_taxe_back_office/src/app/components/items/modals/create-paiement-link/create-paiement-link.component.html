@@ -1,0 +1,103 @@
+<div class="h-full grid grid-cols-[400px_500px] gap-4">
+  <div>
+    <app-h1>Information</app-h1>
+    <form class="w-full grid gap-3 mt-8">
+      <!--    Input sans icone -->
+      <div>
+        <label for="name" class="block text-sm/6 font-medium text-gray-900">
+          Nom du client <sup>*</sup>
+        </label>
+        <div class="mt-2">
+          <input type="text" name="name" id="name" class="block w-full rounded-lg px-3 py-3 bg-background text-base text-gray-900 placeholder:text-gray-400 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-main sm:text-sm/6" placeholder="Exdras Shop">
+        </div>
+      </div>
+      <!--    Fin input sans icone-->
+      <div class="grid grid-cols-2 gap-2 h-[50px] rounded-lg bg-main/10 p-[5px] mt-5">
+        <button type="button" (click)="onToggleActiveEmail(false)" class="{{!activeEmail ? 'active' : null}} [&.active]:bg-main [&.active]:text-white text-gray-700  rounded-lg">
+          Contact
+        </button>
+        <button type="button" (click)="onToggleActiveEmail(true)" class="{{activeEmail ? 'active' : null}} [&.active]:bg-main [&.active]:text-white text-gray-700 rounded-lg">
+          E-mail
+        </button>
+      </div>
+      @if (activeEmail)
+      {
+        <!--    Input sans icone : email -->
+        <div>
+          <div class="mt-2">
+            <input type="text" name="name" class="block w-full rounded-lg px-3 py-3 bg-background text-base text-gray-900 placeholder:text-gray-400 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-main sm:text-sm/6" placeholder="user@gmail.com">
+          </div>
+        </div>
+        <!--    Fin input sans icone-->
+      } @else {
+        <!--    Input avec icone -->
+        <div>
+          <div class="mt-2 grid grid-cols-1 items-center">
+            <input type="tel" name="email" id="numero" class="col-start-1 row-start-1 block w-full rounded-md bg-background py-3 pl-10 pr-3 text-base text-gray-900 placeholder:text-gray-400 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-main sm:pl-9 sm:text-sm/6" placeholder="+241  066 00 00 00">
+            <svg class="pointer-events-none col-start-1 row-start-1 ml-3 size-5 self-center text-gray-400 sm:size-4" xmlns="http://www.w3.org/2000/svg">
+              <rect fill="#3a75c4" width="16" height="15"/>
+              <rect fill="#fcd116" width="16" height="10"/>
+              <rect fill="#009e60" width="16" height="5"/>
+            </svg>
+          </div>
+        </div>
+        <!--    Fin input avec icone-->
+      }
+      <!--    Input sans icone -->
+      <div>
+        <label for="adress" class="block text-sm/6 font-medium text-gray-900">
+          Montant
+        </label>
+        <div class="mt-2">
+          <input type="text" name="name" id="adress" class="block w-full rounded-lg px-3 py-3 bg-background text-base text-gray-900 placeholder:text-gray-400 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-main sm:text-sm/6" placeholder="Libreville">
+        </div>
+      </div>
+      <!--    Fin input sans icone-->
+      <!--    Input sans icone -->
+      <div>
+        <label for="pays" class="block text-sm/6 font-medium text-gray-900">
+          Référence facture
+        </label>
+        <div class="mt-2">
+          <input type="text" name="name" id="pays" class="block w-full rounded-lg px-3 py-3 bg-background text-base text-gray-900 placeholder:text-gray-400 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-main sm:text-sm/6" placeholder="Gabon">
+        </div>
+      </div>
+      <!--    Fin input sans icone-->
+<!--      button -->
+      <button class="w-full flex gap-3 items-center justify-center px-4 py-3 text-white bg-main rounded-lg mt-5">
+        <svg class="size-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="currentColor" d="M15.729 3.884c1.434-1.44 3.532-1.47 4.693-.304c1.164 1.168 1.133 3.28-.303 4.72l-2.423 2.433a.75.75 0 0 0 1.062 1.059l2.424-2.433c1.911-1.919 2.151-4.982.303-6.838c-1.85-1.857-4.907-1.615-6.82.304L9.819 7.692c-1.911 1.919-2.151 4.982-.303 6.837a.75.75 0 1 0 1.063-1.058c-1.164-1.168-1.132-3.28.303-4.72z"/><path fill="currentColor" d="M14.485 9.47a.75.75 0 0 0-1.063 1.06c1.164 1.168 1.133 3.279-.303 4.72l-4.847 4.866c-1.435 1.44-3.533 1.47-4.694.304c-1.164-1.168-1.132-3.28.303-4.72l2.424-2.433a.75.75 0 0 0-1.063-1.059l-2.424 2.433c-1.911 1.92-2.151 4.982-.303 6.838c1.85 1.858 4.907 1.615 6.82-.304l4.847-4.867c1.911-1.918 2.151-4.982.303-6.837"/></svg>
+        <span>Créer le lien</span>
+      </button>
+<!--      Fin button -->
+    </form>
+  </div>
+  <div class="bg-main rounded-lg flex flex-col justify-between px-20 pt-20 pb-6">
+    <h2 class="text-secondary text-2xl font-bold">Exdras shop</h2>
+    <div>
+      <p class="text-3xl font-black text-white pb-6">795 000 XAF</p>
+      <div>
+        <p class="py-3 border-b text-white w-full">Détail de la facture</p>
+        <ul class="py-5 flex flex-col gap-3">
+          <li class="flex justify-between text-white">
+            <span>Montan</span>
+            <span class="font-bold">795 000 XAF</span>
+          </li>
+          <li class="flex justify-between text-white">
+            <span>Référence facture</span>
+            <span class="font-bold">004537</span>
+          </li>
+        </ul>
+      </div>
+      <p class="flex justify-between text-white pt-3 border-t">
+        <span>Montant total</span>
+        <span class="font-bold">795 000 XAF</span>
+      </p>
+    </div>
+    <div>
+      <p class="flex gap-3 text-xs justify-center text-white">
+        <span class="flex items-center gap-2">Sécurisé par <img class="h-[16px]" src="/assets/logo/card.png" alt="logo bamboo"> </span>
+        <span>| Termes et confidentialités</span>
+      </p>
+    </div>
+  </div>
+</div>

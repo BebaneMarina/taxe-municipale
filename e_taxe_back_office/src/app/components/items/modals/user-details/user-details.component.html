@@ -1,0 +1,31 @@
+<div class="h-full w-[450px] flex flex-col justify-between">
+  <div>
+    <div class="flex items-center gap-3">
+      <div class="size-[80px] rounded-full overflow-hidden border">
+        <img src="/assets/images/client.png" alt="client">
+      </div>
+      <p class="text-xl">Jacob Jones</p>
+    </div>
+    <app-contener-gray>
+      <p class="mb-2 border-b-2 pb-2 w-full font-medium">Détails de l'utilisateur</p>
+      <ul class="flex flex-col gap-3">
+        <li class="flex justify-between text-[14px]">
+          <span>Dernière connexion</span>
+          <span class="font-medium">Il y a 16 minutes</span>
+        </li>
+        <li class="flex justify-between text-[14px]">
+          <span>E-mail</span>
+          <span class="font-medium">jacobjones&#64;exdrashop.com</span>
+        </li>
+        <li class="flex justify-between text-[14px]">
+          <span>Roles</span>
+          <span class="font-medium px-5 py-1 rounded-lg bg-main text-white">Service client</span>
+        </li>
+      </ul>
+    </app-contener-gray>
+  </div>
+  <div class="grid grid-cols-2 gap-3">
+    <button class="rounded-lg py-2 bg-red-600 text-white font-medium">Supprimer le membre</button>
+    <button class="rounded-lg py-2 border-main border-2 text-main font-medium">Changer le role</button>
+  </div>
+</div>

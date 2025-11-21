@@ -1,0 +1,59 @@
+<div class="w-[450px]">
+  <p class="text-main text-lg font-semibold">Envoyer une invitation aux nouveaux<br> membres</p>
+  <h2 class="text-sm">Saisissez les informations les informations de l'utilisateurs que vous souhaiter <br>inviter et
+    choisissez le role qu'il doit avoir</h2>
+  <form class="w-full grid gap-3 mt-8">
+    <label for="role" class="block text-sm/6 font-medium text-gray-900">
+    Nom de l'utilisateur<sup>*</sup>
+  </label>
+  <div class="mt-2">
+    <select id="role" name="role"
+      class="block w-full rounded-lg px-3 py-3 bg-background text-base text-gray-900 placeholder:text-gray-400 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-main sm:text-sm/6">
+      <option value="" disabled selected>Sélectionnez un utilisateur
+      <option value="admin">Administrateur</option>
+      <option value="manager">Gestionnaire</option>
+      <option value="viewer">Lecteur</option>
+    </select>
+  </div>
+    <div>
+      <label for="adress" class="block text-sm/6 font-medium text-gray-900">
+        Email
+      </label>
+      <div class="mt-2">
+        <input type="text" name="name" id="adress"
+          class="block w-full rounded-lg px-3 py-3 bg-background text-base text-gray-900 placeholder:text-gray-400 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-main sm:text-sm/6"
+          placeholder="Libreville">
+      </div>
+    </div>
+    <div>
+  <label for="role" class="block text-sm/6 font-medium text-gray-900">
+    Rôle de l'utilisateur<sup>*</sup>
+  </label>
+  <div class="mt-2">
+    <select id="role" name="role"
+      class="block w-full rounded-lg px-3 py-3 bg-background text-base text-gray-900 placeholder:text-gray-400 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-main sm:text-sm/6">
+      <option value="" disabled selected>Sélectionnez un rôle</option>
+      <option value="admin">Administrateur</option>
+      <option value="manager">Gestionnaire</option>
+      <option value="viewer">Lecteur</option>
+    </select>
+  </div>
+</div>
+    <div>
+      <label for="pays" class="block text-sm/6 font-medium text-gray-900">
+        Descriptif
+      </label>
+      <div class="mt-2">
+        <textarea name="name" id="pays"
+          class="block w-full rounded-lg px-3 py-3 bg-background text-base text-gray-900 placeholder:text-gray-400 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-main sm:text-sm/6"
+          placeholder="Gabon"></textarea>
+      </div>
+    </div>
+    <!--      button -->
+    <div class="grid grid-cols-2 gap-3 mt-5">
+      <button class="rounded-lg py-2 border-main border-2 text-main font-medium">Annuler</button>
+      <button class="rounded-lg py-2 bg-main text-white font-medium">Inviter l'utilisateur</button>
+    </div>
+    <!--      Fin button -->
+  </form>
+</div>

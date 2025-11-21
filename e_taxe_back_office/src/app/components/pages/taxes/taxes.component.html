@@ -1,0 +1,127 @@
+<app-contener>
+  <div class="flex justify-between items-center mb-6">
+    <h1 class="text-2xl font-bold text-gray-900">Gestion des Taxes</h1>
+    <button (click)="onActiveModal(true)" class="px-4 py-2 bg-main text-white rounded-lg hover:bg-main/90">
+      Ajouter une taxe
+    </button>
+  </div>
+
+  <!-- Modal de création -->
+  <app-modal [(active)]="activeModal" title="Créer une taxe">
+    <app-create-taxe />
+  </app-modal>
+
+  <!-- Modal de détails -->
+  <app-modal [(active)]="activeModalDetails" title="Détails de la taxe">
+    <app-details-taxes />
+  </app-modal>
+
+  <!-- Barre de recherche -->
+  <div class="mb-6">
+    <div class="flex gap-4">
+      <input
+        type="text"
+        [(ngModel)]="searchTerm"
+        (keyup.enter)="onSearch()"
+        placeholder="Rechercher une taxe..."
+        class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-main"
+      />
+      <button
+        (click)="onSearch()"
+        class="px-6 py-2 bg-main text-white rounded-lg hover:bg-main/90"
+      >
+        Rechercher
+      </button>
+    </div>
+  </div>
+
+  <!-- Tableau des taxes -->
+  @if (loading) {
+    <div class="text-center py-8">
+      <p class="text-gray-500">Chargement...</p>
+    </div>
+  } @else {
+    <div class="overflow-x-auto">
+      <table class="min-w-full bg-white rounded-lg shadow">
+        <thead class="bg-main text-white">
+          <tr>
+            <th class="px-6 py-3 text-left text-sm font-semibold">Code</th>
+            <th class="px-6 py-3 text-left text-sm font-semibold">Nom</th>
+            <th class="px-6 py-3 text-left text-sm font-semibold">Montant</th>
+            <th class="px-6 py-3 text-left text-sm font-semibold">Périodicité</th>
+            <th class="px-6 py-3 text-left text-sm font-semibold">Commission</th>
+            <th class="px-6 py-3 text-left text-sm font-semibold">Statut</th>
+            <th class="px-6 py-3 text-left text-sm font-semibold">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-200">
+          @for (taxe of taxes; track taxe.id) {
+            <tr class="hover:bg-gray-50">
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                {{ taxe.code }}
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                {{ taxe.nom }}
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                {{ taxe.montant_variable ? 'Variable' : taxe.montant + ' FCFA' }}
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                {{ getPeriodiciteLabel(taxe.periodicite) }}
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                {{ taxe.commission_pourcentage }}%
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <span [class]="'px-2 py-1 rounded-full text-xs font-semibold ' + (taxe.actif ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800')">
+                  {{ taxe.actif ? 'Actif' : 'Inactif' }}
+                </span>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm">
+                <div class="flex gap-2">
+                  <button
+                    (click)="onActiveModalDetails(true, taxe)"
+                    class="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
+                  >
+                    Voir
+                  </button>
+                  <button
+                    (click)="toggleActif(taxe)"
+                    class="px-3 py-1 bg-gray-200 text-gray-700 rounded hover:bg-gray-300"
+                  >
+                    {{ taxe.actif ? 'Désactiver' : 'Activer' }}
+                  </button>
+                  <button
+                    (click)="deleteTaxe(taxe)"
+                    class="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600"
+                  >
+                    Supprimer
+                  </button>
+                </div>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="7" class="px-6 py-8 text-center text-gray-500">
+                Aucune taxe trouvée
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    
+    <!-- Pagination -->
+    @if (!loading && taxes.length > 0) {
+      <app-pagination
+        [currentPage]="currentPage"
+        [totalPages]="totalPages"
+        [pageSize]="pageSize"
+        [totalItems]="totalItems"
+        (pageChange)="onPageChange($event)"
+        (pageSizeChange)="onPageSizeChange($event)"
+      />
+    }
+  }
+</app-contener>
+
