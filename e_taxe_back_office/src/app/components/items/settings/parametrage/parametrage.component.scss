@@ -1,0 +1,91 @@
+.parametrage-container {
+  width: 100%;
+  min-height: 80vh;
+}
+
+// Onglets de navigation
+.parametrage-tabs {
+  display: flex;
+  gap: 0;
+  background: white;
+  border-bottom: 2px solid #e5e7eb;
+  margin-bottom: 1.5rem;
+  
+  .tabs-container {
+    display: flex;
+    gap: 0;
+    width: 100%;
+  }
+  
+  button {
+    position: relative;
+    padding: 0.75rem 1.5rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #9ca3af;
+    border: none;
+    background: transparent;
+    border-bottom: 2px solid transparent;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    
+    &:hover {
+      color: #0c529c;
+      background-color: #f9fafb;
+    }
+    
+    &.active {
+      color: #0c529c;
+      border-bottom-color: #0c529c;
+      font-weight: 600;
+      
+      svg {
+        color: #0c529c;
+      }
+    }
+    
+    svg {
+      width: 1.25rem;
+      height: 1.25rem;
+      transition: color 0.3s ease;
+    }
+  }
+}
+
+// Contenu des onglets
+.parametrage-content {
+  animation: fadeIn 0.3s ease-in-out;
+  min-height: 60vh;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// Styles responsive
+@media (max-width: 768px) {
+  .parametrage-tabs {
+    flex-wrap: wrap;
+    
+    button {
+      flex: 1 1 auto;
+      padding: 0.5rem 1rem;
+      font-size: 0.8rem;
+      
+      svg {
+        width: 1rem;
+        height: 1rem;
+      }
+    }
+  }
+}

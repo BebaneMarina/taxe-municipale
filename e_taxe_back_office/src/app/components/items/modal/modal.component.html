@@ -2,14 +2,14 @@
   <div (click)="toggleActive()" class="absolute left-0 top-0 w-screen h-screen"></div>
   <div class="modal-content relative translate-x-[150%]">
 
-      <div class="h-full bg-secondary rounded-2xl p-4 gap-3 grid grid-rows-[60px_1fr]">
-        <div class="flex items-center">
-          <button (click)="toggleActive()" class="border shadow px-1 py-1 rounded cursor-pointer">
+      <div class="h-full bg-secondary rounded-2xl gap-3 grid grid-rows-[auto_1fr] min-h-0 overflow-hidden">
+        <div class="flex items-center flex-shrink-0 px-4 pt-4 pb-2">
+          <button (click)="toggleActive()" class="border shadow px-1 py-1 rounded cursor-pointer hover:bg-gray-100 transition-colors">
             <svg class="size-6" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="currentColor" d="M6.4 19L5 17.6l5.6-5.6L5 6.4L6.4 5l5.6 5.6L17.6 5L19 6.4L13.4 12l5.6 5.6l-1.4 1.4l-5.6-5.6z"/></svg>
           </button>
-          <p class="px-4">{{title}}</p>
+          <p class="px-4 font-semibold text-gray-900">{{title}}</p>
         </div>
-        <div class="overflow-y-scroll scroll-hidden">
+        <div class="modal-scrollable-content min-h-0 pb-4">
           <ng-content/>
         </div>
       </div>

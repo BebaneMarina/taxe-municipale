@@ -9,10 +9,10 @@ import {ContenerComponent} from '../contener/contener.component';
   styleUrl: './modal.component.scss'
 })
 export class ModalComponent {
-  active : ModelSignal<boolean> = model<boolean>(true);
+  active : ModelSignal<boolean> = model<boolean>(false);
   @Input() title : string | null = null;
   toggleActive()
   {
-    this.active.set(false);
+    this.active.set(!this.active());
   }
 }

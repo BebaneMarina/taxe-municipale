@@ -1,7 +1,4 @@
-<div class="min-w-[450px]">
-   <app-modal [(active)]="activeModalModifTaxe">
-    <app-modification-taxes></app-modification-taxes>
-  </app-modal>
+<div class="w-full max-w-full modal-content-wrapper">
   <!--  HEAD -->
   <div class="flex justify-between items-center">
     <div>
@@ -9,34 +6,62 @@
     </div>
   </div>
   <!--  CONTENT 1 -->
-  <app-contener-gray>
-    <ul class="flex flex-col gap-3">
-      <li class="flex justify-between text-[14px]">
-        <span>Nom</span>
-        <span class="font-medium">Taxe journalier</span>
-      </li>
-      <li class="flex justify-between text-[14px]">
-        <span>Montant</span>
-        <span class="font-medium">1000 XAF</span>
-      </li>
-      <li class="flex justify-between text-[14px]">
-        <span>Date d'ajout</span>
-        <span class="font-medium">04/07/2025 à 11h30</span>
-      </li>
-      <li class="flex justify-between text-[14px]">
-        <span>Statut</span>
-        <span class="font-medium">Actif</span>
-      </li>
-    </ul>
-  </app-contener-gray>
-  <!--  END CONTENT 1-->
+  @if (taxe) {
+    <app-contener-gray>
+      <ul class="flex flex-col gap-3">
+        <li class="flex justify-between text-[14px]">
+          <span>Nom</span>
+          <span class="font-medium">{{ taxe.nom }}</span>
+        </li>
+        <li class="flex justify-between text-[14px]">
+          <span>Code</span>
+          <span class="font-medium">{{ taxe.code }}</span>
+        </li>
+        <li class="flex justify-between text-[14px]">
+          <span>Type</span>
+          <span class="font-medium">{{ taxe.type_taxe?.nom || 'N/A' }}</span>
+        </li>
+        <li class="flex justify-between text-[14px]">
+          <span>Montant</span>
+          <span class="font-medium">
+            {{ taxe.montant_variable ? 'Variable' : formatNumber(taxe.montant) + ' FCFA' }}
+          </span>
+        </li>
+        <li class="flex justify-between text-[14px]">
+          <span>Périodicité</span>
+          <span class="font-medium">{{ getPeriodiciteLabel(taxe.periodicite) }}</span>
+        </li>
+        <li class="flex justify-between text-[14px]">
+          <span>Commission</span>
+          <span class="font-medium">{{ taxe.commission_pourcentage }}%</span>
+        </li>
+        <li class="flex justify-between text-[14px]">
+          <span>Date d'ajout</span>
+          <span class="font-medium">{{ formatDate(taxe.created_at) }}</span>
+        </li>
+        <li class="flex justify-between text-[14px]">
+          <span>Statut</span>
+          <span class="font-medium" [class.text-green-600]="taxe.actif" [class.text-red-600]="!taxe.actif">
+            {{ taxe.actif ? 'Actif' : 'Inactif' }}
+          </span>
+        </li>
+      </ul>
+    </app-contener-gray>
+    <!--  END CONTENT 1-->
 
-  <!--  CONTENT 3 -->
-        <p class="mb-2 pb-2 w-full font-medium">Descriptif</p>
-  <app-contener-gray>
-
-  </app-contener-gray>
-  <!--  END CONTENT 3 -->
+    <!--  CONTENT 3 -->
+    <p class="mb-2 pb-2 w-full font-medium">Descriptif</p>
+    <app-contener-gray>
+      <p class="text-[14px] text-gray-700">
+        {{ taxe.description || 'Aucune description disponible' }}
+      </p>
+    </app-contener-gray>
+    <!--  END CONTENT 3 -->
+  } @else {
+    <div class="text-center py-8 text-gray-500">
+      Aucune taxe sélectionnée
+    </div>
+  }
   <div class="grid grid-cols-2 gap-3 pt-20 pb-5">
     <button class="flex justify-center items-center gap-3 border-main border-2 font-medium text-main py-2 rounded-lg">
       <!-- <svg class="size-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">

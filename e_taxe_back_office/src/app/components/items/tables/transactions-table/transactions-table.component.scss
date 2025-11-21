@@ -1,0 +1,44 @@
+// Wrapper pour le scroll horizontal avec scrollbars personnalisées
+.table-wrapper {
+  overflow-x: auto !important;
+  overflow-y: hidden;
+  width: 100%;
+  max-width: 100%;
+  
+  // Scrollbar personnalisée pour WebKit (Chrome, Safari, Edge) - horizontale
+  &::-webkit-scrollbar {
+    height: 8px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: #f1f5f9;
+    border-radius: 10px;
+    margin: 0 8px;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: #94a3b8;
+    border-radius: 10px;
+    transition: background 0.2s ease;
+  }
+  
+  &::-webkit-scrollbar-thumb:hover {
+    background: #64748b;
+  }
+  
+  // Scrollbar pour Firefox - horizontale
+  scrollbar-width: thin;
+  scrollbar-color: #94a3b8 #f1f5f9;
+  
+  // S'assurer que les éléments internes ne bloquent pas le scroll
+  .flow-root {
+    overflow: visible;
+  }
+  
+  // Le tableau peut dépasser
+  table {
+    min-width: 100%;
+    width: auto;
+  }
+}
+

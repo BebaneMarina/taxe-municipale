@@ -1,10 +1,20 @@
 <app-contener>
   <div class="flex justify-between items-center mb-6">
     <h1 class="text-2xl font-bold text-gray-900">Gestion des Collecteurs</h1>
-    <button class="px-4 py-2 bg-main text-white rounded-lg hover:bg-main/90">
+    <button (click)="openCreateModal()" class="px-4 py-2 bg-main text-white rounded-lg hover:bg-main/90">
       Ajouter un collecteur
     </button>
   </div>
+
+  <!-- Modal de création -->
+  <app-modal [(active)]="activeModal" title="Créer un collecteur">
+    <app-create-collecteur (collecteurCreated)="onCollecteurCreated()" />
+  </app-modal>
+
+  <!-- Modal de modification -->
+  <app-modal [(active)]="activeModalEdit" [title]="selectedCollecteur ? 'Modifier le collecteur' : 'Créer un collecteur'">
+    <app-create-collecteur [collecteur]="selectedCollecteur" (collecteurCreated)="onCollecteurCreated()" />
+  </app-modal>
 
   <!-- Barre de recherche -->
   <div class="mb-6">
@@ -31,7 +41,7 @@
       <p class="text-gray-500">Chargement...</p>
     </div>
   } @else {
-    <div class="overflow-x-auto">
+    <div class="table-wrapper">
       <table class="min-w-full bg-white rounded-lg shadow">
         <thead class="bg-main text-white">
           <tr>
@@ -76,6 +86,13 @@
               <td class="px-6 py-4 whitespace-nowrap text-sm">
                 <div class="flex gap-2">
                   <button
+                    (click)="editCollecteur(collecteur)"
+                    class="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
+                    title="Modifier"
+                  >
+                    Modifier
+                  </button>
+                  <button
                     (click)="toggleStatut(collecteur)"
                     class="px-3 py-1 bg-gray-200 text-gray-700 rounded hover:bg-gray-300"
                   >
@@ -84,7 +101,7 @@
                   @if (collecteur.statut === 'active') {
                     <button
                       (click)="toggleConnexion(collecteur)"
-                      class="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
+                      class="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600"
                     >
                       {{ collecteur.etat === 'connecte' ? 'Déconnecter' : 'Connecter' }}
                     </button>

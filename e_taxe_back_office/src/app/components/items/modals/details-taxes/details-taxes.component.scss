@@ -1,0 +1,32 @@
+// Styles pour le modal de détails de taxe avec scrollbar
+.modal-content-wrapper {
+  overflow-y: auto;
+  overflow-x: hidden;
+  max-height: calc(100vh - 200px);
+  
+  // Scrollbar personnalisée pour WebKit (Chrome, Safari, Edge)
+  &::-webkit-scrollbar {
+    width: 8px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: #f1f5f9;
+    border-radius: 10px;
+    margin: 8px 0;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: #94a3b8;
+    border-radius: 10px;
+    transition: background 0.2s ease;
+  }
+  
+  &::-webkit-scrollbar-thumb:hover {
+    background: #64748b;
+  }
+  
+  // Scrollbar pour Firefox
+  scrollbar-width: thin;
+  scrollbar-color: #94a3b8 #f1f5f9;
+}
+

@@ -1,8 +1,36 @@
-<app-contener>
-  <div class="flex justify-between items-center mb-6">
-    <h1 class="text-2xl font-bold text-gray-900">Gestion des Taxes</h1>
-    <button (click)="onActiveModal(true)" class="px-4 py-2 bg-main text-white rounded-lg hover:bg-main/90">
-      Ajouter une taxe
+<div class="taxes-page">
+  <!-- Header avec icône, titre et bouton -->
+  <div class="taxes-header">
+    <div class="header-left">
+      <div class="header-icon">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M9 7H6C5.46957 7 4.96086 7.21071 4.58579 7.58579C4.21071 7.96086 4 8.46957 4 9V18C4 18.5304 4.21071 19.0391 4.58579 19.4142C4.96086 19.7893 5.46957 20 6 20H15C15.5304 20 16.0391 19.7893 16.4142 19.4142C16.7893 19.0391 17 18.5304 17 18V15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M9 15H12L20 7C20.2652 6.73478 20.4249 6.38239 20.4249 6C20.4249 5.61761 20.2652 5.26522 20 5L18 3C17.7348 2.73478 17.3824 2.57507 17 2.57507C16.6176 2.57507 16.2652 2.73478 16 3L9 10V15Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M16 6L18 8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div class="header-text">
+        <h1 class="header-title">Taxes</h1>
+        <p class="header-subtitle">Liste des taxes municipales</p>
+      </div>
+    </div>
+    <button (click)="onActiveModal(true)" class="btn-new-taxe">
+      <span class="btn-icon">+</span>
+      <span>Nouvelle taxe</span>
+    </button>
+  </div>
+
+  <!-- Barre de recherche -->
+  <div class="search-bar">
+    <input
+      type="text"
+      [(ngModel)]="searchTerm"
+      (keyup.enter)="onSearch()"
+      placeholder="Rechercher une taxe..."
+      class="search-input"
+    />
+    <button (click)="onSearch()" class="search-btn">
+      Rechercher
     </button>
   </div>
 
@@ -11,104 +39,103 @@
     <app-create-taxe />
   </app-modal>
 
-  <!-- Modal de détails -->
-  <app-modal [(active)]="activeModalDetails" title="Détails de la taxe">
-    <app-details-taxes />
+  <!-- Modal de modification -->
+  <app-modal [(active)]="activeModalEdit" [title]="selectedTaxe ? 'Modifier la taxe' : 'Créer une taxe'">
+    <app-create-taxe />
   </app-modal>
 
-  <!-- Barre de recherche -->
-  <div class="mb-6">
-    <div class="flex gap-4">
-      <input
-        type="text"
-        [(ngModel)]="searchTerm"
-        (keyup.enter)="onSearch()"
-        placeholder="Rechercher une taxe..."
-        class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-main"
-      />
-      <button
-        (click)="onSearch()"
-        class="px-6 py-2 bg-main text-white rounded-lg hover:bg-main/90"
-      >
-        Rechercher
-      </button>
-    </div>
-  </div>
+  <!-- Modal de détails -->
+  <app-modal [(active)]="activeModalDetails" title="Détails de la taxe">
+    <app-details-taxes [taxe]="selectedTaxe" />
+  </app-modal>
 
-  <!-- Tableau des taxes -->
+  <!-- Grille de cartes des taxes -->
   @if (loading) {
-    <div class="text-center py-8">
-      <p class="text-gray-500">Chargement...</p>
+    <div class="loading-container">
+      <p class="loading-text">Chargement...</p>
     </div>
   } @else {
-    <div class="overflow-x-auto">
-      <table class="min-w-full bg-white rounded-lg shadow">
-        <thead class="bg-main text-white">
-          <tr>
-            <th class="px-6 py-3 text-left text-sm font-semibold">Code</th>
-            <th class="px-6 py-3 text-left text-sm font-semibold">Nom</th>
-            <th class="px-6 py-3 text-left text-sm font-semibold">Montant</th>
-            <th class="px-6 py-3 text-left text-sm font-semibold">Périodicité</th>
-            <th class="px-6 py-3 text-left text-sm font-semibold">Commission</th>
-            <th class="px-6 py-3 text-left text-sm font-semibold">Statut</th>
-            <th class="px-6 py-3 text-left text-sm font-semibold">Actions</th>
-          </tr>
-        </thead>
-        <tbody class="divide-y divide-gray-200">
-          @for (taxe of taxes; track taxe.id) {
-            <tr class="hover:bg-gray-50">
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                {{ taxe.code }}
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                {{ taxe.nom }}
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                {{ taxe.montant_variable ? 'Variable' : taxe.montant + ' FCFA' }}
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                {{ getPeriodiciteLabel(taxe.periodicite) }}
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                {{ taxe.commission_pourcentage }}%
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap">
-                <span [class]="'px-2 py-1 rounded-full text-xs font-semibold ' + (taxe.actif ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800')">
-                  {{ taxe.actif ? 'Actif' : 'Inactif' }}
-                </span>
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm">
-                <div class="flex gap-2">
-                  <button
-                    (click)="onActiveModalDetails(true, taxe)"
-                    class="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
-                  >
-                    Voir
-                  </button>
-                  <button
-                    (click)="toggleActif(taxe)"
-                    class="px-3 py-1 bg-gray-200 text-gray-700 rounded hover:bg-gray-300"
-                  >
-                    {{ taxe.actif ? 'Désactiver' : 'Activer' }}
-                  </button>
-                  <button
-                    (click)="deleteTaxe(taxe)"
-                    class="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600"
-                  >
-                    Supprimer
-                  </button>
-                </div>
-              </td>
-            </tr>
-          } @empty {
-            <tr>
-              <td colspan="7" class="px-6 py-8 text-center text-gray-500">
-                Aucune taxe trouvée
-              </td>
-            </tr>
-          }
-        </tbody>
-      </table>
+    <div class="taxes-grid">
+      @for (taxe of taxes; track taxe.id) {
+        <div class="taxe-card">
+          <!-- En-tête de la carte -->
+          <div class="card-header">
+            <h3 class="card-title">{{ taxe.nom }}</h3>
+            <span [class]="'status-badge ' + (taxe.actif ? 'status-active' : 'status-inactive')">
+              {{ taxe.actif ? 'Active' : 'Inactive' }}
+            </span>
+          </div>
+
+          <!-- Description -->
+          <p class="card-description">
+            {{ taxe.description || 'Aucune description' }}
+          </p>
+
+          <!-- Détails -->
+          <div class="card-details">
+            <div class="detail-item">
+              <span class="detail-label">Code:</span>
+              <span class="detail-value">{{ taxe.code }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">Type:</span>
+              <span class="detail-value">{{ taxe.type_taxe?.nom || 'N/A' }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">Montant:</span>
+              <span class="detail-value">
+                {{ taxe.montant_variable ? 'Variable' : formatNumber(taxe.montant) + ' FCFA' }}
+              </span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">Périodicité:</span>
+              <span class="detail-value">{{ getPeriodiciteLabel(taxe.periodicite) }}</span>
+            </div>
+          </div>
+
+          <!-- Actions -->
+          <div class="card-actions">
+            <button
+              (click)="viewDetails(taxe)"
+              class="btn-action btn-view"
+              title="Voir détails"
+            >
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M8 3C4.667 3 2.073 5.553 1 9C2.073 12.447 4.667 15 8 15C11.333 15 13.927 12.447 15 9C13.927 5.553 11.333 3 8 3Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M8 11.6667C9.841 11.6667 11.3333 10.1743 11.3333 8.33333C11.3333 6.49238 9.841 5 8 5C6.15905 5 4.66667 6.49238 4.66667 8.33333C4.66667 10.1743 6.15905 11.6667 8 11.6667Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              <span>Détails</span>
+            </button>
+            <button
+              (click)="editTaxe(taxe)"
+              class="btn-action btn-edit"
+              title="Modifier"
+            >
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M11.333 2.00008C11.5084 1.82471 11.7163 1.68579 11.9447 1.59203C12.173 1.49826 12.4173 1.45142 12.664 1.45408C12.9106 1.45674 13.1542 1.50886 13.3798 1.60722C13.6054 1.70559 13.8084 1.84813 13.978 2.02763C14.1476 2.20712 14.2803 2.41978 14.3692 2.65304C14.4581 2.8863 14.5014 3.13552 14.4967 3.38617C14.492 3.63682 14.4394 3.88407 14.3416 4.11388C14.2439 4.34369 14.103 4.55157 13.928 4.72675L6.86066 11.7941L3.33398 12.6667L4.20666 9.14008L11.333 2.00008Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              <span>Modifier</span>
+            </button>
+            <button
+              (click)="deleteTaxe(taxe)"
+              class="btn-action btn-delete"
+              title="Supprimer"
+            >
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M2 4H3.33333H14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M5.33331 4V2.66667C5.33331 2.31305 5.47379 1.97391 5.72384 1.72386C5.97389 1.47381 6.31302 1.33334 6.66665 1.33334H9.33331C9.68693 1.33334 10.0261 1.47381 10.2761 1.72386C10.5262 1.97391 10.6666 2.31305 10.6666 2.66667V4M12.6666 4V13.3333C12.6666 13.687 12.5262 14.0261 12.2761 14.2761C12.0261 14.5262 11.6869 14.6667 11.3333 14.6667H4.66665C4.31302 14.6667 3.97389 14.5262 3.72384 14.2761C3.47379 14.0261 3.33331 13.687 3.33331 13.3333V4H12.6666Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M6.66669 7.33333V11.3333" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M9.33331 7.33333V11.3333" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              <span>Supprimer</span>
+            </button>
+          </div>
+        </div>
+      } @empty {
+        <div class="empty-state">
+          <p class="empty-text">Aucune taxe trouvée</p>
+        </div>
+      }
     </div>
     
     <!-- Pagination -->
@@ -123,5 +150,4 @@
       />
     }
   }
-</app-contener>
-
+</div>

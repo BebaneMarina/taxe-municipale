@@ -133,10 +133,18 @@ export class ApiService {
     return this.http.get(`${this.apiUrl}/references/zones`, httpParams.keys().length > 0 ? { params: httpParams } : {});
   }
 
-  getQuartiers(zoneId?: number, actif?: boolean): Observable<any> {
+  getQuartiers(zoneId?: number, actif?: boolean, additionalParams?: any): Observable<any> {
     const params: { [key: string]: any } = {};
     if (zoneId) params['zone_id'] = zoneId.toString();
     if (actif !== undefined) params['actif'] = actif.toString();
+    // Ajouter les paramètres additionnels (comme arrondissement_id)
+    if (additionalParams) {
+      Object.keys(additionalParams).forEach(key => {
+        if (additionalParams[key] !== undefined && additionalParams[key] !== null) {
+          params[key] = additionalParams[key].toString();
+        }
+      });
+    }
     const httpParams = createHttpParams(params);
     return this.http.get(`${this.apiUrl}/references/quartiers`, httpParams.keys().length > 0 ? { params: httpParams } : {});
   }
@@ -170,7 +178,8 @@ export class ApiService {
 
   // Zones géographiques
   getZonesGeographiques(params?: any): Observable<any> {
-    return this.http.get(`${this.apiUrl}/zones-geographiques`, { params });
+    const httpParams = params ? createHttpParams(params) : new HttpParams();
+    return this.http.get(`${this.apiUrl}/zones-geographiques/`, httpParams.keys().length > 0 ? { params: httpParams } : {});
   }
 
   getZoneGeographique(id: number): Observable<any> {
@@ -218,6 +227,177 @@ export class ApiService {
 
   deletePhoto(filename: string): Observable<any> {
     return this.http.delete(`${this.apiUrl}/uploads/photo/${filename}`);
+  }
+
+  // ==================== PARAMÉTRAGE ====================
+  
+  // Rôles
+  getRoles(params?: any): Observable<any> {
+    const httpParams = params ? createHttpParams(params) : new HttpParams();
+    return this.http.get(`${this.apiUrl}/parametrage/roles`, httpParams.keys().length > 0 ? { params: httpParams } : {});
+  }
+
+  getRole(id: number): Observable<any> {
+    return this.http.get(`${this.apiUrl}/parametrage/roles/${id}`);
+  }
+
+  createRole(role: any): Observable<any> {
+    return this.http.post(`${this.apiUrl}/parametrage/roles`, role);
+  }
+
+  updateRole(id: number, role: any): Observable<any> {
+    return this.http.put(`${this.apiUrl}/parametrage/roles/${id}`, role);
+  }
+
+  deleteRole(id: number): Observable<any> {
+    return this.http.delete(`${this.apiUrl}/parametrage/roles/${id}`);
+  }
+
+  // Villes
+  getVilles(params?: any): Observable<any> {
+    const httpParams = params ? createHttpParams(params) : new HttpParams();
+    return this.http.get(`${this.apiUrl}/parametrage/villes`, httpParams.keys().length > 0 ? { params: httpParams } : {});
+  }
+
+  getVille(id: number): Observable<any> {
+    return this.http.get(`${this.apiUrl}/parametrage/villes/${id}`);
+  }
+
+  createVille(ville: any): Observable<any> {
+    return this.http.post(`${this.apiUrl}/parametrage/villes`, ville);
+  }
+
+  updateVille(id: number, ville: any): Observable<any> {
+    return this.http.put(`${this.apiUrl}/parametrage/villes/${id}`, ville);
+  }
+
+  deleteVille(id: number): Observable<any> {
+    return this.http.delete(`${this.apiUrl}/parametrage/villes/${id}`);
+  }
+
+  // Communes
+  getCommunes(villeId?: number, params?: any): Observable<any> {
+    let httpParams = params ? createHttpParams(params) : new HttpParams();
+    if (villeId) {
+      httpParams = httpParams.set('ville_id', villeId.toString());
+    }
+    return this.http.get(`${this.apiUrl}/parametrage/communes`, httpParams.keys().length > 0 ? { params: httpParams } : {});
+  }
+
+  getCommune(id: number): Observable<any> {
+    return this.http.get(`${this.apiUrl}/parametrage/communes/${id}`);
+  }
+
+  createCommune(commune: any): Observable<any> {
+    return this.http.post(`${this.apiUrl}/parametrage/communes`, commune);
+  }
+
+  updateCommune(id: number, commune: any): Observable<any> {
+    return this.http.put(`${this.apiUrl}/parametrage/communes/${id}`, commune);
+  }
+
+  deleteCommune(id: number): Observable<any> {
+    return this.http.delete(`${this.apiUrl}/parametrage/communes/${id}`);
+  }
+
+  // Arrondissements
+  getArrondissements(communeId?: number, params?: any): Observable<any> {
+    let httpParams = params ? createHttpParams(params) : new HttpParams();
+    if (communeId) {
+      httpParams = httpParams.set('commune_id', communeId.toString());
+    }
+    return this.http.get(`${this.apiUrl}/parametrage/arrondissements`, httpParams.keys().length > 0 ? { params: httpParams } : {});
+  }
+
+  getArrondissement(id: number): Observable<any> {
+    return this.http.get(`${this.apiUrl}/parametrage/arrondissements/${id}`);
+  }
+
+  createArrondissement(arrondissement: any): Observable<any> {
+    return this.http.post(`${this.apiUrl}/parametrage/arrondissements`, arrondissement);
+  }
+
+  updateArrondissement(id: number, arrondissement: any): Observable<any> {
+    return this.http.put(`${this.apiUrl}/parametrage/arrondissements/${id}`, arrondissement);
+  }
+
+  deleteArrondissement(id: number): Observable<any> {
+    return this.http.delete(`${this.apiUrl}/parametrage/arrondissements/${id}`);
+  }
+
+  // Quartiers (avec support arrondissement)
+  createQuartier(quartier: any): Observable<any> {
+    return this.http.post(`${this.apiUrl}/parametrage/quartiers`, quartier);
+  }
+
+  updateQuartier(id: number, quartier: any): Observable<any> {
+    return this.http.put(`${this.apiUrl}/parametrage/quartiers/${id}`, quartier);
+  }
+
+  deleteQuartier(id: number): Observable<any> {
+    return this.http.delete(`${this.apiUrl}/parametrage/quartiers/${id}`);
+  }
+
+  // Secteurs d'activité
+  getSecteursActivite(params?: any): Observable<any> {
+    const httpParams = params ? createHttpParams(params) : new HttpParams();
+    return this.http.get(`${this.apiUrl}/parametrage/secteurs-activite`, httpParams.keys().length > 0 ? { params: httpParams } : {});
+  }
+
+  getSecteurActivite(id: number): Observable<any> {
+    return this.http.get(`${this.apiUrl}/parametrage/secteurs-activite/${id}`);
+  }
+
+  createSecteurActivite(secteur: any): Observable<any> {
+    return this.http.post(`${this.apiUrl}/parametrage/secteurs-activite`, secteur);
+  }
+
+  updateSecteurActivite(id: number, secteur: any): Observable<any> {
+    return this.http.put(`${this.apiUrl}/parametrage/secteurs-activite/${id}`, secteur);
+  }
+
+  deleteSecteurActivite(id: number): Observable<any> {
+    return this.http.delete(`${this.apiUrl}/parametrage/secteurs-activite/${id}`);
+  }
+
+  // ==================== RAPPORTS ====================
+  
+  // Statistiques générales
+  getStatistiquesGenerales(params?: any): Observable<any> {
+    const httpParams = params ? createHttpParams(params) : new HttpParams();
+    return this.http.get(`${this.apiUrl}/rapports/statistiques-generales`, httpParams.keys().length > 0 ? { params: httpParams } : {});
+  }
+
+  // Collecte par moyen de paiement
+  getCollecteParMoyen(params?: any): Observable<any> {
+    const httpParams = params ? createHttpParams(params) : new HttpParams();
+    return this.http.get(`${this.apiUrl}/rapports/collecte-par-moyen`, httpParams.keys().length > 0 ? { params: httpParams } : {});
+  }
+
+  // Top collecteurs
+  getTopCollecteurs(limit: number = 10, params?: any): Observable<any> {
+    const queryParams: any = { limit, ...params };
+    const httpParams = createHttpParams(queryParams);
+    return this.http.get(`${this.apiUrl}/rapports/top-collecteurs`, { params: httpParams });
+  }
+
+  // Top taxes
+  getTopTaxes(limit: number = 10, params?: any): Observable<any> {
+    const queryParams: any = { limit, ...params };
+    const httpParams = createHttpParams(queryParams);
+    return this.http.get(`${this.apiUrl}/rapports/top-taxes`, { params: httpParams });
+  }
+
+  // Évolution temporelle
+  getEvolutionTemporelle(params?: any): Observable<any> {
+    const httpParams = params ? createHttpParams(params) : new HttpParams();
+    return this.http.get(`${this.apiUrl}/rapports/evolution-temporelle`, httpParams.keys().length > 0 ? { params: httpParams } : {});
+  }
+
+  // Rapport complet
+  getRapportComplet(params?: any): Observable<any> {
+    const httpParams = params ? createHttpParams(params) : new HttpParams();
+    return this.http.get(`${this.apiUrl}/rapports/complet`, httpParams.keys().length > 0 ? { params: httpParams } : {});
   }
 }
 

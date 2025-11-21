@@ -1,89 +1,181 @@
 <div class="map-container">
-  <!-- Contrôles de la carte -->
-  <div class="map-controls bg-white p-6 rounded-xl shadow-xl mb-6 border border-gray-200">
-    <h3 class="text-lg font-semibold mb-4">Contrôles de la carte</h3>
-    
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-      <!-- Filtres d'affichage -->
-      <div class="space-y-2">
-        <label class="flex items-center gap-2 cursor-pointer">
-          <input 
-            type="checkbox" 
-            [(ngModel)]="showContribuables"
-            (change)="toggleContribuables()"
-            class="rounded"
+  <div class="map-overlay">
+    <!-- Contrôles de la carte -->
+    <div class="map-controls" [class.collapsed]="controlsCollapsed">
+      <div class="controls-header">
+        <h3>Contrôles</h3>
+        <div class="header-actions">
+          <div class="map-style-toggle">
+            <button 
+              type="button"
+              class="toggle-btn"
+              [class.active]="mapStyle === 'light'"
+              (click)="onMapStyleChange('light')"
+            >
+              Mode clair
+            </button>
+            <button 
+              type="button"
+              class="toggle-btn"
+              [class.active]="mapStyle === 'dark'"
+              (click)="onMapStyleChange('dark')"
+            >
+              Mode sombre
+            </button>
+          </div>
+          <button 
+            type="button"
+            class="collapse-btn"
+            (click)="toggleControls()"
+            [attr.aria-label]="controlsCollapsed ? 'Agrandir les contrôles' : 'Réduire les contrôles'"
           >
-          <span class="text-sm font-medium">📍 Contribuables</span>
-        </label>
-        <label class="flex items-center gap-2 cursor-pointer">
-          <input 
-            type="checkbox" 
-            [(ngModel)]="showCollecteurs"
-            (change)="toggleCollecteurs()"
-            class="rounded"
-          >
-          <span class="text-sm font-medium">👤 Collecteurs</span>
-        </label>
-        <label class="flex items-center gap-2 cursor-pointer">
-          <input 
-            type="checkbox" 
-            [(ngModel)]="showZones"
-            (change)="toggleZones()"
-            class="rounded"
-          >
-          <span class="text-sm font-medium">🗺️ Zones</span>
-        </label>
-        <label class="flex items-center gap-2 cursor-pointer">
-          <input 
-            type="checkbox" 
-            [(ngModel)]="showUncoveredZones"
-            (change)="toggleUncoveredZones()"
-            class="rounded"
-          >
-          <span class="text-sm font-medium">⚠️ Zones non couvertes</span>
-        </label>
-        <label class="flex items-center gap-2 cursor-pointer">
-          <input 
-            type="checkbox" 
-            [(ngModel)]="filterActif"
-            (change)="onFilterChange()"
-            class="rounded"
-          >
-          <span class="text-sm font-medium">Actifs uniquement</span>
-        </label>
-        <label class="flex items-center gap-2 cursor-pointer">
-          <input 
-            type="checkbox" 
-            [(ngModel)]="autoRefresh"
-            (change)="onAutoRefreshChange()"
-            class="rounded"
-          >
-          <span class="text-sm font-medium">🔄 Actualisation auto ({{ refreshIntervalSeconds }}s)</span>
-        </label>
+            <span [class.rotated]="controlsCollapsed">▼</span>
+          </button>
+        </div>
       </div>
 
-      <!-- Statistiques -->
-      <div class="text-sm">
-        <p class="font-semibold mb-2">Statistiques</p>
-        <p>Contribuables: <span class="font-bold text-main">{{ contribuables.length }}</span></p>
-        <p>Collecteurs: <span class="font-bold text-blue-600">{{ collecteurs.length }}</span></p>
-        <p>Zones: <span class="font-bold text-green-600">{{ zonesGeographiques.length }}</span></p>
-        <p>Zones non couvertes: <span class="font-bold text-red-600">{{ uncoveredZonesData.length }}</span></p>
-      </div>
+      <div class="controls-content" [class.hidden]="controlsCollapsed">
+        <div class="controls-grid">
+          <div class="control-group">
+            <p class="group-title">Couches</p>
+            <label class="control-item">
+              <input 
+                type="checkbox" 
+                [(ngModel)]="showContribuables"
+                (change)="toggleContribuables()"
+              >
+              <span>📍 Contribuables</span>
+            </label>
+            <label class="control-item">
+              <input 
+                type="checkbox" 
+                [(ngModel)]="showCollecteurs"
+                (change)="toggleCollecteurs()"
+              >
+              <span>👤 Collecteurs</span>
+            </label>
+            <label class="control-item">
+              <input 
+                type="checkbox" 
+                [(ngModel)]="showZones"
+                (change)="toggleZones()"
+              >
+              <span>🗺️ Zones</span>
+            </label>
+            <label class="control-item">
+              <input 
+                type="checkbox" 
+                [(ngModel)]="showUncoveredZones"
+                (change)="toggleUncoveredZones()"
+              >
+              <span>⚠️ Zones non couvertes</span>
+            </label>
+          </div>
 
-      <!-- Actions -->
-      <div>
-        <button 
-          (click)="loadData()"
-          [disabled]="loading"
-          class="px-4 py-2 bg-main text-white rounded-lg hover:bg-main/90 disabled:opacity-50 transition"
-        >
-          @if (loading) {
-            <span>Chargement...</span>
-          } @else {
-            <span>Actualiser</span>
-          }
-        </button>
+          <div class="control-group">
+            <p class="group-title">Filtrage</p>
+            <label class="control-item">
+              <input 
+                type="checkbox" 
+                [(ngModel)]="filterActif"
+                (change)="onFilterChange()"
+              >
+              <span>Actifs uniquement</span>
+            </label>
+            <label class="control-item">
+              <input 
+                type="checkbox" 
+                [(ngModel)]="autoRefresh"
+                (change)="onAutoRefreshChange()"
+              >
+              <span>🔄 Auto ({{ refreshIntervalSeconds }}s)</span>
+            </label>
+            <button 
+              (click)="loadData()"
+              [disabled]="loading"
+              class="refresh-btn"
+            >
+              @if (loading) {
+                <span>Chargement...</span>
+              } @else {
+                <span>Actualiser</span>
+              }
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Stats repositionnées en haut à droite -->
+    <div class="map-stats-container" [class.collapsed]="statsCollapsed">
+      <button 
+        type="button"
+        class="stats-toggle-btn"
+        (click)="toggleStats()"
+        [attr.aria-label]="statsCollapsed ? 'Afficher les stats' : 'Masquer les stats'"
+      >
+        <span [class.rotated]="statsCollapsed">◀</span>
+      </button>
+      <div class="map-stats-grid" [class.hidden]="statsCollapsed">
+        <div class="stat-card">
+          <p>Contribuables</p>
+          <span>{{ contribuables.length }}</span>
+        </div>
+        <div class="stat-card">
+          <p>Collecteurs</p>
+          <span>{{ collecteurs.length }}</span>
+        </div>
+        <div class="stat-card">
+          <p>Zones</p>
+          <span>{{ zonesGeographiques.length }}</span>
+        </div>
+        <div class="stat-card alert">
+          <p>À couvrir</p>
+          <span>{{ uncoveredZonesData.length }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Légende interactive -->
+    <div class="map-legend" [class.collapsed]="legendCollapsed">
+      <button 
+        type="button"
+        class="legend-toggle-btn"
+        (click)="toggleLegend()"
+        [attr.aria-label]="legendCollapsed ? 'Afficher la légende' : 'Masquer la légende'"
+      >
+        <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+        </svg>
+      </button>
+      <div class="legend-content" [class.hidden]="legendCollapsed">
+        <h4 class="legend-title">Légende</h4>
+        <div class="legend-items">
+          <div class="legend-item">
+            <div class="legend-marker contribuable-legend"></div>
+            <span>Contribuable</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-marker collecteur-legend"></div>
+            <span>Collecteur</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-line" style="background: #3B82F6;"></div>
+            <span>Arrondissement</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-line" style="background: #10B981;"></div>
+            <span>Secteur</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-line" style="background: #F59E0B;"></div>
+            <span>Quartier</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-line dashed" style="background: #EF4444;"></div>
+            <span>Zone non couverte</span>
+          </div>
+        </div>
       </div>
     </div>
   </div>

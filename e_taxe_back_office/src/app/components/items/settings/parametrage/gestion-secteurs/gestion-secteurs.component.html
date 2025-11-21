@@ -1,0 +1,174 @@
+<div class="gestion-secteurs">
+  <!-- En-tête -->
+  <div class="flex justify-between items-center mb-6">
+    <div>
+      <h3 class="text-xl font-bold text-gray-900">Gestion des secteurs d'activité</h3>
+      <p class="text-sm text-gray-600 mt-1">Gérez les secteurs d'activité des contribuables au Gabon</p>
+    </div>
+    <div class="flex gap-3">
+      <button (click)="loadDefaultData()" class="flex items-center gap-2 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors">
+        <svg class="size-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 6.25a.75.75 0 0 1 .75.75v4.75H17a.75.75 0 0 1 0 1.5h-4.25V18a.75.75 0 0 1-1.5 0v-4.75H7a.75.75 0 0 1 0-1.5h4.25V7a.75.75 0 0 1 .75-.75Z"/>
+        </svg>
+        Charger données Gabon
+      </button>
+      <button (click)="openCreateModal()" class="flex items-center gap-2 px-4 py-2 bg-main text-white rounded-lg hover:bg-main/90 transition-colors">
+        <svg class="size-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 6.25a.75.75 0 0 1 .75.75v4.75H17a.75.75 0 0 1 0 1.5h-4.25V18a.75.75 0 0 1-1.5 0v-4.75H7a.75.75 0 0 1 0-1.5h4.25V7a.75.75 0 0 1 .75-.75Z"/>
+        </svg>
+        Nouveau secteur
+      </button>
+    </div>
+  </div>
+
+  <!-- Barre de recherche -->
+  <div class="mb-6 flex gap-4">
+    <input
+      type="text"
+      [(ngModel)]="searchTerm"
+      (keyup.enter)="onSearch()"
+      placeholder="Rechercher un secteur d'activité..."
+      class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-main"
+    />
+    <button (click)="onSearch()" class="px-6 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700">
+      Rechercher
+    </button>
+  </div>
+
+  <!-- Modal de création/édition -->
+  <app-modal [(active)]="activeModal" [title]="isEditMode ? 'Modifier le secteur' : 'Nouveau secteur d\'activité'">
+    <div class="w-full max-w-full">
+      <h2 class="text-2xl text-main font-medium">{{ isEditMode ? 'Modification du secteur d\'activité' : 'Ajout du secteur d\'activité' }}</h2>
+      <p>Saisissez les informations pour {{ isEditMode ? 'modifier' : 'ajouter' }} un nouveau secteur d'activité</p>
+      <form (ngSubmit)="saveSecteur()" class="w-full grid gap-3 mt-8">
+        <div>
+          <label for="secteur-nom" class="block text-sm/6 font-medium text-gray-900">
+            Nom du secteur <sup>*</sup>
+          </label>
+          <div class="mt-2">
+            <input
+              type="text"
+              id="secteur-nom"
+              name="secteur-nom"
+              [(ngModel)]="secteurForm.nom"
+              required
+              class="block w-full rounded-lg px-3 py-3 bg-background text-base text-gray-900 placeholder:text-gray-400 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-main sm:text-sm/6"
+              placeholder="Ex: Commerce général"
+            />
+          </div>
+        </div>
+
+        <div>
+          <label for="secteur-code" class="block text-sm/6 font-medium text-gray-900">
+            Code du secteur <sup>*</sup>
+          </label>
+          <div class="mt-2">
+            <input
+              type="text"
+              id="secteur-code"
+              name="secteur-code"
+              [(ngModel)]="secteurForm.code"
+              required
+              class="block w-full rounded-lg px-3 py-3 bg-background text-base text-gray-900 placeholder:text-gray-400 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-main sm:text-sm/6"
+              placeholder="Ex: COM-GEN"
+            />
+          </div>
+        </div>
+
+        <div>
+          <label for="secteur-description" class="block text-sm/6 font-medium text-gray-900">
+            Description
+          </label>
+          <div class="mt-2">
+            <textarea
+              id="secteur-description"
+              name="secteur-description"
+              [(ngModel)]="secteurForm.description"
+              rows="3"
+              class="block w-full rounded-lg px-3 py-3 bg-background text-base text-gray-900 placeholder:text-gray-400 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-main sm:text-sm/6"
+              placeholder="Description du secteur d'activité..."
+            ></textarea>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <input
+            type="checkbox"
+            id="secteur-actif"
+            name="secteur-actif"
+            [(ngModel)]="secteurForm.actif"
+            class="rounded border-gray-300 text-main focus:ring-main"
+          />
+          <label for="secteur-actif" class="text-sm/6 font-medium text-gray-900 cursor-pointer">Actif</label>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3 mt-5">
+          <button
+            type="button"
+            (click)="closeModal()"
+            class="rounded-lg py-2 border-main border-2 text-main font-medium hover:bg-main/5 transition-colors"
+          >
+            Annuler
+          </button>
+          <button
+            type="submit"
+            class="rounded-lg py-2 bg-main text-white font-medium hover:bg-main/90 transition-colors"
+          >
+            {{ isEditMode ? 'Modifier' : 'Enregistrer' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </app-modal>
+
+  <!-- Liste des secteurs -->
+  @if (loading) {
+    <div class="text-center py-8">
+      <p class="text-gray-500">Chargement des secteurs d'activité...</p>
+    </div>
+  } @else if (secteurs.length === 0) {
+    <div class="text-center py-8">
+      <p class="text-gray-500">Aucun secteur d'activité trouvé.</p>
+    </div>
+  } @else {
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      @for (secteur of secteurs; track secteur.id) {
+        <div class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow">
+          <div class="flex justify-between items-start mb-3">
+            <div>
+              <h4 class="font-bold text-lg text-gray-900">{{ secteur.nom }}</h4>
+              <p class="text-sm text-gray-500">{{ secteur.code }}</p>
+            </div>
+            <span [class]="'px-2 py-1 rounded text-xs font-semibold ' + (secteur.actif ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800')">
+              {{ secteur.actif ? 'Actif' : 'Inactif' }}
+            </span>
+          </div>
+          @if (secteur.description) {
+            <p class="text-sm text-gray-600 mb-3">{{ secteur.description }}</p>
+          }
+          <div class="flex gap-2 pt-3 border-t">
+            <button
+              (click)="openEditModal(secteur)"
+              class="flex-1 px-3 py-2 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 text-sm font-medium"
+            >
+              Modifier
+            </button>
+            <button
+              (click)="toggleActif(secteur)"
+              [class]="'flex-1 px-3 py-2 rounded-lg text-sm font-medium ' + (secteur.actif ? 'bg-yellow-50 text-yellow-700 hover:bg-yellow-100' : 'bg-green-50 text-green-700 hover:bg-green-100')"
+            >
+              {{ secteur.actif ? 'Désactiver' : 'Activer' }}
+            </button>
+            <button
+              (click)="deleteSecteur(secteur)"
+              class="px-3 py-2 bg-red-50 text-red-700 rounded-lg hover:bg-red-100 text-sm font-medium"
+            >
+              Supprimer
+            </button>
+          </div>
+        </div>
+      }
+    </div>
+  }
+</div>
+

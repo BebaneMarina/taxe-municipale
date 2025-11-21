@@ -1,0 +1,305 @@
+.gestion-roles {
+  padding: 0;
+  width: 100%;
+  min-height: auto;
+}
+
+// En-tête
+.header-section {
+  margin-bottom: 2rem;
+  
+  h3 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #111827;
+    margin-bottom: 0.5rem;
+  }
+  
+  p {
+    font-size: 0.875rem;
+    color: #6b7280;
+    margin: 0;
+  }
+}
+
+// Barre de recherche et actions
+.search-actions-bar {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+  align-items: center;
+  
+  input {
+    flex: 1;
+    min-width: 250px;
+    padding: 0.75rem 1rem;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    outline: none;
+    transition: all 0.2s ease;
+    
+    &:focus {
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+    
+    &::placeholder {
+      color: #9ca3af;
+    }
+  }
+  
+  button {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: none;
+    white-space: nowrap;
+    
+    &.btn-create {
+      background: #3b82f6;
+      color: white;
+      box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
+      
+      &:hover {
+        background: #2563eb;
+        box-shadow: 0 4px 8px rgba(59, 130, 246, 0.4);
+        transform: translateY(-1px);
+      }
+      
+      svg {
+        width: 1.25rem;
+        height: 1.25rem;
+        flex-shrink: 0;
+      }
+    }
+    
+    &.btn-search {
+      background: #6b7280;
+      color: white;
+      
+      &:hover {
+        background: #4b5563;
+        transform: translateY(-1px);
+      }
+      
+      svg {
+        width: 1.25rem;
+        height: 1.25rem;
+        flex-shrink: 0;
+      }
+    }
+  }
+  
+  @media (max-width: 640px) {
+    flex-direction: column;
+    
+    input {
+      min-width: 100%;
+      width: 100%;
+    }
+    
+    button {
+      width: 100%;
+      justify-content: center;
+    }
+  }
+}
+
+// Grille de cartes
+.roles-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+  
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+// Cartes de rôles
+.role-card {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  transition: all 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  
+  &:hover {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+  }
+  
+  .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  
+  .role-title {
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: #1f2937;
+    margin: 0;
+    flex: 1;
+  }
+  
+  .status-badge {
+    padding: 0.35rem 0.75rem;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    white-space: nowrap;
+    flex-shrink: 0;
+    
+    &.active {
+      background: #d1fae5;
+      color: #065f46;
+    }
+    
+    &.inactive {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+  }
+  
+  .role-description {
+    font-size: 0.875rem;
+    color: #6b7280;
+    margin: 0;
+    line-height: 1.5;
+    min-height: 2.5rem;
+  }
+  
+  .permissions-list {
+    padding-top: 1rem;
+    border-top: 1px solid #f3f4f6;
+    
+    p {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: #6b7280;
+      margin: 0 0 0.5rem 0;
+    }
+  }
+  
+  .permission-tag {
+    display: inline-block;
+    padding: 0.25rem 0.5rem;
+    background: #f3f4f6;
+    color: #374151;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    margin-right: 0.25rem;
+    margin-bottom: 0.25rem;
+  }
+  
+  .card-actions {
+    display: flex;
+    gap: 0.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid #f3f4f6;
+  }
+  
+  .btn-edit,
+  .btn-toggle,
+  .btn-delete {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.6rem 1rem;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  
+  .btn-edit {
+    background: #eff6ff;
+    color: #2563eb;
+    
+    &:hover {
+      background: #dbeafe;
+      transform: translateY(-1px);
+    }
+  }
+  
+  .btn-toggle {
+    background: #f0fdf4;
+    color: #16a34a;
+    
+    &:hover {
+      background: #dcfce7;
+      transform: translateY(-1px);
+    }
+    
+    &.btn-deactivate {
+      background: #fef2f2;
+      color: #dc2626;
+      
+      &:hover {
+        background: #fee2e2;
+      }
+    }
+  }
+  
+  .btn-delete {
+    background: #fef2f2;
+    color: #dc2626;
+    
+    &:hover {
+      background: #fee2e2;
+      transform: translateY(-1px);
+    }
+  }
+}
+
+// États
+.loading-state,
+.empty-state {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+  padding: 4rem 2rem;
+  background: white;
+  border-radius: 12px;
+  
+  svg {
+    width: 48px;
+    height: 48px;
+    color: #9ca3af;
+  }
+  
+  p {
+    font-size: 1rem;
+    color: #6b7280;
+    margin: 0;
+  }
+}
+
+// Responsive
+@media (max-width: 768px) {
+  .roles-grid {
+    grid-template-columns: 1fr;
+  }
+}

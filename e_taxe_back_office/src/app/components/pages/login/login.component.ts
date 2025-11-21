@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
@@ -11,7 +11,7 @@ import { AuthService, LoginCredentials } from '../../../services/auth.service';
   templateUrl: './login.component.html',
   styleUrl: './login.component.scss'
 })
-export class LoginComponent {
+export class LoginComponent implements OnInit {
   loginForm: FormGroup;
   showPassword = false;
   isLoading = false;
@@ -22,15 +22,30 @@ export class LoginComponent {
     private authService: AuthService,
     private router: Router
   ) {
-    // Si déjà connecté, rediriger vers le dashboard
-    if (this.authService.isAuthenticated()) {
-      this.router.navigate(['/']);
-    }
-
+    // Ne pas vérifier l'authentification dans le constructeur
+    // Laisser le guard et le routing gérer cela
+    // Cela évite les problèmes de redirection prématurée
+    
     this.loginForm = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
       password: ['', [Validators.required, Validators.minLength(6)]]
     });
+  }
+  
+  ngOnInit(): void {
+    // Si l'utilisateur est déjà authentifié et a un utilisateur valide en cache, 
+    // rediriger vers le dashboard
+    if (this.authService.isAuthenticated()) {
+      const user = this.authService.getCurrentUserValue();
+      if (user) {
+        // L'utilisateur est authentifié, rediriger vers le dashboard
+        setTimeout(() => {
+          this.router.navigate(['/']).catch(() => {
+            // Ignorer les erreurs de navigation
+          });
+        }, 0);
+      }
+    }
   }
 
   togglePasswordVisibility(): void {

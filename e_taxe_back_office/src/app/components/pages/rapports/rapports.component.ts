@@ -23,12 +23,24 @@ export class RapportsComponent implements OnInit {
   collecteurId: number | null = null;
   taxeId: number | null = null;
   
-  // Statistiques
-  totalCollecte: number = 0;
-  nombreTransactions: number = 0;
-  collecteParMoyen: any = {};
-  collecteParCollecteur: any[] = [];
-  collecteParTaxe: any[] = [];
+  // Statistiques générales
+  statistiquesGenerales: any = {
+    total_collecte: 0,
+    nombre_transactions: 0,
+    moyenne_par_transaction: 0,
+    nombre_collecteurs_actifs: 0,
+    nombre_taxes_actives: 0,
+    transactions_aujourd_hui: 0,
+    collecte_aujourd_hui: 0,
+    transactions_ce_mois: 0,
+    collecte_ce_mois: 0
+  };
+  
+  // Statistiques détaillées
+  collecteParMoyen: any[] = [];
+  topCollecteurs: any[] = [];
+  topTaxes: any[] = [];
+  evolutionTemporelle: any[] = [];
   
   // Données pour graphiques
   chartData: any = null;
@@ -64,113 +76,105 @@ export class RapportsComponent implements OnInit {
 
   loadRapports(): void {
     this.loading = true;
-    const params: any = {
-      limit: 1000,
-      date_debut: this.dateDebut,
-      date_fin: this.dateFin
-    };
     
-    if (this.collecteurId) {
-      params.collecteur_id = this.collecteurId;
-    }
-    if (this.taxeId) {
-      params.taxe_id = this.taxeId;
-    }
+    const params: any = {};
+    if (this.dateDebut) params.date_debut = this.dateDebut;
+    if (this.dateFin) params.date_fin = this.dateFin;
+    if (this.collecteurId) params.collecteur_id = this.collecteurId;
+    if (this.taxeId) params.taxe_id = this.taxeId;
 
-    this.apiService.getCollectes(params).subscribe({
-      next: (collectes: any[]) => {
-        this.processData(collectes);
+    // Charger toutes les statistiques en parallèle
+    this.apiService.getStatistiquesGenerales(params).subscribe({
+      next: (data) => {
+        this.statistiquesGenerales = data;
+      },
+      error: (err) => {
+        console.error('Erreur chargement statistiques générales:', err);
+      }
+    });
+
+    this.apiService.getCollecteParMoyen(params).subscribe({
+      next: (data) => {
+        this.collecteParMoyen = data;
+      },
+      error: (err) => {
+        console.error('Erreur chargement collecte par moyen:', err);
+      }
+    });
+
+    this.apiService.getTopCollecteurs(10, params).subscribe({
+      next: (data) => {
+        this.topCollecteurs = data;
+      },
+      error: (err) => {
+        console.error('Erreur chargement top collecteurs:', err);
+      }
+    });
+
+    this.apiService.getTopTaxes(10, params).subscribe({
+      next: (data) => {
+        this.topTaxes = data;
+      },
+      error: (err) => {
+        console.error('Erreur chargement top taxes:', err);
+      }
+    });
+
+    // Charger l'évolution temporelle pour le graphique
+    const evolutionParams = { ...params, periode: 'jour' };
+    this.apiService.getEvolutionTemporelle(evolutionParams).subscribe({
+      next: (data) => {
+        this.evolutionTemporelle = data;
+        this.prepareChartData(data);
         this.loading = false;
       },
       error: (err) => {
-        console.error('Erreur lors du chargement des rapports:', err);
+        console.error('Erreur chargement évolution temporelle:', err);
         this.loading = false;
       }
     });
   }
 
-  processData(collectes: any[]): void {
-    const validees = collectes.filter(c => c.statut === 'validee');
-    
-    // Total collecte
-    this.totalCollecte = validees.reduce((sum, c) => sum + parseFloat(c.montant || 0), 0);
-    this.nombreTransactions = validees.length;
-    
-    // Par moyen de paiement
-    this.collecteParMoyen = {};
-    validees.forEach(c => {
-      const moyen = c.type_paiement || 'autre';
-      if (!this.collecteParMoyen[moyen]) {
-        this.collecteParMoyen[moyen] = 0;
-      }
-      this.collecteParMoyen[moyen] += parseFloat(c.montant || 0);
-    });
-    
-    // Par collecteur
-    const parCollecteur: { [key: number]: { nom: string, montant: number } } = {};
-    validees.forEach(c => {
-      const id = c.collecteur_id;
-      if (!parCollecteur[id]) {
-        parCollecteur[id] = {
-          nom: c.collecteur?.nom || `Collecteur ${id}`,
-          montant: 0
-        };
-      }
-      parCollecteur[id].montant += parseFloat(c.montant || 0);
-    });
-    this.collecteParCollecteur = Object.values(parCollecteur)
-      .sort((a, b) => b.montant - a.montant)
-      .slice(0, 10);
-    
-    // Par taxe
-    const parTaxe: { [key: number]: { nom: string, montant: number } } = {};
-    validees.forEach(c => {
-      const id = c.taxe_id;
-      if (!parTaxe[id]) {
-        parTaxe[id] = {
-          nom: c.taxe?.nom || `Taxe ${id}`,
-          montant: 0
-        };
-      }
-      parTaxe[id].montant += parseFloat(c.montant || 0);
-    });
-    this.collecteParTaxe = Object.values(parTaxe)
-      .sort((a, b) => b.montant - a.montant)
-      .slice(0, 10);
-    
-    // Préparer les données pour le graphique
-    this.prepareChartData(validees);
-  }
+  prepareChartData(evolution: any[]): void {
+    if (!evolution || evolution.length === 0) {
+      this.chartData = null;
+      return;
+    }
 
-  prepareChartData(collectes: any[]): void {
-    const monthlyData: { [key: string]: number } = {};
-    const months = ['jan', 'fev', 'mar', 'avr', 'mai', 'jun', 'jul', 'aou', 'sep', 'oct', 'nov', 'dec'];
-    
-    collectes.forEach(collecte => {
-      const date = new Date(collecte.date_collecte);
-      const monthKey = `${date.getFullYear()}-${date.getMonth()}`;
-      if (!monthlyData[monthKey]) {
-        monthlyData[monthKey] = 0;
+    const labels = evolution.map(item => {
+      // Formater la date selon le format de la période
+      if (item.periode.includes('-')) {
+        const parts = item.periode.split('-');
+        if (parts.length === 3) {
+          // Format date (YYYY-MM-DD)
+          const date = new Date(item.periode);
+          return date.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' });
+        } else if (parts.length === 2 && parts[0].startsWith('S')) {
+          // Format semaine (SXX-YYYY)
+          return item.periode;
+        } else {
+          // Format mois (YYYY-MM)
+          const [year, month] = parts;
+          const monthNames = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun', 'Jul', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc'];
+          return `${monthNames[parseInt(month) - 1]} ${year}`;
+        }
       }
-      monthlyData[monthKey] += parseFloat(collecte.montant || 0);
+      return item.periode;
     });
-    
-    const labels = months;
-    const data = months.map((_, index) => {
-      const date = new Date();
-      date.setMonth(date.getMonth() - (11 - index));
-      const key = `${date.getFullYear()}-${date.getMonth()}`;
-      return monthlyData[key] || 0;
-    });
-    
+
+    const data = evolution.map(item => parseFloat(item.montant_total?.toString() || '0'));
+
     this.chartData = {
       labels,
       datasets: [{
-        label: 'Collecte mensuelle (FCFA)',
+        label: 'Collecte quotidienne (FCFA)',
         data,
         fill: true,
-        borderColor: "rgba(12, 82, 156, 1)",
-        tension: 0.1,
+        backgroundColor: 'rgba(12, 82, 156, 0.1)',
+        borderColor: 'rgba(12, 82, 156, 1)',
+        tension: 0.4,
+        pointRadius: 3,
+        pointHoverRadius: 5
       }]
     };
   }
@@ -180,33 +184,49 @@ export class RapportsComponent implements OnInit {
   }
 
   exportExcel(): void {
-    // TODO: Implémenter l'export Excel
-    alert('Export Excel - À implémenter');
+    // TODO: Implémenter l'export Excel avec les données du rapport
+    const params: any = {};
+    if (this.dateDebut) params.date_debut = this.dateDebut;
+    if (this.dateFin) params.date_fin = this.dateFin;
+    if (this.collecteurId) params.collecteur_id = this.collecteurId;
+    if (this.taxeId) params.taxe_id = this.taxeId;
+    
+    alert('Export Excel - Fonctionnalité à implémenter');
+    console.log('Paramètres pour export:', params);
   }
 
   exportPDF(): void {
-    // TODO: Implémenter l'export PDF
-    alert('Export PDF - À implémenter');
+    // TODO: Implémenter l'export PDF avec les données du rapport
+    const params: any = {};
+    if (this.dateDebut) params.date_debut = this.dateDebut;
+    if (this.dateFin) params.date_fin = this.dateFin;
+    if (this.collecteurId) params.collecteur_id = this.collecteurId;
+    if (this.taxeId) params.taxe_id = this.taxeId;
+    
+    alert('Export PDF - Fonctionnalité à implémenter');
+    console.log('Paramètres pour export:', params);
   }
 
-  formatNumber(value: number): string {
-    return new Intl.NumberFormat('fr-FR').format(value);
+  formatNumber(value: number | string | null | undefined): string {
+    if (value === null || value === undefined) return '0';
+    const num = typeof value === 'string' ? parseFloat(value) : value;
+    if (isNaN(num)) return '0';
+    return new Intl.NumberFormat('fr-FR').format(num);
   }
 
   getMoyenPaiementLabel(moyen: string): string {
     const labels: { [key: string]: string } = {
       'especes': 'Espèces',
       'mobile_money': 'Mobile Money',
-      'carte': 'Carte'
+      'carte': 'Carte bancaire',
+      'virement': 'Virement',
+      'autre': 'Autre'
     };
-    return labels[moyen] || moyen;
+    return labels[moyen.toLowerCase()] || moyen;
   }
 
-  // Exposer Object pour le template
-  Object = Object;
-  
-  getCollecteParMoyenKeys(): string[] {
-    return Object.keys(this.collecteParMoyen);
+  getCollecteurFullName(collecteur: any): string {
+    if (!collecteur) return '';
+    return `${collecteur.collecteur_nom || ''} ${collecteur.collecteur_prenom || ''}`.trim() || `Collecteur ${collecteur.collecteur_id}`;
   }
 }
-

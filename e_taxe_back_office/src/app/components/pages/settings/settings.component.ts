@@ -7,6 +7,7 @@ import {EquipeComponent} from '../../items/settings/equipe/equipe.component';
 import {ModalComponent} from '../../items/modal/modal.component';
 import {UserInvitationComponent} from '../../items/modals/user-invitation/user-invitation.component';
 import {UserDetailsComponent} from '../../items/modals/user-details/user-details.component';
+import {ParametrageComponent} from '../../items/settings/parametrage/parametrage.component';
 
 @Component({
   selector: 'app-settings',
@@ -19,7 +20,8 @@ import {UserDetailsComponent} from '../../items/modals/user-details/user-details
     EquipeComponent,
     ModalComponent,
     UserInvitationComponent,
-    UserDetailsComponent
+    UserDetailsComponent,
+    ParametrageComponent
   ],
   templateUrl: './settings.component.html',
   styleUrl: './settings.component.scss'

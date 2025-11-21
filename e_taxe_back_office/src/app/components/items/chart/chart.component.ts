@@ -79,13 +79,17 @@ export class ChartComponent implements OnInit, OnChanges {
   }
   
   updateChart(): void {
-    if (this.chart && this.chartData) {
-      this.chart.data.labels = this.chartData.labels;
-      this.chart.data.datasets[0].data = this.chartData.datasets[0].data;
-      
-      // Ajuster l'échelle Y dynamiquement
-      const maxValue = Math.max(...this.chartData.datasets[0].data, 1);
-      this.chart.options.scales.y.max = maxValue * 1.2;
+    if (this.chart && this.chartData && this.chartData.datasets && this.chartData.datasets.length > 0) {
+      if (this.chartData.labels) {
+        this.chart.data.labels = this.chartData.labels;
+      }
+      if (this.chartData.datasets[0] && this.chartData.datasets[0].data) {
+        this.chart.data.datasets[0].data = this.chartData.datasets[0].data;
+        
+        // Ajuster l'échelle Y dynamiquement
+        const maxValue = Math.max(...this.chartData.datasets[0].data, 1);
+        this.chart.options.scales.y.max = maxValue * 1.2;
+      }
       
       this.chart.update();
     }

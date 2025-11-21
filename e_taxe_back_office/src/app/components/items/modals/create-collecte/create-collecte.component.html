@@ -1,0 +1,202 @@
+<div class="w-full max-w-full modal-content-wrapper">
+  <h2 class="text-2xl text-main font-medium">Ajouter une collecte</h2>
+  <p>Saisissez les informations de la collecte</p>
+  
+  @if (error) {
+    <div class="mt-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+      {{ error }}
+    </div>
+  }
+  
+  <form class="w-full grid gap-4 mt-8" (ngSubmit)="onSubmit()">
+    <!-- Contribuable -->
+    <div>
+      <label for="contribuable_id" class="block text-sm/6 font-medium text-gray-900">
+        Contribuable <sup class="text-red-500">*</sup>
+      </label>
+      <div class="mt-2">
+        <select 
+          name="contribuable_id" 
+          id="contribuable_id" 
+          [(ngModel)]="formData.contribuable_id"
+          required
+          [disabled]="loadingContribuables"
+          class="block w-full rounded-lg px-3 py-3 bg-background text-base text-gray-900 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-main sm:text-sm/6"
+        >
+          <option [value]="0">Sélectionner un contribuable</option>
+          @for (contribuable of contribuables; track contribuable.id) {
+            <option [value]="contribuable.id">
+              {{ contribuable.nom }} {{ contribuable.prenom || '' }} 
+              @if (contribuable.telephone) {
+                - {{ contribuable.telephone }}
+              }
+            </option>
+          }
+        </select>
+        @if (loadingContribuables) {
+          <p class="mt-1 text-xs text-gray-500">Chargement des contribuables...</p>
+        }
+      </div>
+    </div>
+
+    <!-- Taxe -->
+    <div>
+      <label for="taxe_id" class="block text-sm/6 font-medium text-gray-900">
+        Taxe <sup class="text-red-500">*</sup>
+      </label>
+      <div class="mt-2">
+        <select 
+          name="taxe_id" 
+          id="taxe_id" 
+          [(ngModel)]="formData.taxe_id"
+          required
+          [disabled]="loadingTaxes"
+          class="block w-full rounded-lg px-3 py-3 bg-background text-base text-gray-900 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-main sm:text-sm/6"
+        >
+          <option [value]="0">Sélectionner une taxe</option>
+          @for (taxe of taxes; track taxe.id) {
+            <option [value]="taxe.id">
+              {{ taxe.nom }} 
+              @if (taxe.code) {
+                ({{ taxe.code }})
+              }
+              - {{ taxe.montant }} XAF
+            </option>
+          }
+        </select>
+        @if (loadingTaxes) {
+          <p class="mt-1 text-xs text-gray-500">Chargement des taxes...</p>
+        }
+      </div>
+    </div>
+
+    <!-- Collecteur -->
+    <div>
+      <label for="collecteur_id" class="block text-sm/6 font-medium text-gray-900">
+        Collecteur <sup class="text-red-500">*</sup>
+      </label>
+      <div class="mt-2">
+        <select 
+          name="collecteur_id" 
+          id="collecteur_id" 
+          [(ngModel)]="formData.collecteur_id"
+          required
+          [disabled]="loadingCollecteurs"
+          class="block w-full rounded-lg px-3 py-3 bg-background text-base text-gray-900 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-main sm:text-sm/6"
+        >
+          <option [value]="0">Sélectionner un collecteur</option>
+          @for (collecteur of collecteurs; track collecteur.id) {
+            <option [value]="collecteur.id">
+              {{ collecteur.nom }} {{ collecteur.prenom || '' }}
+              @if (collecteur.matricule) {
+                ({{ collecteur.matricule }})
+              }
+            </option>
+          }
+        </select>
+        @if (loadingCollecteurs) {
+          <p class="mt-1 text-xs text-gray-500">Chargement des collecteurs...</p>
+        }
+      </div>
+    </div>
+
+    <!-- Montant -->
+    <div>
+      <label for="montant" class="block text-sm/6 font-medium text-gray-900">
+        Montant (XAF) <sup class="text-red-500">*</sup>
+      </label>
+      <div class="mt-2">
+        <input 
+          type="number" 
+          name="montant" 
+          id="montant" 
+          [(ngModel)]="formData.montant"
+          required
+          min="1"
+          step="1"
+          class="block w-full rounded-lg px-3 py-3 bg-background text-base text-gray-900 placeholder:text-gray-400 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-main sm:text-sm/6" 
+          placeholder="0"
+        >
+      </div>
+    </div>
+
+    <!-- Type de paiement -->
+    <div>
+      <label for="type_paiement" class="block text-sm/6 font-medium text-gray-900">
+        Type de paiement <sup class="text-red-500">*</sup>
+      </label>
+      <div class="mt-2">
+        <select 
+          name="type_paiement" 
+          id="type_paiement" 
+          [(ngModel)]="formData.type_paiement"
+          required
+          class="block w-full rounded-lg px-3 py-3 bg-background text-base text-gray-900 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-main sm:text-sm/6"
+        >
+          <option value="especes">Espèces</option>
+          <option value="mobile_money">Mobile Money</option>
+          <option value="carte">Carte</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Billetage (optionnel) -->
+    <div>
+      <label for="billetage" class="block text-sm/6 font-medium text-gray-900">
+        Billetage (optionnel)
+      </label>
+      <div class="mt-2">
+        <textarea 
+          name="billetage" 
+          id="billetage" 
+          [(ngModel)]="formData.billetage"
+          rows="3"
+          class="block w-full rounded-lg px-3 py-3 bg-background text-base text-gray-900 placeholder:text-gray-400 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-main sm:text-sm/6" 
+          placeholder='Ex: {"5000": 5, "1000": 10}'
+        ></textarea>
+        <p class="mt-1 text-xs text-gray-500">
+          Format JSON optionnel pour le détail du billetage
+        </p>
+      </div>
+    </div>
+
+    <!-- Date de collecte -->
+    <div>
+      <label for="date_collecte" class="block text-sm/6 font-medium text-gray-900">
+        Date de collecte
+      </label>
+      <div class="mt-2">
+        <input 
+          type="date" 
+          name="date_collecte" 
+          id="date_collecte" 
+          [(ngModel)]="formData.date_collecte"
+          class="block w-full rounded-lg px-3 py-3 bg-background text-base text-gray-900 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-main sm:text-sm/6"
+        >
+      </div>
+    </div>
+
+    <!-- Boutons -->
+    <div class="grid grid-cols-2 gap-3 mt-5">
+      <button 
+        type="button"
+        (click)="resetForm()"
+        class="rounded-lg py-2 border-main border-2 text-main font-medium hover:bg-main/10"
+      >
+        Annuler
+      </button>
+      <button 
+        type="submit"
+        [disabled]="loading || loadingContribuables || loadingTaxes || loadingCollecteurs"
+        class="rounded-lg py-2 bg-main text-white font-medium hover:bg-main/90 disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        @if (loading) {
+          <span>Enregistrement...</span>
+        } @else {
+          <span>Enregistrer</span>
+        }
+      </button>
+    </div>
+  </form>
+</div>
+

@@ -39,7 +39,7 @@ else:
 # Configuration de la base de données
 DATABASE_URL = os.getenv(
     "DATABASE_URL",
-    "postgresql://postgres:postgres@localhost:5432/taxe_municipale"
+    "postgresql://postgres:admin@localhost:5432/taxe_municipale"
 )
 
 # Encoder correctement l'URL si elle contient des caractères spéciaux

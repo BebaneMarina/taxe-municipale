@@ -1,0 +1,139 @@
+// Container principal de la sidebar
+.sidebar-container {
+  height: 100vh;
+  max-height: 100vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+// Wrapper de la sidebar
+.sidebar-wrapper {
+  height: 100%;
+  max-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  flex: 1;
+}
+
+// Header de la sidebar (logo)
+.sidebar-header {
+  flex-shrink: 0;
+  min-height: 64px;
+  max-height: 64px;
+  display: flex;
+  align-items: center;
+}
+
+// Navigation container
+.sidebar-nav {
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: 100%;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+// Menu scrollable
+.sidebar-menu {
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-bottom: 1rem;
+  display: flex;
+  flex-direction: column;
+  
+  // Permettre le scroll naturel
+  > li:first-child {
+    flex: 0 1 auto;
+  }
+  
+  > li:last-child {
+    margin-top: auto;
+    flex: 0 0 auto;
+    padding-top: 1rem;
+  }
+  
+  // Scrollbar personnalisée pour WebKit (Chrome, Safari, Edge)
+  &::-webkit-scrollbar {
+    width: 8px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: #f1f5f9;
+    border-radius: 10px;
+    margin: 8px 4px;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: #94a3b8;
+    border-radius: 10px;
+    transition: background 0.2s ease;
+  }
+  
+  &::-webkit-scrollbar-thumb:hover {
+    background: #64748b;
+  }
+  
+  // Scrollbar pour Firefox
+  scrollbar-width: thin;
+  scrollbar-color: #94a3b8 #f1f5f9;
+}
+
+// Footer de la sidebar (boutons en bas)
+.sidebar-footer {
+  flex-shrink: 0;
+  padding-top: 1rem;
+  
+  ul {
+    margin-top: 0;
+    padding-top: 1rem;
+    border-top: 1px solid #e5e7eb;
+  }
+}
+
+// Responsive pour petits écrans
+@media (max-height: 768px) {
+  .sidebar-menu {
+    padding-bottom: 0.5rem;
+  }
+  
+  .sidebar-header {
+    min-height: 56px;
+    max-height: 56px;
+    
+    img {
+      height: 48px;
+    }
+  }
+}
+
+@media (max-height: 600px) {
+  .sidebar-menu {
+    gap: 0.5rem;
+  }
+  
+  .sidebar-header {
+    min-height: 48px;
+    max-height: 48px;
+    padding: 0.5rem 1rem;
+    
+    img {
+      height: 40px;
+    }
+  }
+}
+
+// Ajustements pour les petits écrans horizontaux
+@media (max-width: 1024px) {
+  .sidebar-container {
+    width: 100%;
+    max-width: 100vw;
+  }
+}
+

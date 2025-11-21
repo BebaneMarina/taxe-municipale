@@ -43,10 +43,17 @@ export class AuthService {
   public currentUser$ = this.currentUserSubject.asObservable();
 
   constructor(private http: HttpClient) {
-    // Vérifier si un token existe au démarrage
-    const token = this.getToken();
-    if (token) {
-      this.getCurrentUser().subscribe();
+    // Charger l'utilisateur depuis le cache s'il existe
+    // Ne pas faire de requête HTTP au démarrage pour éviter les problèmes
+    const cachedUser = localStorage.getItem('current_user');
+    if (cachedUser) {
+      try {
+        const parsedUser = JSON.parse(cachedUser);
+        this.currentUserSubject.next(parsedUser);
+      } catch (e) {
+        // Si erreur de parsing, nettoyer
+        this.logout();
+      }
     }
   }
 

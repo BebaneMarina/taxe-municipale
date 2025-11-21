@@ -15,6 +15,7 @@
               <button (click)="setIndex(1)" class="btn-onglet {{checkIndex(1)}} inline-flex items-center text-sm font-medium text-gray-400">Notification</button>
               <button (click)="setIndex(2)" class="btn-onglet {{checkIndex(2)}} inline-flex items-center text-sm font-medium text-gray-400">Sécurié</button>
               <button (click)="setIndex(3)" class="btn-onglet {{checkIndex(3)}} inline-flex items-center text-sm font-medium text-gray-400">Equipe</button>
+              <button (click)="setIndex(4)" class="btn-onglet {{checkIndex(4)}} inline-flex items-center text-sm font-medium text-gray-400">Paramétrage</button>
             </div>
           </div>
         </div>
@@ -33,6 +34,9 @@
       </div>
       <div class="absolute opacity-0 content-onglet {{checkIndex(3)}} left-0 top-0 w-full">
         <app-equipe [(activeModalUser)]="activeModalUser" (activeModalUserChange)="onActiveModalUser($event)" [(active)]="activeModal" (activeChange)="openModal($event)"/>
+      </div>
+      <div class="absolute opacity-0 content-onglet {{checkIndex(4)}} left-0 top-0 w-full">
+        <app-parametrage/>
       </div>
     </div>
   </div>

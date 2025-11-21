@@ -3,6 +3,7 @@ import {ContenerComponent} from '../../items/contener/contener.component';
 import {TransactionsTableComponent} from '../../items/tables/transactions-table/transactions-table.component';
 import {ModalComponent} from '../../items/modal/modal.component';
 import {TransactionDetailsComponent} from '../../items/modals/transaction-details/transaction-details.component';
+import {CreateCollecteComponent} from '../../items/modals/create-collecte/create-collecte.component';
 import {FormsModule} from '@angular/forms';
 import {CommonModule} from '@angular/common';
 
@@ -13,6 +14,7 @@ import {CommonModule} from '@angular/common';
     TransactionsTableComponent,
     ModalComponent,
     TransactionDetailsComponent,
+    CreateCollecteComponent,
     FormsModule,
     CommonModule
   ],
@@ -22,6 +24,7 @@ import {CommonModule} from '@angular/common';
 })
 export class TransactionsComponent {
   activeModal : ModelSignal<boolean> = model<boolean>(false);
+  activeModalCreate = model<boolean>(false);
   @ViewChild(TransactionsTableComponent) transactionsTable!: TransactionsTableComponent;
   
   filters = {
@@ -30,6 +33,18 @@ export class TransactionsComponent {
     dateFin: '',
     statut: ''
   };
+  
+  openCreateModal(): void {
+    this.activeModalCreate.set(true);
+  }
+  
+  onCollecteCreated(): void {
+    this.activeModalCreate.set(false);
+    // Recharger les collectes dans le tableau
+    if (this.transactionsTable) {
+      this.transactionsTable.loadCollectes();
+    }
+  }
   
   onActiveModal(value : boolean) : void
   {

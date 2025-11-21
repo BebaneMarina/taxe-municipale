@@ -1,0 +1,646 @@
+<div class="gestion-divisions">
+  <!-- En-tête -->
+  <div class="header-section">
+    <h3>Gestion des divisions administratives</h3>
+    <p>Gérez les villes, communes, arrondissements et quartiers du Gabon</p>
+  </div>
+
+  <!-- Onglets de navigation -->
+  <div class="divisions-tabs">
+    <div class="tabs-container">
+      <button 
+        (click)="setTab('villes')" 
+        [class.active]="activeTab === 'villes'"
+        class="divisions-tab-btn">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+        </svg>
+        Villes
+      </button>
+      <button 
+        (click)="setTab('communes')" 
+        [class.active]="activeTab === 'communes'"
+        class="divisions-tab-btn">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+        </svg>
+        Communes
+      </button>
+      <button 
+        (click)="setTab('arrondissements')" 
+        [class.active]="activeTab === 'arrondissements'"
+        class="divisions-tab-btn">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+        </svg>
+        Arrondissements
+      </button>
+      <button 
+        (click)="setTab('quartiers')" 
+        [class.active]="activeTab === 'quartiers'"
+        class="divisions-tab-btn">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+        </svg>
+        Quartiers
+      </button>
+    </div>
+  </div>
+
+  <!-- Contenu : Villes -->
+  @if (activeTab === 'villes') {
+    <div class="actions-bar">
+      <button (click)="openCreateVilleModal()" class="btn-create">
+        <svg fill="currentColor" viewBox="0 0 24 24">
+          <path d="M12 6.25a.75.75 0 0 1 .75.75v4.75H17a.75.75 0 0 1 0 1.5h-4.25V18a.75.75 0 0 1-1.5 0v-4.75H7a.75.75 0 0 1 0-1.5h4.25V7a.75.75 0 0 1 .75-.75Z"/>
+        </svg>
+        Nouvelle ville
+      </button>
+    </div>
+
+    <!-- Modal Ville -->
+    <app-modal [(active)]="activeModalVille" [title]="selectedVille ? 'Modifier la ville' : 'Nouvelle ville'">
+      <div class="w-full max-w-full">
+        <h2 class="text-2xl text-main font-medium">{{ selectedVille ? 'Modification de la ville' : 'Ajout de la ville' }}</h2>
+        <p>Saisissez les informations pour {{ selectedVille ? 'modifier' : 'ajouter' }} une nouvelle ville</p>
+        <form (ngSubmit)="saveVille()" class="w-full grid gap-3 mt-8">
+          <div>
+            <label for="ville-nom" class="block text-sm/6 font-medium text-gray-900">
+              Nom de la ville <sup>*</sup>
+            </label>
+            <div class="mt-2">
+              <input
+                type="text"
+                id="ville-nom"
+                name="ville-nom"
+                [(ngModel)]="villeForm.nom"
+                required
+                class="block w-full rounded-lg px-3 py-3 bg-background text-base text-gray-900 placeholder:text-gray-400 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-main sm:text-sm/6"
+                placeholder="Ex: Libreville"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label for="ville-code" class="block text-sm/6 font-medium text-gray-900">
+              Code de la ville <sup>*</sup>
+            </label>
+            <div class="mt-2">
+              <input
+                type="text"
+                id="ville-code"
+                name="ville-code"
+                [(ngModel)]="villeForm.code"
+                required
+                class="block w-full rounded-lg px-3 py-3 bg-background text-base text-gray-900 placeholder:text-gray-400 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-main sm:text-sm/6"
+                placeholder="Ex: LBV"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label for="ville-description" class="block text-sm/6 font-medium text-gray-900">
+              Description
+            </label>
+            <div class="mt-2">
+              <textarea
+                id="ville-description"
+                name="ville-description"
+                [(ngModel)]="villeForm.description"
+                rows="3"
+                class="block w-full rounded-lg px-3 py-3 bg-background text-base text-gray-900 placeholder:text-gray-400 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-main sm:text-sm/6"
+                placeholder="Description de la ville..."
+              ></textarea>
+            </div>
+          </div>
+
+          <div>
+            <label for="ville-pays" class="block text-sm/6 font-medium text-gray-900">
+              Pays
+            </label>
+            <div class="mt-2">
+              <input
+                type="text"
+                id="ville-pays"
+                name="ville-pays"
+                [(ngModel)]="villeForm.pays"
+                readonly
+                class="block w-full rounded-lg px-3 py-3 bg-gray-100 text-base text-gray-600 cursor-not-allowed sm:text-sm/6"
+                value="Gabon"
+              />
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3 mt-5">
+            <button
+              type="button"
+              (click)="activeModalVille = false"
+              class="rounded-lg py-2 border-main border-2 text-main font-medium hover:bg-main/5 transition-colors"
+            >
+              Annuler
+            </button>
+            <button
+              type="submit"
+              class="rounded-lg py-2 bg-main text-white font-medium hover:bg-main/90 transition-colors"
+            >
+              {{ selectedVille ? 'Modifier' : 'Enregistrer' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </app-modal>
+
+    @if (loading) {
+      <div class="loading-state">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+        </svg>
+        <p>Chargement...</p>
+      </div>
+    } @else if (villes.length === 0) {
+      <div class="empty-state">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+        </svg>
+        <p>Aucune ville trouvée.</p>
+      </div>
+    } @else {
+      <div class="divisions-grid">
+        @for (ville of villes; track ville.id) {
+          <div class="division-card">
+            <div class="card-header">
+              <div>
+                <h4 class="card-title">{{ ville.nom }}</h4>
+                <p class="card-code">{{ ville.code }}</p>
+              </div>
+              <span class="card-badge">Actif</span>
+            </div>
+            @if (ville.description) {
+              <p class="card-description">{{ ville.description }}</p>
+            }
+            <div class="card-actions">
+              <button (click)="openEditVilleModal(ville)" class="btn-edit">Modifier</button>
+              <button (click)="deleteVille(ville)" class="btn-delete">Supprimer</button>
+            </div>
+          </div>
+        }
+      </div>
+    }
+  }
+
+  <!-- Contenu : Communes -->
+  @if (activeTab === 'communes') {
+    <div class="actions-bar">
+      <select [(ngModel)]="communeForm.ville_id" (change)="loadCommunes(communeForm.ville_id)">
+        <option [value]="0">Toutes les villes</option>
+        @for (ville of villes; track ville.id) {
+          <option [value]="ville.id">{{ ville.nom }}</option>
+        }
+      </select>
+      <button (click)="openCreateCommuneModal(communeForm.ville_id || undefined)" class="btn-create">
+        <svg fill="currentColor" viewBox="0 0 24 24">
+          <path d="M12 6.25a.75.75 0 0 1 .75.75v4.75H17a.75.75 0 0 1 0 1.5h-4.25V18a.75.75 0 0 1-1.5 0v-4.75H7a.75.75 0 0 1 0-1.5h4.25V7a.75.75 0 0 1 .75-.75Z"/>
+        </svg>
+        Nouvelle commune
+      </button>
+    </div>
+
+    <!-- Modal Commune -->
+    <app-modal [(active)]="activeModalCommune" [title]="selectedCommune ? 'Modifier la commune' : 'Nouvelle commune'">
+      <div class="w-full max-w-full">
+        <h2 class="text-2xl text-main font-medium">{{ selectedCommune ? 'Modification de la commune' : 'Ajout de la commune' }}</h2>
+        <p>Saisissez les informations pour {{ selectedCommune ? 'modifier' : 'ajouter' }} une nouvelle commune</p>
+        <form (ngSubmit)="saveCommune()" class="w-full grid gap-3 mt-8">
+          <div>
+            <label for="commune-ville" class="block text-sm/6 font-medium text-gray-900">
+              Ville <sup>*</sup>
+            </label>
+            <div class="mt-2">
+              <select
+                id="commune-ville"
+                name="commune-ville"
+                [(ngModel)]="communeForm.ville_id"
+                required
+                class="block w-full rounded-lg px-3 py-3 bg-background text-base text-gray-900 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-main sm:text-sm/6"
+              >
+                <option [value]="0">Sélectionner une ville</option>
+                @for (ville of villes; track ville.id) {
+                  <option [value]="ville.id">{{ ville.nom }}</option>
+                }
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label for="commune-nom" class="block text-sm/6 font-medium text-gray-900">
+              Nom de la commune <sup>*</sup>
+            </label>
+            <div class="mt-2">
+              <input
+                type="text"
+                id="commune-nom"
+                name="commune-nom"
+                [(ngModel)]="communeForm.nom"
+                required
+                class="block w-full rounded-lg px-3 py-3 bg-background text-base text-gray-900 placeholder:text-gray-400 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-main sm:text-sm/6"
+                placeholder="Ex: Commune de Libreville"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label for="commune-code" class="block text-sm/6 font-medium text-gray-900">
+              Code de la commune <sup>*</sup>
+            </label>
+            <div class="mt-2">
+              <input
+                type="text"
+                id="commune-code"
+                name="commune-code"
+                [(ngModel)]="communeForm.code"
+                required
+                class="block w-full rounded-lg px-3 py-3 bg-background text-base text-gray-900 placeholder:text-gray-400 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-main sm:text-sm/6"
+                placeholder="Ex: LBV-COM"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label for="commune-description" class="block text-sm/6 font-medium text-gray-900">
+              Description
+            </label>
+            <div class="mt-2">
+              <textarea
+                id="commune-description"
+                name="commune-description"
+                [(ngModel)]="communeForm.description"
+                rows="3"
+                class="block w-full rounded-lg px-3 py-3 bg-background text-base text-gray-900 placeholder:text-gray-400 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-main sm:text-sm/6"
+                placeholder="Description de la commune..."
+              ></textarea>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3 mt-5">
+            <button
+              type="button"
+              (click)="activeModalCommune = false"
+              class="rounded-lg py-2 border-main border-2 text-main font-medium hover:bg-main/5 transition-colors"
+            >
+              Annuler
+            </button>
+            <button
+              type="submit"
+              class="rounded-lg py-2 bg-main text-white font-medium hover:bg-main/90 transition-colors"
+            >
+              {{ selectedCommune ? 'Modifier' : 'Enregistrer' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </app-modal>
+
+    @if (loading) {
+      <div class="loading-state">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+        </svg>
+        <p>Chargement...</p>
+      </div>
+    } @else if (communes.length === 0) {
+      <div class="empty-state">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+        </svg>
+        <p>Aucune commune trouvée.</p>
+      </div>
+    } @else {
+      <div class="divisions-grid">
+        @for (commune of communes; track commune.id) {
+          <div class="division-card">
+            <div class="card-header">
+              <div>
+                <h4 class="card-title">{{ commune.nom }}</h4>
+                <p class="card-code">{{ commune.code }}</p>
+                <p class="parent-info">Ville: {{ getVilleName(commune.ville_id) }}</p>
+              </div>
+              <span class="card-badge">Actif</span>
+            </div>
+            @if (commune.description) {
+              <p class="card-description">{{ commune.description }}</p>
+            }
+            <div class="card-actions">
+              <button (click)="openEditCommuneModal(commune)" class="btn-edit">Modifier</button>
+              <button (click)="deleteCommune(commune)" class="btn-delete">Supprimer</button>
+            </div>
+          </div>
+        }
+      </div>
+    }
+  }
+
+  <!-- Contenu : Arrondissements -->
+  @if (activeTab === 'arrondissements') {
+    <div class="actions-bar">
+      <select [(ngModel)]="arrondissementForm.commune_id" (change)="loadArrondissements(arrondissementForm.commune_id)">
+        <option [value]="0">Toutes les communes</option>
+        @for (commune of communes; track commune.id) {
+          <option [value]="commune.id">{{ commune.nom }}</option>
+        }
+      </select>
+      <button (click)="openCreateArrondissementModal(arrondissementForm.commune_id || undefined)" class="btn-create">
+        <svg fill="currentColor" viewBox="0 0 24 24">
+          <path d="M12 6.25a.75.75 0 0 1 .75.75v4.75H17a.75.75 0 0 1 0 1.5h-4.25V18a.75.75 0 0 1-1.5 0v-4.75H7a.75.75 0 0 1 0-1.5h4.25V7a.75.75 0 0 1 .75-.75Z"/>
+        </svg>
+        Nouvel arrondissement
+      </button>
+    </div>
+
+    <!-- Modal Arrondissement -->
+    <app-modal [(active)]="activeModalArrondissement" [title]="selectedArrondissement ? 'Modifier l\'arrondissement' : 'Nouvel arrondissement'">
+      <div class="w-full max-w-full">
+        <h2 class="text-2xl text-main font-medium">{{ selectedArrondissement ? 'Modification de l\'arrondissement' : 'Ajout de l\'arrondissement' }}</h2>
+        <p>Saisissez les informations pour {{ selectedArrondissement ? 'modifier' : 'ajouter' }} un nouvel arrondissement</p>
+        <form (ngSubmit)="saveArrondissement()" class="w-full grid gap-3 mt-8">
+          <div>
+            <label for="arrondissement-commune" class="block text-sm/6 font-medium text-gray-900">
+              Commune <sup>*</sup>
+            </label>
+            <div class="mt-2">
+              <select
+                id="arrondissement-commune"
+                name="arrondissement-commune"
+                [(ngModel)]="arrondissementForm.commune_id"
+                required
+                class="block w-full rounded-lg px-3 py-3 bg-background text-base text-gray-900 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-main sm:text-sm/6"
+              >
+                <option [value]="0">Sélectionner une commune</option>
+                @for (commune of communes; track commune.id) {
+                  <option [value]="commune.id">{{ commune.nom }}</option>
+                }
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label for="arrondissement-nom" class="block text-sm/6 font-medium text-gray-900">
+              Nom de l'arrondissement <sup>*</sup>
+            </label>
+            <div class="mt-2">
+              <input
+                type="text"
+                id="arrondissement-nom"
+                name="arrondissement-nom"
+                [(ngModel)]="arrondissementForm.nom"
+                required
+                class="block w-full rounded-lg px-3 py-3 bg-background text-base text-gray-900 placeholder:text-gray-400 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-main sm:text-sm/6"
+                placeholder="Ex: Arrondissement 1"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label for="arrondissement-code" class="block text-sm/6 font-medium text-gray-900">
+              Code de l'arrondissement <sup>*</sup>
+            </label>
+            <div class="mt-2">
+              <input
+                type="text"
+                id="arrondissement-code"
+                name="arrondissement-code"
+                [(ngModel)]="arrondissementForm.code"
+                required
+                class="block w-full rounded-lg px-3 py-3 bg-background text-base text-gray-900 placeholder:text-gray-400 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-main sm:text-sm/6"
+                placeholder="Ex: ARR-01"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label for="arrondissement-description" class="block text-sm/6 font-medium text-gray-900">
+              Description
+            </label>
+            <div class="mt-2">
+              <textarea
+                id="arrondissement-description"
+                name="arrondissement-description"
+                [(ngModel)]="arrondissementForm.description"
+                rows="3"
+                class="block w-full rounded-lg px-3 py-3 bg-background text-base text-gray-900 placeholder:text-gray-400 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-main sm:text-sm/6"
+                placeholder="Description de l'arrondissement..."
+              ></textarea>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3 mt-5">
+            <button
+              type="button"
+              (click)="activeModalArrondissement = false"
+              class="rounded-lg py-2 border-main border-2 text-main font-medium hover:bg-main/5 transition-colors"
+            >
+              Annuler
+            </button>
+            <button
+              type="submit"
+              class="rounded-lg py-2 bg-main text-white font-medium hover:bg-main/90 transition-colors"
+            >
+              {{ selectedArrondissement ? 'Modifier' : 'Enregistrer' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </app-modal>
+
+    @if (loading) {
+      <div class="loading-state">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+        </svg>
+        <p>Chargement...</p>
+      </div>
+    } @else if (arrondissements.length === 0) {
+      <div class="empty-state">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+        </svg>
+        <p>Aucun arrondissement trouvé.</p>
+      </div>
+    } @else {
+      <div class="divisions-grid">
+        @for (arrondissement of arrondissements; track arrondissement.id) {
+          <div class="division-card">
+            <div class="card-header">
+              <div>
+                <h4 class="card-title">{{ arrondissement.nom }}</h4>
+                <p class="card-code">{{ arrondissement.code }}</p>
+                <p class="parent-info">Commune: {{ getCommuneName(arrondissement.commune_id) }}</p>
+              </div>
+              <span class="card-badge">Actif</span>
+            </div>
+            @if (arrondissement.description) {
+              <p class="card-description">{{ arrondissement.description }}</p>
+            }
+            <div class="card-actions">
+              <button (click)="openEditArrondissementModal(arrondissement)" class="btn-edit">Modifier</button>
+              <button (click)="deleteArrondissement(arrondissement)" class="btn-delete">Supprimer</button>
+            </div>
+          </div>
+        }
+      </div>
+    }
+  }
+
+  <!-- Contenu : Quartiers -->
+  @if (activeTab === 'quartiers') {
+    <div class="actions-bar">
+      <select [(ngModel)]="quartierForm.arrondissement_id" (change)="loadQuartiers(quartierForm.arrondissement_id || undefined)">
+        <option [value]="0">Tous les arrondissements</option>
+        @for (arrondissement of arrondissements; track arrondissement.id) {
+          <option [value]="arrondissement.id">{{ arrondissement.nom }}</option>
+        }
+      </select>
+      <button (click)="openCreateQuartierModal(quartierForm.arrondissement_id || undefined)" class="btn-create">
+        <svg fill="currentColor" viewBox="0 0 24 24">
+          <path d="M12 6.25a.75.75 0 0 1 .75.75v4.75H17a.75.75 0 0 1 0 1.5h-4.25V18a.75.75 0 0 1-1.5 0v-4.75H7a.75.75 0 0 1 0-1.5h4.25V7a.75.75 0 0 1 .75-.75Z"/>
+        </svg>
+        Nouveau quartier
+      </button>
+    </div>
+
+    <!-- Modal Quartier -->
+    <app-modal [(active)]="activeModalQuartier" [title]="selectedQuartier ? 'Modifier le quartier' : 'Nouveau quartier'">
+      <div class="w-full max-w-full">
+        <h2 class="text-2xl text-main font-medium">{{ selectedQuartier ? 'Modification du quartier' : 'Ajout du quartier' }}</h2>
+        <p>Saisissez les informations pour {{ selectedQuartier ? 'modifier' : 'ajouter' }} un nouveau quartier</p>
+        <form (ngSubmit)="saveQuartier()" class="w-full grid gap-3 mt-8">
+          <div>
+            <label for="quartier-arrondissement" class="block text-sm/6 font-medium text-gray-900">
+              Arrondissement
+            </label>
+            <div class="mt-2">
+              <select
+                id="quartier-arrondissement"
+                name="quartier-arrondissement"
+                [(ngModel)]="quartierForm.arrondissement_id"
+                class="block w-full rounded-lg px-3 py-3 bg-background text-base text-gray-900 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-main sm:text-sm/6"
+              >
+                <option [value]="0">Sélectionner un arrondissement</option>
+                @for (arrondissement of arrondissements; track arrondissement.id) {
+                  <option [value]="arrondissement.id">{{ arrondissement.nom }}</option>
+                }
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label for="quartier-nom" class="block text-sm/6 font-medium text-gray-900">
+              Nom du quartier <sup>*</sup>
+            </label>
+            <div class="mt-2">
+              <input
+                type="text"
+                id="quartier-nom"
+                name="quartier-nom"
+                [(ngModel)]="quartierForm.nom"
+                required
+                class="block w-full rounded-lg px-3 py-3 bg-background text-base text-gray-900 placeholder:text-gray-400 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-main sm:text-sm/6"
+                placeholder="Ex: Quartier Louis"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label for="quartier-code" class="block text-sm/6 font-medium text-gray-900">
+              Code du quartier <sup>*</sup>
+            </label>
+            <div class="mt-2">
+              <input
+                type="text"
+                id="quartier-code"
+                name="quartier-code"
+                [(ngModel)]="quartierForm.code"
+                required
+                class="block w-full rounded-lg px-3 py-3 bg-background text-base text-gray-900 placeholder:text-gray-400 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-main sm:text-sm/6"
+                placeholder="Ex: Q-LOUIS"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label for="quartier-description" class="block text-sm/6 font-medium text-gray-900">
+              Description
+            </label>
+            <div class="mt-2">
+              <textarea
+                id="quartier-description"
+                name="quartier-description"
+                [(ngModel)]="quartierForm.description"
+                rows="3"
+                class="block w-full rounded-lg px-3 py-3 bg-background text-base text-gray-900 placeholder:text-gray-400 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-main sm:text-sm/6"
+                placeholder="Description du quartier..."
+              ></textarea>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3 mt-5">
+            <button
+              type="button"
+              (click)="activeModalQuartier = false"
+              class="rounded-lg py-2 border-main border-2 text-main font-medium hover:bg-main/5 transition-colors"
+            >
+              Annuler
+            </button>
+            <button
+              type="submit"
+              class="rounded-lg py-2 bg-main text-white font-medium hover:bg-main/90 transition-colors"
+            >
+              {{ selectedQuartier ? 'Modifier' : 'Enregistrer' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </app-modal>
+
+    @if (loading) {
+      <div class="loading-state">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+        </svg>
+        <p>Chargement...</p>
+      </div>
+    } @else if (quartiers.length === 0) {
+      <div class="empty-state">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+        </svg>
+        <p>Aucun quartier trouvé.</p>
+      </div>
+    } @else {
+      <div class="divisions-grid">
+        @for (quartier of quartiers; track quartier.id) {
+          <div class="division-card">
+            <div class="card-header">
+              <div>
+                <h4 class="card-title">{{ quartier.nom }}</h4>
+                <p class="card-code">{{ quartier.code }}</p>
+                @if (quartier.arrondissement_id) {
+                  <p class="parent-info">Arrondissement: {{ getArrondissementName(quartier.arrondissement_id) }}</p>
+                }
+              </div>
+              <span class="card-badge">Actif</span>
+            </div>
+            @if (quartier.description) {
+              <p class="card-description">{{ quartier.description }}</p>
+            }
+            <div class="card-actions">
+              <button (click)="openEditQuartierModal(quartier)" class="btn-edit">Modifier</button>
+              <button (click)="deleteQuartier(quartier)" class="btn-delete">Supprimer</button>
+            </div>
+          </div>
+        }
+      </div>
+    }
+  }
+</div>
+

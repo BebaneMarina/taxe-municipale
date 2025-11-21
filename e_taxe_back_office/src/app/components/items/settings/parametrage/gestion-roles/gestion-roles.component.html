@@ -1,0 +1,193 @@
+<div class="gestion-roles">
+  <!-- En-tête -->
+  <div class="header-section">
+    <h3>Gestion des rôles utilisateurs</h3>
+    <p>Définissez les rôles et leurs permissions dans le système</p>
+  </div>
+
+  <!-- Barre de recherche et actions -->
+  <div class="search-actions-bar">
+    <input
+      type="text"
+      [(ngModel)]="searchTerm"
+      (keyup.enter)="onSearch()"
+      placeholder="Rechercher un rôle..."
+    />
+    <button (click)="openCreateModal()" class="btn-create">
+      <svg fill="currentColor" viewBox="0 0 24 24">
+        <path d="M12 6.25a.75.75 0 0 1 .75.75v4.75H17a.75.75 0 0 1 0 1.5h-4.25V18a.75.75 0 0 1-1.5 0v-4.75H7a.75.75 0 0 1 0-1.5h4.25V7a.75.75 0 0 1 .75-.75Z"/>
+      </svg>
+      <span>Nouveau rôle</span>
+    </button>
+    <button (click)="onSearch()" class="btn-search">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+      </svg>
+      Rechercher
+    </button>
+  </div>
+
+  <!-- Modal de création/édition -->
+  <app-modal [(active)]="activeModal" [title]="isEditMode ? 'Modifier le rôle' : 'Nouveau rôle'">
+    <div class="w-full max-w-full">
+      <h2 class="text-2xl text-main font-medium">{{ isEditMode ? 'Modification du rôle' : 'Ajout du rôle' }}</h2>
+      <p>Saisissez les informations complementaire pour <br> {{ isEditMode ? 'modifier' : 'ajouter' }} un nouveau rôle</p>
+      <form (ngSubmit)="saveRole()" class="w-full grid gap-4 mt-8">
+        <div>
+          <label for="nom" class="block text-sm/6 font-medium text-gray-900">
+            Nom du rôle <sup>*</sup>
+          </label>
+          <div class="mt-2">
+            <input
+              type="text"
+              id="nom"
+              name="nom"
+              [(ngModel)]="roleForm.nom"
+              required
+              class="block w-full rounded-lg px-3 py-3 bg-background text-base text-gray-900 placeholder:text-gray-400 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-main sm:text-sm/6"
+              placeholder="Ex: Administrateur"
+            />
+          </div>
+        </div>
+
+        <div>
+          <label for="code" class="block text-sm/6 font-medium text-gray-900">
+            Code du rôle <sup>*</sup>
+          </label>
+          <div class="mt-2">
+            <input
+              type="text"
+              id="code"
+              name="code"
+              [(ngModel)]="roleForm.code"
+              required
+              class="block w-full rounded-lg px-3 py-3 bg-background text-base text-gray-900 placeholder:text-gray-400 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-main sm:text-sm/6"
+              placeholder="Ex: admin"
+            />
+          </div>
+        </div>
+
+        <div>
+          <label for="description" class="block text-sm/6 font-medium text-gray-900">
+            Description
+          </label>
+          <div class="mt-2">
+            <textarea
+              id="description"
+              name="description"
+              [(ngModel)]="roleForm.description"
+              rows="3"
+              class="block w-full rounded-lg px-3 py-3 bg-background text-base text-gray-900 placeholder:text-gray-400 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-main sm:text-sm/6"
+              placeholder="Description du rôle..."
+            ></textarea>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-sm/6 font-medium text-gray-900 mb-2">
+            Permissions
+          </label>
+          <div class="mt-2 max-h-[200px] overflow-y-auto border border-gray-200 rounded-lg p-3 bg-gray-50">
+            <div class="grid grid-cols-2 gap-2">
+              @for (perm of availablePermissions; track perm.value) {
+                <label class="flex items-center gap-2 cursor-pointer hover:bg-gray-100 p-1 rounded">
+                  <input
+                    type="checkbox"
+                    [checked]="isPermissionSelected(perm.value)"
+                    (change)="togglePermission(perm.value)"
+                    class="rounded border-gray-300 text-main focus:ring-main"
+                  />
+                  <span class="text-sm text-gray-700">{{ perm.label }}</span>
+                </label>
+              }
+            </div>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <input
+            type="checkbox"
+            id="actif"
+            name="actif"
+            [(ngModel)]="roleForm.actif"
+            class="rounded border-gray-300 text-main focus:ring-main"
+          />
+          <label for="actif" class="text-sm/6 font-medium text-gray-900 cursor-pointer">Actif</label>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3 mt-5">
+          <button
+            type="button"
+            (click)="closeModal()"
+            class="rounded-lg py-2 border-main border-2 text-main font-medium hover:bg-main/5 transition-colors"
+          >
+            Annuler
+          </button>
+          <button
+            type="submit"
+            class="rounded-lg py-2 bg-main text-white font-medium hover:bg-main/90 transition-colors"
+          >
+            {{ isEditMode ? 'Modifier' : 'Enregistrer' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </app-modal>
+
+  <!-- Liste des rôles -->
+  @if (loading) {
+    <div class="loading-state">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+      </svg>
+      <p>Chargement des rôles...</p>
+    </div>
+  } @else if (roles.length === 0) {
+    <div class="empty-state">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+      </svg>
+      <p>Aucun rôle trouvé.</p>
+    </div>
+  } @else {
+    <div class="roles-grid">
+      @for (role of roles; track role.id) {
+        <div class="role-card">
+          <div class="card-header">
+            <div>
+              <h4 class="role-title">{{ role.nom }}</h4>
+              <p class="text-sm text-gray-500">{{ role.code }}</p>
+            </div>
+            <span [class]="'status-badge ' + (role.actif ? 'active' : 'inactive')">
+              {{ role.actif ? 'Actif' : 'Inactif' }}
+            </span>
+          </div>
+          @if (role.description) {
+            <p class="role-description">{{ role.description }}</p>
+          }
+          @if (role.permissions && role.permissions.length > 0) {
+            <div class="permissions-list">
+              <p class="text-xs font-semibold text-gray-700 mb-2">Permissions ({{ role.permissions.length }})</p>
+              <div class="flex flex-wrap gap-1">
+                @for (perm of role.permissions.slice(0, 5); track perm) {
+                  <span class="permission-tag">{{ perm }}</span>
+                }
+                @if (role.permissions.length > 5) {
+                  <span class="permission-tag">+{{ role.permissions.length - 5 }}</span>
+                }
+              </div>
+            </div>
+          }
+          <div class="card-actions">
+            <button (click)="openEditModal(role)" class="btn-edit">Modifier</button>
+            <button (click)="toggleActif(role)" [class]="'btn-toggle ' + (role.actif ? 'btn-deactivate' : '')">
+              {{ role.actif ? 'Désactiver' : 'Activer' }}
+            </button>
+            <button (click)="deleteRole(role)" class="btn-delete">Supprimer</button>
+          </div>
+        </div>
+      }
+    </div>
+  }
+</div>
+

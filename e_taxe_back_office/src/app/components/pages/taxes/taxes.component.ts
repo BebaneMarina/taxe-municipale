@@ -8,10 +8,11 @@ import { Taxe } from '../../../interfaces/taxe.interface';
 import { ModalComponent } from '../../items/modal/modal.component';
 import { CreateTaxeComponent } from '../../items/modals/create-taxe/create-taxe.component';
 import { DetailsTaxesComponent } from '../../items/modals/details-taxes/details-taxes.component';
+import { DecimalPipe } from '@angular/common';
 
 @Component({
   selector: 'app-taxes',
-  imports: [CommonModule, FormsModule, ContenerComponent, PaginationComponent, ModalComponent, CreateTaxeComponent, DetailsTaxesComponent],
+  imports: [CommonModule, FormsModule, ContenerComponent, PaginationComponent, ModalComponent, CreateTaxeComponent, DetailsTaxesComponent, DecimalPipe],
   standalone: true,
   templateUrl: './taxes.component.html',
   styleUrl: './taxes.component.scss'
@@ -24,6 +25,7 @@ export class TaxesComponent implements OnInit {
   loading: boolean = true;
   searchTerm: string = '';
   activeModal: boolean = false;
+  activeModalEdit: boolean = false;
   activeModalDetails: boolean = false;
   selectedTaxe: Taxe | null = null;
   
@@ -39,14 +41,15 @@ export class TaxesComponent implements OnInit {
 
   loadTaxes(): void {
     this.loading = true;
+    // Charger toutes les taxes pour le filtrage
     const params: any = { 
-      skip: (this.currentPage - 1) * this.pageSize,
-      limit: this.pageSize
+      limit: 1000  // Charger toutes les taxes
     };
     
     this.apiService.getTaxes(params).subscribe({
       next: (data: Taxe[]) => {
         this.allTaxes = data;
+        this.totalItems = data.length;
         this.applyFilters();
         this.loading = false;
       },
@@ -63,13 +66,18 @@ export class TaxesComponent implements OnInit {
     if (this.searchTerm) {
       filtered = filtered.filter(t => 
         t.nom.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
-        t.code.toLowerCase().includes(this.searchTerm.toLowerCase())
+        t.code.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
+        (t.description && t.description.toLowerCase().includes(this.searchTerm.toLowerCase()))
       );
     }
     
-    this.taxes = filtered;
     this.totalItems = filtered.length;
     this.totalPages = Math.ceil(this.totalItems / this.pageSize);
+    
+    // Appliquer la pagination
+    const startIndex = (this.currentPage - 1) * this.pageSize;
+    const endIndex = startIndex + this.pageSize;
+    this.taxes = filtered.slice(startIndex, endIndex);
   }
 
   onSearch(): void {
@@ -79,7 +87,7 @@ export class TaxesComponent implements OnInit {
 
   onPageChange(page: number): void {
     this.currentPage = page;
-    this.loadTaxes();
+    this.applyFilters(); // Appliquer les filtres avec la nouvelle page
   }
 
   onPageSizeChange(size: number): void {
@@ -98,6 +106,24 @@ export class TaxesComponent implements OnInit {
   onActiveModalDetails(value: boolean, taxe?: Taxe): void {
     this.selectedTaxe = taxe || null;
     this.activeModalDetails = value;
+  }
+
+  viewDetails(taxe: Taxe): void {
+    this.selectedTaxe = taxe;
+    this.activeModalDetails = true;
+  }
+
+  onActiveModalEdit(value: boolean): void {
+    this.activeModalEdit = value;
+    if (!value) {
+      this.selectedTaxe = null;
+      this.loadTaxes(); // Recharger après fermeture
+    }
+  }
+
+  editTaxe(taxe: Taxe): void {
+    this.selectedTaxe = taxe;
+    this.activeModalEdit = true;
   }
 
   toggleActif(taxe: Taxe): void {
@@ -132,6 +158,16 @@ export class TaxesComponent implements OnInit {
       'trimestrielle': 'Trimestrielle'
     };
     return labels[periodicite] || periodicite;
+  }
+
+  formatNumber(value: number): string {
+    if (isNaN(value) || value === null || value === undefined) {
+      return '0';
+    }
+    return new Intl.NumberFormat('fr-FR', {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
+    }).format(value);
   }
 }
 

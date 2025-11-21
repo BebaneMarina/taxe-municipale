@@ -1,14 +1,16 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, model } from '@angular/core';
 import { ApiService } from '../../../services/api.service';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ContenerComponent } from '../../items/contener/contener.component';
 import { PaginationComponent } from '../../items/pagination/pagination.component';
+import { ModalComponent } from '../../items/modal/modal.component';
+import { CreateCollecteurComponent } from '../../items/modals/create-collecteur/create-collecteur.component';
 import { Collecteur } from '../../../interfaces/collecteur.interface';
 
 @Component({
   selector: 'app-gestion-collecteurs',
-  imports: [CommonModule, FormsModule, ContenerComponent, PaginationComponent],
+  imports: [CommonModule, FormsModule, ContenerComponent, PaginationComponent, ModalComponent, CreateCollecteurComponent],
   standalone: true,
   templateUrl: './gestion-collecteurs.component.html',
   styleUrl: './gestion-collecteurs.component.scss'
@@ -19,6 +21,9 @@ export class GestionCollecteursComponent implements OnInit {
   collecteurs: Collecteur[] = [];
   loading: boolean = true;
   searchTerm: string = '';
+  activeModal = model<boolean>(false);
+  activeModalEdit = model<boolean>(false);
+  selectedCollecteur: Collecteur | null = null;
   
   // Pagination
   currentPage: number = 1;
@@ -110,5 +115,30 @@ export class GestionCollecteursComponent implements OnInit {
 
   getEtatBadgeClass(etat: string): string {
     return etat === 'connecte' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800';
+  }
+
+  onActiveModal(active: boolean): void {
+    this.activeModal.set(active);
+  }
+
+  onActiveModalEdit(active: boolean): void {
+    this.activeModalEdit.set(active);
+  }
+
+  openCreateModal(): void {
+    this.selectedCollecteur = null;
+    this.activeModal.set(true);
+  }
+
+  editCollecteur(collecteur: Collecteur): void {
+    this.selectedCollecteur = collecteur;
+    this.activeModalEdit.set(true);
+  }
+
+  onCollecteurCreated(): void {
+    this.loadCollecteurs();
+    this.activeModal.set(false);
+    this.activeModalEdit.set(false);
+    this.selectedCollecteur = null;
   }
 }
