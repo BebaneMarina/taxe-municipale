@@ -6,7 +6,189 @@
     </p>
   </header>
 
-  <section class="cartographie-map">
-    <app-map-interactive />
+  <!-- Filtres de recherche -->
+  <section class="filters-section" *ngIf="showFilters">
+    <div class="filters-container">
+      <div class="filters-header">
+        <h3>Filtres de recherche</h3>
+        <button class="btn-clear" (click)="clearFilters()">Réinitialiser</button>
+      </div>
+      
+      <div class="filters-grid">
+        <div class="filter-group">
+          <label>Recherche</label>
+          <input 
+            type="text" 
+            [(ngModel)]="searchTerm"
+            (input)="applyFilters()"
+            placeholder="Nom, prénom, téléphone, activité..."
+            class="filter-input"
+          >
+        </div>
+
+        <div class="filter-group">
+          <label>Statut de paiement</label>
+          <select 
+            [(ngModel)]="filterPaye"
+            (change)="applyFilters()"
+            class="filter-select"
+          >
+            <option value="all">Tous</option>
+            <option value="paye">Payé</option>
+            <option value="non-paye">Non payé</option>
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <label>Quartier</label>
+          <select 
+            [(ngModel)]="filterQuartier"
+            (change)="applyFilters()"
+            class="filter-select"
+          >
+            <option value="">Tous les quartiers</option>
+            <option *ngFor="let quartier of quartiers" [value]="quartier.nom">
+              {{ quartier.nom }}
+            </option>
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <label>Collecteur</label>
+          <select 
+            [(ngModel)]="filterCollecteur"
+            (change)="applyFilters()"
+            class="filter-select"
+          >
+            <option value="">Tous les collecteurs</option>
+            <option *ngFor="let collecteur of collecteurs" [value]="collecteur.nom + ' ' + collecteur.prenom">
+              {{ collecteur.nom }} {{ collecteur.prenom }}
+            </option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Statistiques -->
+      <div class="stats-summary" *ngIf="getStats()">
+        <div class="stat-item">
+          <span class="stat-label">Total:</span>
+          <span class="stat-value">{{ getStats().total }}</span>
+        </div>
+        <div class="stat-item stat-paye">
+          <span class="stat-label">Payé:</span>
+          <span class="stat-value">{{ getStats().payes }}</span>
+        </div>
+        <div class="stat-item stat-non-paye">
+          <span class="stat-label">Non payé:</span>
+          <span class="stat-value">{{ getStats().nonPayes }}</span>
+        </div>
+        <div class="stat-item stat-filtered">
+          <span class="stat-label">Filtré:</span>
+          <span class="stat-value">{{ getStats().filtered }}</span>
+        </div>
+      </div>
+    </div>
   </section>
+
+  <div class="main-content">
+    <!-- Carte -->
+    <section class="cartographie-map">
+      <app-map-interactive 
+        (contribuablesLoaded)="onContribuablesLoaded($event)"
+        #mapComponent
+      />
+    </section>
+
+    <!-- Tableau de résultats -->
+    <section class="results-section" *ngIf="showResults">
+      <div class="results-container">
+        <div class="results-header">
+          <h3>Résultats ({{ filteredContribuables.length }})</h3>
+          <button class="btn-toggle" (click)="toggleResults()">Masquer</button>
+        </div>
+
+        <div class="table-container">
+          <table class="results-table">
+            <thead>
+              <tr>
+                <th>Contribuable</th>
+                <th>Téléphone</th>
+                <th>Quartier</th>
+                <th>Collecteur</th>
+                <th>Statut</th>
+                <th>Total Collecté</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let contrib of paginatedContribuables" 
+                  [class.row-paye]="contrib.a_paye"
+                  [class.row-non-paye]="!contrib.a_paye">
+                <td>
+                  <div class="contribuable-info">
+                    <strong>{{ contrib.nom }} {{ contrib.prenom || '' }}</strong>
+                    <small *ngIf="contrib.nom_activite">{{ contrib.nom_activite }}</small>
+                  </div>
+                </td>
+                <td>{{ contrib.telephone }}</td>
+                <td>{{ contrib.quartier || 'N/A' }}</td>
+                <td>{{ contrib.collecteur || 'N/A' }}</td>
+                <td>
+                  <span class="badge" 
+                        [class.badge-paye]="contrib.a_paye"
+                        [class.badge-non-paye]="!contrib.a_paye">
+                    {{ contrib.a_paye ? '✓ Payé' : '✗ Non payé' }}
+                  </span>
+                </td>
+                <td>
+                  {{ contrib.total_collecte ? (contrib.total_collecte | number) + ' FCFA' : '-' }}
+                </td>
+                <td>
+                  <button class="btn-zoom" (click)="zoomToContribuable(contrib)" title="Centrer sur la carte">
+                    📍
+                  </button>
+                </td>
+              </tr>
+              <tr *ngIf="filteredContribuables.length === 0">
+                <td colspan="7" class="no-results">
+                  Aucun résultat trouvé
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Pagination -->
+        <div class="pagination" *ngIf="totalPages > 1">
+          <button 
+            (click)="goToPage(currentPage - 1)"
+            [disabled]="currentPage === 1"
+            class="btn-page"
+          >
+            Précédent
+          </button>
+          <span class="page-info">
+            Page {{ currentPage }} / {{ totalPages }}
+          </span>
+          <button 
+            (click)="goToPage(currentPage + 1)"
+            [disabled]="currentPage === totalPages"
+            class="btn-page"
+          >
+            Suivant
+          </button>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Boutons de contrôle -->
+  <div class="control-buttons">
+    <button class="btn-control" (click)="toggleFilters()">
+      {{ showFilters ? '🔽' : '🔼' }} Filtres
+    </button>
+    <button class="btn-control" (click)="toggleResults()">
+      {{ showResults ? '🔽' : '🔼' }} Résultats
+    </button>
+  </div>
 </div>

@@ -3,12 +3,14 @@ Application FastAPI principale
 Application de Collecte de Taxe Municipale - Mairie de Libreville
 """
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from fastapi.responses import JSONResponse
 from database.database import init_db
 from routers import taxes, contribuables, collecteurs, collectes, references, auth, zones_geographiques, uploads, parametrage, rapports
 from pathlib import Path
+import json
 
 app = FastAPI(
     title="API Collecte Taxe Municipale",
@@ -16,10 +18,28 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# Configuration CORS pour permettre les requêtes depuis le front-end Angular
+# Middleware pour forcer l'encodage UTF-8 dans les réponses
+@app.middleware("http")
+async def add_utf8_encoding(request: Request, call_next):
+    response = await call_next(request)
+    # Ajouter le charset UTF-8 dans les headers Content-Type
+    if response.headers.get("content-type") and "application/json" in response.headers.get("content-type", ""):
+        if "charset" not in response.headers.get("content-type", ""):
+            response.headers["content-type"] = response.headers["content-type"].replace(
+                "application/json", "application/json; charset=utf-8"
+            )
+    return response
+
+# Configuration CORS pour permettre les requêtes depuis le front-end Angular et l'app mobile
+import os
+cors_origins = os.getenv("CORS_ORIGINS", "http://localhost:4200,http://127.0.0.1:4200").split(",")
+# En production, ajoutez l'URL de votre app mobile ici ou utilisez "*" pour développement
+if os.getenv("ENVIRONMENT") != "production":
+    cors_origins.append("*")  # Permettre toutes les origines en développement
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:4200", "http://127.0.0.1:4200"],  # Angular dev server
+    allow_origins=cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

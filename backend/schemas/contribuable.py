@@ -29,7 +29,7 @@ class ContribuableBase(BaseModel):
 
 
 class ContribuableCreate(ContribuableBase):
-    pass
+    taxes_ids: Optional[List[int]] = Field(default=None, description="Liste des IDs des taxes à attribuer au contribuable")
 
 
 class ContribuableUpdate(BaseModel):

@@ -56,7 +56,9 @@ export class CreateClientComponent implements OnInit {
   quartiers: Quartier[] = [];
   typesContribuables: TypeContribuable[] = [];
   collecteurs: Collecteur[] = [];
+  taxes: any[] = [];
   selectedZoneId: number | null = null;
+  selectedTaxes: number[] = [];
 
   ngOnInit(): void {
     this.loadOptions();
@@ -162,6 +164,14 @@ export class CreateClientComponent implements OnInit {
       next: (data) => this.collecteurs = data,
       error: (err) => console.error('Erreur chargement collecteurs:', err)
     });
+
+    // Charger les taxes actives
+    this.apiService.getTaxes({ actif: true, limit: 1000 }).subscribe({
+      next: (data) => {
+        this.taxes = Array.isArray(data) ? data : [];
+      },
+      error: (err) => console.error('Erreur chargement taxes:', err)
+    });
   }
 
   onZoneChange(zoneId: number): void {
@@ -229,6 +239,11 @@ export class CreateClientComponent implements OnInit {
       data.nom_activite = this.formData.nom_activite;
     }
 
+    // Ajouter les taxes sélectionnées
+    if (this.selectedTaxes && this.selectedTaxes.length > 0) {
+      data.taxes_ids = this.selectedTaxes;
+    }
+
     // Upload photo si sélectionnée
     if (this.selectedPhoto) {
       this.apiService.uploadPhoto(this.selectedPhoto).subscribe({
@@ -288,9 +303,23 @@ export class CreateClientComponent implements OnInit {
     };
     this.selectedZoneId = null;
     this.quartiers = [];
+    this.selectedTaxes = [];
     this.error = '';
     this.geolocationStatus = 'idle';
     this.geolocationError = '';
     this.removePhoto();
+  }
+
+  onTaxeToggle(taxeId: number): void {
+    const index = this.selectedTaxes.indexOf(taxeId);
+    if (index > -1) {
+      this.selectedTaxes.splice(index, 1);
+    } else {
+      this.selectedTaxes.push(taxeId);
+    }
+  }
+
+  isTaxeSelected(taxeId: number): boolean {
+    return this.selectedTaxes.includes(taxeId);
   }
 }

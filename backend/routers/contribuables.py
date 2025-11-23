@@ -126,7 +126,7 @@ def create_contribuable(contribuable: ContribuableCreate, db: Session = Depends(
             quartier_id = zone_match.quartier_id
     
     # Créer le contribuable avec le quartier_id (détecté ou fourni)
-    contribuable_dict = contribuable.dict()
+    contribuable_dict = contribuable.dict(exclude={'taxes_ids'})
     contribuable_dict['quartier_id'] = quartier_id
     db_contribuable = Contribuable(**contribuable_dict)
     if geom_point is not None:
@@ -134,6 +134,35 @@ def create_contribuable(contribuable: ContribuableCreate, db: Session = Depends(
     db.add(db_contribuable)
     db.commit()
     db.refresh(db_contribuable)
+    
+    # Créer les affectations de taxes si des taxes sont fournies
+    if contribuable.taxes_ids and len(contribuable.taxes_ids) > 0:
+        from database.models import AffectationTaxe, Taxe
+        from datetime import datetime
+        
+        for taxe_id in contribuable.taxes_ids:
+            # Vérifier que la taxe existe et est active
+            taxe = db.query(Taxe).filter(Taxe.id == taxe_id, Taxe.actif == True).first()
+            if taxe:
+                # Vérifier si l'affectation existe déjà
+                existing = db.query(AffectationTaxe).filter(
+                    AffectationTaxe.contribuable_id == db_contribuable.id,
+                    AffectationTaxe.taxe_id == taxe_id,
+                    AffectationTaxe.actif == True
+                ).first()
+                
+                if not existing:
+                    affectation = AffectationTaxe(
+                        contribuable_id=db_contribuable.id,
+                        taxe_id=taxe_id,
+                        date_debut=datetime.utcnow(),
+                        date_fin=None,  # Toujours active par défaut
+                        montant_custom=None if not taxe.montant_variable else None,  # Peut être défini plus tard
+                        actif=True
+                    )
+                    db.add(affectation)
+        
+        db.commit()
     
     # Recharger avec les relations (incluant la zone du quartier)
     from database.models import Quartier

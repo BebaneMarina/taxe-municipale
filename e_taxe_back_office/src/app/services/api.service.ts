@@ -209,8 +209,13 @@ export class ApiService {
   }
 
   getUncoveredZones(typeZone?: string): Observable<any> {
-    const params = typeZone ? createHttpParams({ type_zone: typeZone }) : undefined;
-    return this.http.get(`${this.apiUrl}/zones-geographiques/uncovered-zones`, { params });
+    // Ne pas envoyer de paramètres si typeZone n'est pas fourni ou est vide
+    if (typeZone && typeZone.trim()) {
+      const params = createHttpParams({ type_zone: typeZone.trim() });
+      return this.http.get(`${this.apiUrl}/zones-geographiques/uncovered-zones`, { params });
+    }
+    // Appel sans paramètres
+    return this.http.get(`${this.apiUrl}/zones-geographiques/uncovered-zones`);
   }
 
   getCollecteursForMap(actif?: boolean): Observable<any> {

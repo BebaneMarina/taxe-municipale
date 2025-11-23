@@ -147,9 +147,11 @@ def get_contribuables_for_map(
 ):
     """
     Récupère les contribuables avec leurs coordonnées GPS pour affichage sur carte
+    Inclut le statut de paiement (a_paye) basé sur les collectes complétées
     """
-    from database.models import Contribuable
+    from database.models import Contribuable, AffectationTaxe, InfoCollecte, StatutCollecteEnum
     from sqlalchemy.orm import joinedload
+    from datetime import datetime
     
     query = db.query(Contribuable).options(
         joinedload(Contribuable.type_contribuable),
@@ -168,8 +170,76 @@ def get_contribuables_for_map(
     
     contribuables = query.all()
     
+    print(f"📊 Récupération de {len(contribuables)} contribuables depuis la base de données")
+    
     result = []
     for contrib in contribuables:
+        # Déterminer le statut de paiement
+        # Récupérer les taxes affectées actives avec la relation taxe chargée
+        from sqlalchemy.orm import joinedload
+        affectations = db.query(AffectationTaxe).options(
+            joinedload(AffectationTaxe.taxe)
+        ).filter(
+            AffectationTaxe.contribuable_id == contrib.id,
+            AffectationTaxe.actif == True,
+            # Vérifier que la date de début est passée et que date_fin est NULL ou future
+            AffectationTaxe.date_debut <= datetime.utcnow(),
+            (
+                (AffectationTaxe.date_fin.is_(None)) |
+                (AffectationTaxe.date_fin >= datetime.utcnow())
+            )
+        ).all()
+        
+        a_paye = True  # Par défaut, considéré comme ayant payé
+        taxes_impayees = []
+        total_collecte = 0
+        nombre_collectes = 0
+        derniere_collecte = None
+        
+        if affectations:
+            # Pour chaque taxe affectée, vérifier s'il y a une collecte complétée récente
+            for affectation in affectations:
+                # Chercher une collecte complétée pour cette taxe dans les 30 derniers jours
+                # ou depuis la date de début de l'affectation
+                date_reference = max(affectation.date_debut, datetime.utcnow().replace(day=1))
+                
+                collecte = db.query(InfoCollecte).filter(
+                    InfoCollecte.contribuable_id == contrib.id,
+                    InfoCollecte.taxe_id == affectation.taxe_id,
+                    InfoCollecte.statut == StatutCollecteEnum.COMPLETED,
+                    InfoCollecte.annule == False,
+                    InfoCollecte.date_collecte >= date_reference
+                ).order_by(InfoCollecte.date_collecte.desc()).first()
+                
+                if not collecte:
+                    a_paye = False
+                    # Récupérer le nom de la taxe
+                    taxe_nom = affectation.taxe.nom if affectation.taxe else f"Taxe #{affectation.taxe_id}"
+                    taxes_impayees.append(taxe_nom)
+        else:
+            # Si pas d'affectation, vérifier s'il y a des collectes récentes (mois en cours)
+            collectes_recentes = db.query(InfoCollecte).filter(
+                InfoCollecte.contribuable_id == contrib.id,
+                InfoCollecte.statut == StatutCollecteEnum.COMPLETED,
+                InfoCollecte.annule == False,
+                InfoCollecte.date_collecte >= datetime.utcnow().replace(day=1)
+            ).all()
+            
+            if not collectes_recentes:
+                a_paye = False
+        
+        # Calculer les statistiques de collecte
+        collectes_completes = db.query(InfoCollecte).filter(
+            InfoCollecte.contribuable_id == contrib.id,
+            InfoCollecte.statut == StatutCollecteEnum.COMPLETED,
+            InfoCollecte.annule == False
+        ).order_by(InfoCollecte.date_collecte.desc()).all()
+        
+        if collectes_completes:
+            nombre_collectes = len(collectes_completes)
+            total_collecte = sum(float(c.montant) for c in collectes_completes)
+            derniere_collecte = collectes_completes[0].date_collecte.isoformat() if collectes_completes[0].date_collecte else None
+        
         result.append({
             "id": contrib.id,
             "nom": contrib.nom,
@@ -184,7 +254,12 @@ def get_contribuables_for_map(
             "quartier": contrib.quartier.nom if contrib.quartier else None,
             "zone": contrib.quartier.zone.nom if contrib.quartier and contrib.quartier.zone else None,
             "collecteur": contrib.collecteur.nom + " " + contrib.collecteur.prenom if contrib.collecteur else None,
-            "actif": contrib.actif
+            "actif": contrib.actif,
+            "a_paye": a_paye,
+            "taxes_impayees": taxes_impayees,
+            "total_collecte": total_collecte,
+            "nombre_collectes": nombre_collectes,
+            "derniere_collecte": derniere_collecte
         })
     
     return result
@@ -192,11 +267,12 @@ def get_contribuables_for_map(
 
 @router.get("/uncovered-zones")
 def get_uncovered_zones(
-    type_zone: Optional[str] = None,
+    type_zone: Optional[str] = Query(default=None, description="Type de zone (quartier, arrondissement, secteur)"),
     db: Session = Depends(get_db)
 ):
     """
     Identifie les zones géographiques sans contribuables (zones non couvertes)
+    Retourne une liste vide en cas d'erreur pour éviter les 422
     """
     try:
         from database.models import Contribuable, ZoneGeographique
@@ -207,8 +283,9 @@ def get_uncovered_zones(
             ZoneGeographique.geom.isnot(None)
         )
         
-        if type_zone:
-            zones_query = zones_query.filter(ZoneGeographique.type_zone == type_zone)
+        # Filtrer par type_zone seulement si fourni et non vide
+        if type_zone and type_zone.strip():
+            zones_query = zones_query.filter(ZoneGeographique.type_zone == type_zone.strip())
         
         zones = zones_query.all()
         
@@ -216,6 +293,10 @@ def get_uncovered_zones(
         for zone in zones:
             try:
                 # Utiliser une requête plus simple qui évite les problèmes de géométrie
+                # Vérifier d'abord si la zone a une géométrie valide
+                if not zone.geom:
+                    continue
+                    
                 contrib_count = db.query(func.count(Contribuable.id)).filter(
                     Contribuable.geom.isnot(None),
                     Contribuable.actif == True,
@@ -227,7 +308,7 @@ def get_uncovered_zones(
                         "id": zone.id,
                         "nom": zone.nom,
                         "type_zone": zone.type_zone,
-                        "geometry": zone.geometry,
+                        "geometry": zone.geometry if hasattr(zone, 'geometry') and zone.geometry else {},
                         "contribuables_count": 0
                     }
                     # Ajouter les champs optionnels seulement s'ils existent
@@ -238,13 +319,15 @@ def get_uncovered_zones(
                     uncovered_zones.append(zone_dict)
             except Exception as e:
                 # Si erreur avec cette zone, on la saute et on continue
-                print(f"Erreur traitement zone {getattr(zone, 'id', 'Unknown')}: {e}")
+                print(f"⚠️ Erreur traitement zone {getattr(zone, 'id', 'Unknown')}: {e}")
                 continue
         
         return uncovered_zones
     except Exception as e:
         # En cas d'erreur générale, retourner une liste vide plutôt que d'échouer
-        print(f"Erreur get_uncovered_zones: {e}")
+        print(f"⚠️ Erreur get_uncovered_zones: {e}")
+        import traceback
+        traceback.print_exc()
         return []
 
 

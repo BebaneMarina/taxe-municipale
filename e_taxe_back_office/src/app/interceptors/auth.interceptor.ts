@@ -15,15 +15,25 @@ export class AuthInterceptor implements HttpInterceptor {
   intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
     const token = this.authService.getToken();
     
+    // Cloner la requête avec les headers nécessaires pour UTF-8
+    let clonedReq = req.clone({
+      setHeaders: {
+        'Accept': 'application/json; charset=utf-8',
+        'Accept-Charset': 'utf-8'
+      }
+    });
+    
     if (token) {
-      req = req.clone({
+      clonedReq = clonedReq.clone({
         setHeaders: {
-          Authorization: `Bearer ${token}`
+          Authorization: `Bearer ${token}`,
+          'Accept': 'application/json; charset=utf-8',
+          'Accept-Charset': 'utf-8'
         }
       });
     }
     
-    return next.handle(req).pipe(
+    return next.handle(clonedReq).pipe(
       catchError((error: HttpErrorResponse) => {
         // Si l'erreur est 401 (Unauthorized) ou 403 (Forbidden), déconnecter
         if (error.status === 401 || error.status === 403) {
