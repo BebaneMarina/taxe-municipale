@@ -50,7 +50,7 @@ export class RelancesComponent implements OnInit {
     message: '',
     montant_due: 0,
     date_echeance: '',
-    date_planifiee: new Date().toISOString().split('T')[0],
+    date_planifiee: this.getLocalDateTimeString(),
     canal_envoi: '',
     notes: ''
   };
@@ -221,7 +221,7 @@ export class RelancesComponent implements OnInit {
       message: '',
       montant_due: 0,
       date_echeance: '',
-      date_planifiee: new Date().toISOString().split('T')[0],
+      date_planifiee: this.getLocalDateTimeString(),
       canal_envoi: '',
       notes: ''
     };
@@ -372,6 +372,11 @@ export class RelancesComponent implements OnInit {
         this.loading = false;
       }
     });
+  }
+
+  private getLocalDateTimeString(date: Date = new Date()): string {
+    const tzOffset = date.getTimezoneOffset() * 60000;
+    return new Date(date.getTime() - tzOffset).toISOString().slice(0, 16);
   }
 }
 
