@@ -8,7 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import JSONResponse
 from database.database import init_db
-from routers import taxes, contribuables, collecteurs, collectes, references, auth, zones_geographiques, uploads, parametrage, rapports
+from routers import taxes, contribuables, collecteurs, collectes, references, auth, zones_geographiques, uploads, parametrage, rapports, relances, impayes, paiements_client, cartographie
 from pathlib import Path
 import json
 
@@ -56,6 +56,10 @@ app.include_router(zones_geographiques.router)
 app.include_router(uploads.router)
 app.include_router(parametrage.router)
 app.include_router(rapports.router)
+app.include_router(relances.router)
+app.include_router(impayes.router)
+app.include_router(paiements_client.router)
+app.include_router(cartographie.router)
 
 # Servir les fichiers statiques (photos uploadées)
 uploads_dir = Path(__file__).parent / "uploads"

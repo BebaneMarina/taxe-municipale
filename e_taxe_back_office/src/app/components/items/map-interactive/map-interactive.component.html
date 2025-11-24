@@ -1,189 +1,50 @@
-<div class="map-container">
-  <div class="map-overlay">
-    <!-- Contrôles de la carte -->
-    <div class="map-controls" [class.collapsed]="controlsCollapsed">
-      <div class="controls-header">
-        <h3>Contrôles</h3>
-        <div class="header-actions">
-          <div class="map-style-toggle">
-            <button 
-              type="button"
-              class="toggle-btn"
-              [class.active]="mapStyle === 'light'"
-              (click)="onMapStyleChange('light')"
-            >
-              Mode clair
-            </button>
-            <button 
-              type="button"
-              class="toggle-btn"
-              [class.active]="mapStyle === 'dark'"
-              (click)="onMapStyleChange('dark')"
-            >
-              Mode sombre
-            </button>
-          </div>
-          <button 
-            type="button"
-            class="collapse-btn"
-            (click)="toggleControls()"
-            [attr.aria-label]="controlsCollapsed ? 'Agrandir les contrôles' : 'Réduire les contrôles'"
-          >
-            <span [class.rotated]="controlsCollapsed">▼</span>
-          </button>
-        </div>
+<div class="map-wrapper">
+  <!-- Panneau de statistiques -->
+  <div class="stats-panel">
+    <h3>Statistiques</h3>
+    <div class="stats-grid">
+      <div class="stat-item stat-total">
+        <div class="stat-label">Total</div>
+        <div class="stat-value">{{ totalContribuables }}</div>
       </div>
-
-      <div class="controls-content" [class.hidden]="controlsCollapsed">
-        <div class="controls-grid">
-          <div class="control-group">
-            <p class="group-title">Couches</p>
-            <label class="control-item">
-              <input 
-                type="checkbox" 
-                [(ngModel)]="showContribuables"
-                (change)="toggleContribuables()"
-              >
-              <span>📍 Contribuables</span>
-            </label>
-            <label class="control-item">
-              <input 
-                type="checkbox" 
-                [(ngModel)]="showCollecteurs"
-                (change)="toggleCollecteurs()"
-              >
-              <span>👤 Collecteurs</span>
-            </label>
-            <label class="control-item">
-              <input 
-                type="checkbox" 
-                [(ngModel)]="showZones"
-                (change)="toggleZones()"
-              >
-              <span>🗺️ Zones</span>
-            </label>
-            <label class="control-item">
-              <input 
-                type="checkbox" 
-                [(ngModel)]="showUncoveredZones"
-                (change)="toggleUncoveredZones()"
-              >
-              <span>⚠️ Zones non couvertes</span>
-            </label>
-          </div>
-
-          <div class="control-group">
-            <p class="group-title">Filtrage</p>
-            <label class="control-item">
-              <input 
-                type="checkbox" 
-                [(ngModel)]="filterActif"
-                (change)="onFilterChange()"
-              >
-              <span>Actifs uniquement</span>
-            </label>
-            <label class="control-item">
-              <input 
-                type="checkbox" 
-                [(ngModel)]="autoRefresh"
-                (change)="onAutoRefreshChange()"
-              >
-              <span>🔄 Auto ({{ refreshIntervalSeconds }}s)</span>
-            </label>
-            <button 
-              (click)="loadData()"
-              [disabled]="loading"
-              class="refresh-btn"
-            >
-              @if (loading) {
-                <span>Chargement...</span>
-              } @else {
-                <span>Actualiser</span>
-              }
-            </button>
-          </div>
-        </div>
+      <div class="stat-item stat-success">
+        <div class="stat-label">✓ Payés</div>
+        <div class="stat-value">{{ payes }}</div>
+      </div>
+      <div class="stat-item stat-danger">
+        <div class="stat-label">✗ Non payés</div>
+        <div class="stat-value">{{ nonPayes }}</div>
+      </div>
+      <div class="stat-item stat-info">
+        <div class="stat-label">Taux</div>
+        <div class="stat-value">{{ tauxPaiement }}%</div>
       </div>
     </div>
+  </div>
 
-    <!-- Stats repositionnées en haut à droite -->
-    <div class="map-stats-container" [class.collapsed]="statsCollapsed">
-      <button 
-        type="button"
-        class="stats-toggle-btn"
-        (click)="toggleStats()"
-        [attr.aria-label]="statsCollapsed ? 'Afficher les stats' : 'Masquer les stats'"
-      >
-        <span [class.rotated]="statsCollapsed">◀</span>
-      </button>
-      <div class="map-stats-grid" [class.hidden]="statsCollapsed">
-        <div class="stat-card">
-          <p>Contribuables</p>
-          <span>{{ contribuables.length }}</span>
-        </div>
-        <div class="stat-card">
-          <p>Collecteurs</p>
-          <span>{{ collecteurs.length }}</span>
-        </div>
-        <div class="stat-card">
-          <p>Zones</p>
-          <span>{{ zonesGeographiques.length }}</span>
-        </div>
-        <div class="stat-card alert">
-          <p>À couvrir</p>
-          <span>{{ uncoveredZonesData.length }}</span>
-        </div>
+  <!-- Légende -->
+  <div class="legend-panel">
+    <h4>Légende</h4>
+    <div class="legend-items">
+      <div class="legend-item">
+        <div class="legend-marker marker-paye"></div>
+        <span>Contribuable payé</span>
       </div>
-    </div>
-
-    <!-- Légende interactive -->
-    <div class="map-legend" [class.collapsed]="legendCollapsed">
-      <button 
-        type="button"
-        class="legend-toggle-btn"
-        (click)="toggleLegend()"
-        [attr.aria-label]="legendCollapsed ? 'Afficher la légende' : 'Masquer la légende'"
-      >
-        <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-        </svg>
-      </button>
-      <div class="legend-content" [class.hidden]="legendCollapsed">
-        <h4 class="legend-title">Légende</h4>
-        <div class="legend-items">
-          <div class="legend-item">
-            <div class="legend-marker contribuable-paye"></div>
-            <span>Contribuable (Payé)</span>
-          </div>
-          <div class="legend-item">
-            <div class="legend-marker contribuable-non-paye"></div>
-            <span>Contribuable (Non payé)</span>
-          </div>
-          <div class="legend-item">
-            <div class="legend-marker collecteur-legend"></div>
-            <span>Collecteur</span>
-          </div>
-          <div class="legend-item">
-            <div class="legend-line" style="background: #3B82F6;"></div>
-            <span>Arrondissement</span>
-          </div>
-          <div class="legend-item">
-            <div class="legend-line" style="background: #10B981;"></div>
-            <span>Secteur</span>
-          </div>
-          <div class="legend-item">
-            <div class="legend-line" style="background: #F59E0B;"></div>
-            <span>Quartier</span>
-          </div>
-          <div class="legend-item">
-            <div class="legend-line dashed" style="background: #EF4444;"></div>
-            <span>Zone non couverte</span>
-          </div>
-        </div>
+      <div class="legend-item">
+        <div class="legend-marker marker-non-paye"></div>
+        <span>Contribuable non payé</span>
       </div>
     </div>
   </div>
 
   <!-- Carte -->
-  <div id="map" class="map-view"></div>
+  <div id="map" class="map-container"></div>
+
+  <!-- Loading -->
+  @if (loading) {
+    <div class="loading-overlay">
+      <div class="spinner"></div>
+      <p>Chargement des données...</p>
+    </div>
+  }
 </div>

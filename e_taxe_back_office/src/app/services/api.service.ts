@@ -77,6 +77,14 @@ export class ApiService {
     return this.http.get(`${this.apiUrl}/collecteurs/${id}`);
   }
 
+  getActivitesCollecteur(collecteurId: number, dateDebut?: string, dateFin?: string): Observable<any> {
+    const params: any = {};
+    if (dateDebut) params.date_debut = dateDebut;
+    if (dateFin) params.date_fin = dateFin;
+    const httpParams = createHttpParams(params);
+    return this.http.get(`${this.apiUrl}/collecteurs/${collecteurId}/activites`, httpParams.keys().length > 0 ? { params: httpParams } : {});
+  }
+
   createCollecteur(collecteur: any): Observable<any> {
     return this.http.post(`${this.apiUrl}/collecteurs`, collecteur);
   }
@@ -124,7 +132,7 @@ export class ApiService {
   }
 
   // Références
-  getZones(actif?: boolean): Observable<any> {
+  getZonesReferences(actif?: boolean): Observable<any> {
     const params: { [key: string]: any } = {};
     if (actif !== undefined) {
       params['actif'] = actif.toString();
@@ -203,10 +211,6 @@ export class ApiService {
     return this.http.post(`${this.apiUrl}/zones-geographiques/locate-point`, body);
   }
 
-  getContribuablesForMap(actif?: boolean): Observable<any> {
-    const params = actif !== undefined ? createHttpParams({ actif }) : undefined;
-    return this.http.get(`${this.apiUrl}/zones-geographiques/map/contribuables`, { params });
-  }
 
   getUncoveredZones(typeZone?: string): Observable<any> {
     // Ne pas envoyer de paramètres si typeZone n'est pas fourni ou est vide
@@ -403,6 +407,138 @@ export class ApiService {
   getRapportComplet(params?: any): Observable<any> {
     const httpParams = params ? createHttpParams(params) : new HttpParams();
     return this.http.get(`${this.apiUrl}/rapports/complet`, httpParams.keys().length > 0 ? { params: httpParams } : {});
+  }
+
+  // Relances
+  getRelances(params?: any): Observable<any> {
+    const httpParams = params ? createHttpParams(params) : new HttpParams();
+    return this.http.get(`${this.apiUrl}/relances`, httpParams.keys().length > 0 ? { params: httpParams } : {});
+  }
+
+  getRelance(id: number): Observable<any> {
+    return this.http.get(`${this.apiUrl}/relances/${id}`);
+  }
+
+  createRelance(relance: any): Observable<any> {
+    return this.http.post(`${this.apiUrl}/relances`, relance);
+  }
+
+  updateRelance(id: number, relance: any): Observable<any> {
+    return this.http.put(`${this.apiUrl}/relances/${id}`, relance);
+  }
+
+  envoyerRelance(id: number): Observable<any> {
+    return this.http.patch(`${this.apiUrl}/relances/${id}/envoyer`, {});
+  }
+
+  genererRelancesAutomatiques(params?: any): Observable<any> {
+    const httpParams = params ? createHttpParams(params) : new HttpParams();
+    return this.http.post(`${this.apiUrl}/relances/generer-automatique`, {}, httpParams.keys().length > 0 ? { params: httpParams } : {});
+  }
+
+  getHistoriqueRelancesContribuable(contribuableId: number, limit?: number): Observable<any> {
+    const params: { [key: string]: any } = {};
+    if (limit) params['limit'] = limit;
+    const httpParams = createHttpParams(params);
+    return this.http.get(`${this.apiUrl}/relances/contribuable/${contribuableId}/historique`, httpParams.keys().length > 0 ? { params: httpParams } : {});
+  }
+
+  getStatistiquesRelances(params?: any): Observable<any> {
+    const httpParams = params ? createHttpParams(params) : new HttpParams();
+    return this.http.get(`${this.apiUrl}/relances/statistiques`, httpParams.keys().length > 0 ? { params: httpParams } : {});
+  }
+
+  // Impayés
+  getImpayes(params?: any): Observable<any> {
+    const httpParams = params ? createHttpParams(params) : new HttpParams();
+    return this.http.get(`${this.apiUrl}/impayes`, httpParams.keys().length > 0 ? { params: httpParams } : {});
+  }
+
+  getDossierImpaye(id: number): Observable<any> {
+    return this.http.get(`${this.apiUrl}/impayes/${id}`);
+  }
+
+  createDossierImpaye(dossier: any): Observable<any> {
+    return this.http.post(`${this.apiUrl}/impayes`, dossier);
+  }
+
+  updateDossierImpaye(id: number, dossier: any): Observable<any> {
+    return this.http.put(`${this.apiUrl}/impayes/${id}`, dossier);
+  }
+
+  detecterImpayes(params?: any): Observable<any> {
+    const httpParams = params ? createHttpParams(params) : new HttpParams();
+    return this.http.post(`${this.apiUrl}/impayes/detecter-impayes`, {}, httpParams.keys().length > 0 ? { params: httpParams } : {});
+  }
+
+  assignerDossier(id: number, collecteurId: number): Observable<any> {
+    return this.http.patch(`${this.apiUrl}/impayes/${id}/assigner?collecteur_id=${collecteurId}`, {});
+  }
+
+  cloturerDossier(id: number): Observable<any> {
+    return this.http.patch(`${this.apiUrl}/impayes/${id}/cloturer`, {});
+  }
+
+  calculerPenalites(request: any): Observable<any> {
+    return this.http.post(`${this.apiUrl}/impayes/calculer-penalites`, request);
+  }
+
+  getStatistiquesImpayes(): Observable<any> {
+    return this.http.get(`${this.apiUrl}/impayes/statistiques/globales`);
+  }
+
+  // ==================== PAIEMENTS CLIENT (BambooPay) ====================
+  
+  getTaxesPubliques(actif: boolean = true): Observable<any> {
+    return this.http.get(`${this.apiUrl}/client/taxes`, { params: { actif } });
+  }
+
+  initierPaiement(transaction: any): Observable<any> {
+    return this.http.post(`${this.apiUrl}/client/paiement/initier`, transaction);
+  }
+
+  getStatutTransaction(billingId: string): Observable<any> {
+    return this.http.get(`${this.apiUrl}/client/paiement/statut/${billingId}`);
+  }
+
+  verifierStatutBambooPay(billingId: string): Observable<any> {
+    return this.http.post(`${this.apiUrl}/client/paiement/verifier/${billingId}`, {});
+  }
+
+  // ==================== CARTOGRAPHIE ====================
+  
+  getStatistiquesCartographie(params?: any): Observable<any> {
+    const httpParams = params ? createHttpParams(params) : new HttpParams();
+    return this.http.get(`${this.apiUrl}/cartographie/statistiques`, httpParams.keys().length > 0 ? { params: httpParams } : {});
+  }
+
+  getEvolutionJournaliere(jours: number = 7): Observable<any> {
+    return this.http.get(`${this.apiUrl}/cartographie/evolution-journaliere`, { params: { jours } });
+  }
+
+  // Contribuables pour la carte
+  getContribuablesForMap(actif: boolean = true): Observable<any> {
+    return this.http.get(`${this.apiUrl}/cartographie/map/contribuables`, { params: { actif } });
+  }
+
+  // Zones géographiques
+  getZones(actif?: boolean): Observable<any> {
+    const params: { [key: string]: any } = {};
+    if (actif !== undefined) params['actif'] = actif;
+    const httpParams = createHttpParams(params);
+    return this.http.get(`${this.apiUrl}/zones-geographiques`, httpParams.keys().length > 0 ? { params: httpParams } : {});
+  }
+
+  getStatsZones(): Observable<any> {
+    return this.http.get(`${this.apiUrl}/cartographie/stats-zones`);
+  }
+
+  getEvolutionCollecte(): Observable<any> {
+    return this.http.get(`${this.apiUrl}/cartographie/evolution-collecte`);
+  }
+
+  getStatsGlobales(): Observable<any> {
+    return this.http.get(`${this.apiUrl}/cartographie/stats-globales`);
   }
 }
 

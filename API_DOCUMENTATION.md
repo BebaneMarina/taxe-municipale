@@ -1,13 +1,44 @@
-# 📚 Documentation API - Application Mobile
+# Documentation API - Application Mobile
 
 Documentation complète des endpoints pour l'application mobile.
 
-## 🔗 URL de base
+## URL de base
 
-**Production (Render) :** `https://votre-app.onrender.com`  
+**Production (Render) :** `https://taxe-municipale.onrender.com`  
 **Développement :** `http://localhost:8000`
 
-## 🔐 Authentification
+### Informations de déploiement
+
+**Service déployé sur :** Render (https://render.com)  
+**URL de l'API :** `https://taxe-municipale.onrender.com`  
+**Base de données :** PostgreSQL avec PostGIS (Render)  
+**Région :** Singapore  
+**Statut :** En production
+
+#### Note importante - Service gratuit Render
+
+Le service gratuit Render se met en **veille après 15 minutes d'inactivité**. 
+- Le premier démarrage après veille peut prendre **30-60 secondes**
+- C'est normal, attendez simplement que le service redémarre
+- Pour un service 24/7 sans veille, upgrade vers un plan payant
+
+#### Vérifier le statut du service
+
+```bash
+# Health check
+curl https://taxe-municipale.onrender.com/health
+
+# Réponse attendue :
+# {"status": "healthy"}
+```
+
+#### Documentation interactive
+
+- **Swagger UI :** `https://taxe-municipale.onrender.com/docs`
+- **ReDoc :** `https://taxe-municipale.onrender.com/redoc`
+- **Health Check :** `https://taxe-municipale.onrender.com/health`
+
+## Authentification
 
 Tous les endpoints (sauf `/api/auth/login`) nécessitent un token JWT dans le header :
 
@@ -42,7 +73,7 @@ password=votre_mot_de_passe
 
 ---
 
-## 📋 COLLECTEURS
+## COLLECTEURS
 
 ### 1. Liste des collecteurs
 
@@ -141,7 +172,7 @@ PATCH /api/collecteurs/{collecteur_id}/deconnexion
 
 ---
 
-## 💰 COLLECTES
+## COLLECTES
 
 ### 1. Liste des collectes
 
@@ -268,7 +299,7 @@ PATCH /api/collectes/{collecte_id}/annuler
 
 ---
 
-## 📊 TAXES
+## TAXES
 
 ### 1. Liste des taxes
 
@@ -363,7 +394,7 @@ DELETE /api/taxes/{taxe_id}
 
 ---
 
-## 🔍 ENDPOINTS UTILES POUR MOBILE
+## ENDPOINTS UTILES POUR MOBILE
 
 ### 1. Collectes d'un collecteur (avec pagination)
 
@@ -402,7 +433,7 @@ GET /api/taxes?actif=true&limit=100
 
 ---
 
-## 📝 Codes de statut HTTP
+## Codes de statut HTTP
 
 - `200` : Succès
 - `201` : Créé avec succès
@@ -416,33 +447,33 @@ GET /api/taxes?actif=true&limit=100
 
 ---
 
-## 🧪 Tester l'API
+## Tester l'API
 
 ### Avec Swagger UI
 
-Accédez à : `https://votre-app.onrender.com/docs`
+Accédez à : `https://taxe-municipale.onrender.com/docs`
 
 ### Avec cURL
 
 ```bash
 # Login
-curl -X POST "https://votre-app.onrender.com/api/auth/login" \
+curl -X POST "https://taxe-municipale.onrender.com/api/auth/login" \
   -H "Content-Type: application/x-www-form-urlencoded" \
   -d "username=admin@example.com&password=votre_mot_de_passe"
 
 # Liste des collecteurs
-curl -X GET "https://votre-app.onrender.com/api/collecteurs?actif=true" \
+curl -X GET "https://taxe-municipale.onrender.com/api/collecteurs?actif=true" \
   -H "Authorization: Bearer VOTRE_TOKEN"
 ```
 
 ---
 
-## 📱 Exemple d'intégration mobile (Flutter/Dart)
+## Exemple d'intégration mobile (Flutter/Dart)
 
 ```dart
 // Service API
 class ApiService {
-  final String baseUrl = 'https://votre-app.onrender.com';
+  final String baseUrl = 'https://taxe-municipale.onrender.com';
   String? token;
 
   Future<Map<String, dynamic>> login(String email, String password) async {
@@ -502,9 +533,144 @@ class ApiService {
 
 ---
 
-## 🔗 Liens utiles
+## Liens utiles
 
-- **Documentation Swagger :** `https://votre-app.onrender.com/docs`
-- **Documentation ReDoc :** `https://votre-app.onrender.com/redoc`
-- **Health Check :** `https://votre-app.onrender.com/health`
+- **Documentation Swagger :** `https://taxe-municipale.onrender.com/docs`
+- **Documentation ReDoc :** `https://taxe-municipale.onrender.com/redoc`
+- **Health Check :** `https://taxe-municipale.onrender.com/health`
+
+---
+
+## Informations de déploiement
+
+### Environnement de production
+
+- **Plateforme :** Render (https://render.com)
+- **URL de l'API :** `https://taxe-municipale.onrender.com`
+- **Base de données :** PostgreSQL avec PostGIS
+- **Région :** Singapore
+- **Statut :** En production et opérationnel
+
+### Configuration technique
+
+- **Framework :** FastAPI 0.109.0
+- **Serveur :** Uvicorn avec ASGI
+- **Base de données :** PostgreSQL 17.5 avec PostGIS
+- **Python :** 3.11.0
+- **Authentification :** JWT (JSON Web Tokens)
+- **CORS :** Configuré pour accepter toutes les origines (développement)
+
+### Service gratuit Render - Limitations
+
+Le service gratuit Render a quelques limitations :
+
+1. **Mise en veille automatique**
+   - Le service se met en veille après **15 minutes d'inactivité**
+   - Le premier démarrage après veille prend **30-60 secondes**
+   - C'est normal, attendez simplement que le service redémarre
+
+2. **Performance**
+   - Limité en ressources CPU et RAM
+   - Pour de meilleures performances, upgrade vers un plan payant
+
+3. **Disponibilité**
+   - Pas de garantie de disponibilité 24/7
+   - Pour un service toujours actif, upgrade vers un plan payant
+
+### Vérification du service
+
+#### Health Check
+
+```bash
+curl https://taxe-municipale.onrender.com/health
+```
+
+**Réponse attendue :**
+```json
+{"status": "healthy"}
+```
+
+#### Test de connexion
+
+```bash
+# Point d'entrée de l'API
+curl https://taxe-municipale.onrender.com/
+
+# Réponse attendue :
+# {
+#   "message": "API Collecte Taxe Municipale - Mairie de Libreville",
+#   "version": "1.0.0",
+#   "docs": "/docs"
+# }
+```
+
+### Monitoring
+
+Pour surveiller le service :
+
+1. **Render Dashboard :** https://dashboard.render.com
+   - Logs en temps réel
+   - Métriques de performance
+   - Statut du service
+
+2. **Logs de l'application :**
+   - Accessibles via Render Dashboard
+   - Affichent les erreurs et les requêtes
+
+### Sécurité
+
+- **HTTPS** activé automatiquement (SSL/TLS)
+- **Authentification JWT** requise pour la plupart des endpoints
+- **CORS** configuré (actuellement ouvert pour développement)
+- **Validation des données** avec Pydantic
+- **Mots de passe** hashés avec bcrypt
+
+### Mises à jour
+
+Les mises à jour sont automatiques via Git :
+
+1. **Push sur GitHub** → Render détecte automatiquement
+2. **Build automatique** → Installation des dépendances
+3. **Déploiement automatique** → Nouvelle version en ligne
+
+**Temps de déploiement :** ~2-5 minutes
+
+### Variables d'environnement
+
+Le service utilise ces variables d'environnement (configurées dans Render) :
+
+- `DATABASE_URL` : URL de connexion PostgreSQL
+- `SECRET_KEY` : Clé secrète pour JWT
+- `PYTHON_VERSION` : Version Python (3.11.0)
+- `CORS_ORIGINS` : Origines autorisées pour CORS
+
+### Dépannage
+
+#### Service ne répond pas
+
+1. Vérifiez que le service n'est pas en veille (attendez 30-60 secondes)
+2. Vérifiez les logs dans Render Dashboard
+3. Testez le health check : `/health`
+
+#### Erreur 502 Bad Gateway
+
+- Le service est probablement en train de démarrer
+- Attendez quelques secondes et réessayez
+
+#### Erreur de connexion à la base de données
+
+- Vérifiez les logs dans Render Dashboard
+- Vérifiez que la base de données est active
+- Vérifiez la variable `DATABASE_URL`
+
+#### Erreur CORS
+
+- Vérifiez que l'origine de votre requête est autorisée
+- Vérifiez la variable `CORS_ORIGINS` dans Render
+
+### Support
+
+- **Documentation Render :** https://render.com/docs
+- **Support Render :** support@render.com
+- **Status Render :** https://status.render.com
 

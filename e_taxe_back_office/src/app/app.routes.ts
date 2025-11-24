@@ -75,8 +75,23 @@ export const routes: Routes = [
         path: 'cartographie',
         loadComponent: () => import('./components/pages/cartographie/cartographie.component').then(m => m.CartographieComponent),
         title: 'Cartographie'
+      },
+      {
+        path: 'relances',
+        loadComponent: () => import('./components/pages/relances/relances.component').then(m => m.RelancesComponent),
+        title: 'Gestion des Relances'
+      },
+      {
+        path: 'impayes',
+        loadComponent: () => import('./components/pages/impayes/impayes.component').then(m => m.ImpayesComponent),
+        title: 'Gestion des Impayés'
       }
     ]
+  },
+  {
+    path: 'client/paiement',
+    loadComponent: () => import('./components/pages/paiement-client/paiement-client.component').then(m => m.PaiementClientComponent),
+    title: 'Paiement des Taxes'
   },
   {
     path: '**',

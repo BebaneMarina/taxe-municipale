@@ -1,0 +1,212 @@
+<div class="impayes-container p-6">
+  <div class="mb-6">
+    <h1 class="text-3xl font-bold text-gray-900 mb-2">Gestion des Impayés</h1>
+    <p class="text-gray-600">Suivez et gérez les dossiers d'impayés</p>
+  </div>
+
+  @if (error) {
+    <div class="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
+      {{ error }}
+    </div>
+  }
+
+  <!-- Statistiques -->
+  @if (stats) {
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+      <div class="bg-white p-4 rounded-lg shadow border">
+        <div class="text-sm text-gray-600">Dossiers actifs</div>
+        <div class="text-2xl font-bold text-gray-900">{{ stats.total_dossiers_actifs }}</div>
+      </div>
+      <div class="bg-white p-4 rounded-lg shadow border">
+        <div class="text-sm text-gray-600">Montant total dû</div>
+        <div class="text-2xl font-bold text-red-600">{{ stats.total_montant_du | number:'1.0-0' }} FCFA</div>
+      </div>
+      <div class="bg-white p-4 rounded-lg shadow border">
+        <div class="text-sm text-gray-600">Pénalités</div>
+        <div class="text-2xl font-bold text-orange-600">{{ stats.total_penalites | number:'1.0-0' }} FCFA</div>
+      </div>
+      <div class="bg-white p-4 rounded-lg shadow border">
+        <div class="text-sm text-gray-600">Moyenne jours retard</div>
+        <div class="text-2xl font-bold text-blue-600">{{ stats.moyenne_jours_retard }} jours</div>
+      </div>
+    </div>
+  }
+
+  <!-- Actions -->
+  <div class="mb-6 flex gap-4">
+    <button
+      (click)="detecterImpayes()"
+      [disabled]="loading"
+      class="px-4 py-2 bg-main text-white rounded-lg hover:bg-main/90 disabled:opacity-50"
+    >
+      Détecter impayés automatiquement
+    </button>
+  </div>
+
+  <!-- Filtres -->
+  <div class="bg-white p-4 rounded-lg shadow border mb-6">
+    <h2 class="text-lg font-semibold mb-4">Filtres</h2>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Statut</label>
+        <select
+          [(ngModel)]="filters.statut"
+          class="w-full px-3 py-2 border border-gray-300 rounded-lg"
+        >
+          <option value="">Tous</option>
+          <option value="en_cours">En cours</option>
+          <option value="partiellement_paye">Partiellement payé</option>
+          <option value="paye">Payé</option>
+          <option value="archive">Archivé</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Priorité</label>
+        <select
+          [(ngModel)]="filters.priorite"
+          class="w-full px-3 py-2 border border-gray-300 rounded-lg"
+        >
+          <option value="">Toutes</option>
+          <option value="urgente">Urgente</option>
+          <option value="elevee">Élevée</option>
+          <option value="normale">Normale</option>
+          <option value="faible">Faible</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Jours de retard minimum</label>
+        <input
+          type="number"
+          [(ngModel)]="filters.jours_retard_min"
+          class="w-full px-3 py-2 border border-gray-300 rounded-lg"
+          placeholder="Ex: 30"
+        >
+      </div>
+      <div class="flex items-end gap-2">
+        <button
+          (click)="applyFilters()"
+          class="px-4 py-2 bg-main text-white rounded-lg hover:bg-main/90"
+        >
+          Appliquer
+        </button>
+        <button
+          (click)="resetFilters()"
+          class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
+        >
+          Réinitialiser
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tableau des impayés -->
+  <div class="bg-white rounded-lg shadow border overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50">
+          <tr>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contribuable</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Montant initial</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Montant restant</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pénalités</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Jours retard</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Priorité</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Statut</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-200">
+          @if (loading) {
+            <tr>
+              <td colspan="8" class="px-6 py-4 text-center text-gray-500">Chargement...</td>
+            </tr>
+          } @else if (impayes.length === 0) {
+            <tr>
+              <td colspan="8" class="px-6 py-4 text-center text-gray-500">Aucun impayé trouvé</td>
+            </tr>
+          } @else {
+            @for (impaye of impayes; track impaye.id) {
+              <tr class="hover:bg-gray-50">
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <div class="text-sm font-medium text-gray-900">
+                    {{ impaye.contribuable?.nom }} {{ impaye.contribuable?.prenom }}
+                  </div>
+                  <div class="text-sm text-gray-500">{{ impaye.contribuable?.telephone }}</div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                  {{ impaye.montant_initial | number:'1.0-0' }} FCFA
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-red-600">
+                  {{ impaye.montant_restant | number:'1.0-0' }} FCFA
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-orange-600">
+                  {{ impaye.penalites | number:'1.0-0' }} FCFA
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  {{ impaye.jours_retard }} jours
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <span class="px-2 py-1 text-xs font-semibold rounded-full {{ getPrioriteClass(impaye.priorite) }}">
+                    {{ impaye.priorite }}
+                  </span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <span class="px-2 py-1 text-xs font-semibold rounded-full {{ getStatutClass(impaye.statut) }}">
+                    {{ impaye.statut }}
+                  </span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                  <div class="flex gap-2">
+                    @if (impaye.statut !== 'archive' && impaye.statut !== 'paye') {
+                      <select
+                        (change)="assignerDossier(impaye.id, $any($event.target).value)"
+                        class="text-xs px-2 py-1 border border-gray-300 rounded"
+                      >
+                        <option value="">Assigner à...</option>
+                        @for (collecteur of collecteurs; track collecteur.id) {
+                          <option [value]="collecteur.id">{{ collecteur.nom }} {{ collecteur.prenom }}</option>
+                        }
+                      </select>
+                      <button
+                        (click)="cloturerDossier(impaye.id)"
+                        class="text-xs text-gray-600 hover:text-gray-800"
+                      >
+                        Clôturer
+                      </button>
+                    }
+                  </div>
+                </td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    @if (getTotalPages() > 1) {
+      <div class="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
+        <div class="text-sm text-gray-700">
+          Page {{ currentPage + 1 }} sur {{ getTotalPages() }} ({{ total }} dossiers)
+        </div>
+        <div class="flex gap-2">
+          <button
+            (click)="onPageChange(currentPage - 1)"
+            [disabled]="currentPage === 0"
+            class="px-3 py-1 border border-gray-300 rounded-lg disabled:opacity-50"
+          >
+            Précédent
+          </button>
+          <button
+            (click)="onPageChange(currentPage + 1)"
+            [disabled]="currentPage >= getTotalPages() - 1"
+            class="px-3 py-1 border border-gray-300 rounded-lg disabled:opacity-50"
+          >
+            Suivant
+          </button>
+        </div>
+      </div>
+    }
+  </div>
+</div>
+

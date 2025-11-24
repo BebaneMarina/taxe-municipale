@@ -7,6 +7,7 @@ import { PaginationComponent } from '../../items/pagination/pagination.component
 import { ModalComponent } from '../../items/modal/modal.component';
 import { CreateCollecteurComponent } from '../../items/modals/create-collecteur/create-collecteur.component';
 import { Collecteur } from '../../../interfaces/collecteur.interface';
+import { ActiviteCollecteur } from '../../../interfaces/activite-collecteur.interface';
 
 @Component({
   selector: 'app-gestion-collecteurs',
@@ -23,7 +24,12 @@ export class GestionCollecteursComponent implements OnInit {
   searchTerm: string = '';
   activeModal = model<boolean>(false);
   activeModalEdit = model<boolean>(false);
+  activeModalActivites = model<boolean>(false);
   selectedCollecteur: Collecteur | null = null;
+  activites: ActiviteCollecteur | null = null;
+  loadingActivites: boolean = false;
+  dateDebut: string = '';
+  dateFin: string = '';
   
   // Pagination
   currentPage: number = 1;
@@ -140,5 +146,65 @@ export class GestionCollecteursComponent implements OnInit {
     this.activeModal.set(false);
     this.activeModalEdit.set(false);
     this.selectedCollecteur = null;
+  }
+
+  viewActivites(collecteur: Collecteur): void {
+    this.selectedCollecteur = collecteur;
+    // Définir les dates par défaut (30 derniers jours)
+    const today = new Date();
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(today.getDate() - 30);
+    
+    this.dateFin = today.toISOString().split('T')[0];
+    this.dateDebut = thirtyDaysAgo.toISOString().split('T')[0];
+    
+    this.loadActivites();
+    this.activeModalActivites.set(true);
+  }
+
+  loadActivites(): void {
+    if (!this.selectedCollecteur) return;
+    
+    this.loadingActivites = true;
+    this.apiService.getActivitesCollecteur(
+      this.selectedCollecteur.id,
+      this.dateDebut || undefined,
+      this.dateFin || undefined
+    ).subscribe({
+      next: (data: ActiviteCollecteur) => {
+        this.activites = data;
+        this.loadingActivites = false;
+      },
+      error: (err) => {
+        console.error('Erreur lors du chargement des activités:', err);
+        this.loadingActivites = false;
+      }
+    });
+  }
+
+  formatDate(dateStr: string): string {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+  }
+
+  formatTime(dateStr: string): string {
+    const date = new Date(dateStr);
+    return date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+  }
+
+  formatDuree(minutes: number | undefined): string {
+    if (!minutes) return '-';
+    const heures = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    if (heures > 0) {
+      return `${heures}h${mins > 0 ? mins + 'min' : ''}`;
+    }
+    return `${mins}min`;
+  }
+
+  onDateChange(): void {
+    if (this.dateDebut && this.dateFin) {
+      this.loadActivites();
+    }
   }
 }

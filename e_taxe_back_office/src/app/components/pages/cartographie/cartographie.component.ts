@@ -1,10 +1,32 @@
-import { Component, ViewChild } from '@angular/core';
+import { Component, OnInit, ViewChild, AfterViewInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MapInteractiveComponent } from '../../items/map-interactive/map-interactive.component';
-import { ContenerComponent } from '../../items/contener/contener.component';
-import { H1Component } from '../../items/texts/h1/h1.component';
 import { ApiService } from '../../../services/api.service';
+import { Chart, ChartConfiguration, ChartType, registerables } from 'chart.js';
+
+Chart.register(...registerables);
+
+interface DashboardStats {
+  total_contribuables: number;
+  contribuables_payes: number;
+  contribuables_impayes: number;
+  taux_paiement: number;
+  total_collecte: number;
+  collecte_aujourd_hui: number;
+  collecte_ce_mois: number;
+  nombre_collecteurs: number;
+  zones_couvertes: number;
+  zones_non_couvertes: number;
+}
+
+interface ZoneStats {
+  nom: string;
+  total_contribuables: number;
+  contribuables_payes: number;
+  taux_paiement: number;
+  total_collecte: number;
+}
 
 @Component({
   selector: 'app-cartographie',
@@ -12,181 +34,441 @@ import { ApiService } from '../../../services/api.service';
   imports: [
     CommonModule,
     FormsModule,
-    MapInteractiveComponent,
-    ContenerComponent,
-    H1Component
+    MapInteractiveComponent
   ],
   templateUrl: './cartographie.component.html',
   styleUrl: './cartographie.component.scss'
 })
-export class CartographieComponent {
+export class CartographieComponent implements OnInit, AfterViewInit {
   @ViewChild(MapInteractiveComponent) mapComponent!: MapInteractiveComponent;
   
-  // Filtres de recherche
-  searchTerm: string = '';
-  filterPaye: string = 'all'; // 'all', 'paye', 'non-paye'
-  filterQuartier: string = '';
-  filterCollecteur: string = '';
-  
-  // Résultats filtrés
-  filteredContribuables: any[] = [];
-  allContribuables: any[] = [];
-  
-  // Options pour les filtres
-  quartiers: any[] = [];
-  collecteurs: any[] = [];
-  
-  // Pagination
-  currentPage: number = 1;
-  itemsPerPage: number = 10;
-  
-  showFilters: boolean = true;
-  showResults: boolean = true;
-  
-  // Debounce pour la recherche
-  private searchTimeout: any = null;
+  private apiService = inject(ApiService);
 
-  constructor(private apiService: ApiService) {}
+  // Statistiques du dashboard
+  stats: DashboardStats = {
+    total_contribuables: 0,
+    contribuables_payes: 0,
+    contribuables_impayes: 0,
+    taux_paiement: 0,
+    total_collecte: 0,
+    collecte_aujourd_hui: 0,
+    collecte_ce_mois: 0,
+    nombre_collecteurs: 0,
+    zones_couvertes: 0,
+    zones_non_couvertes: 0
+  };
+
+  zoneStats: ZoneStats[] = [];
+  loading = true;
+  error = '';
+
+  // Filtres
+  searchTerm = '';
+  filterPaye: 'all' | 'paye' | 'non-paye' = 'all';
+  selectedZone: string = '';
+
+  // Données
+  allContribuables: any[] = [];
+  filteredContribuables: any[] = [];
+  zones: any[] = [];
+  quartiers: any[] = [];
+
+  // Charts
+  paiementChart: Chart | null = null;
+  collecteChart: Chart | null = null;
+  zonesChart: Chart | null = null;
+
+  // Vue active
+  activeView: 'dashboard' | 'map' | 'analytics' = 'dashboard';
 
   ngOnInit(): void {
-    this.loadFilterOptions();
+    this.loadData();
   }
 
-  loadFilterOptions(): void {
-    // Charger les quartiers
-    this.apiService.getQuartiers(undefined, true).subscribe({
-      next: (data: any[]) => {
-        this.quartiers = data;
-      },
-      error: (err: any) => {
-        console.error('Erreur chargement quartiers:', err);
-      }
-    });
-
-    // Charger les collecteurs
-    this.apiService.getCollecteurs({ actif: true }).subscribe({
-      next: (data: any) => {
-        this.collecteurs = Array.isArray(data) ? data : (data.items || []);
-      },
-      error: (err: any) => {
-        console.error('Erreur chargement collecteurs:', err);
-      }
-    });
+  ngAfterViewInit(): void {
+    // Les graphiques seront initialisés après le chargement des données
   }
 
-  onContribuablesLoaded(contribuables: any[]): void {
-    this.allContribuables = contribuables;
-    this.applyFilters();
+  async loadData(): Promise<void> {
+    this.loading = true;
+    try {
+      // Charger les contribuables
+      const contribuables = await this.apiService.getContribuablesForMap(true).toPromise();
+      this.allContribuables = contribuables || [];
+      this.filteredContribuables = [...this.allContribuables];
+
+      // Charger les zones et quartiers
+      const zones = await this.apiService.getZones(true).toPromise();
+      this.zones = zones || [];
+      
+      // Charger les statistiques de cartographie
+      let statsCarto: any = {};
+      try {
+        statsCarto = await this.apiService.getStatistiquesCartographie().toPromise() || {};
+      } catch (err) {
+        console.warn('Erreur chargement stats cartographie:', err);
+        // Fallback sur les stats générales
+        try {
+          const statsGen = await this.apiService.getStatistiquesGenerales().toPromise() || {};
+          statsCarto = {
+            total_collecte: statsGen.total_collecte || 0,
+            collecte_aujourd_hui: statsGen.collecte_aujourd_hui || 0,
+            collecte_ce_mois: statsGen.collecte_ce_mois || 0
+          };
+        } catch (e) {
+          console.error('Erreur fallback stats:', e);
+        }
+      }
+      
+      // Charger l'évolution journalière pour le graphique
+      let evolutionData: any = null;
+      try {
+        evolutionData = await this.apiService.getEvolutionJournaliere(7).toPromise();
+      } catch (err) {
+        console.warn('Erreur chargement évolution:', err);
+      }
+      
+      // Charger les collecteurs
+      const collecteurs = await this.apiService.getCollecteurs({ actif: true }).toPromise();
+
+      // Utiliser les stats de cartographie si disponibles
+      if (statsCarto && statsCarto.stats_par_zone) {
+        this.stats = {
+          total_contribuables: statsCarto.total_contribuables || 0,
+          contribuables_payes: statsCarto.contribuables_payes || 0,
+          contribuables_impayes: statsCarto.contribuables_impayes || 0,
+          taux_paiement: statsCarto.taux_paiement || 0,
+          total_collecte: parseFloat(statsCarto.total_collecte || 0),
+          collecte_aujourd_hui: parseFloat(statsCarto.collecte_aujourd_hui || 0),
+          collecte_ce_mois: parseFloat(statsCarto.collecte_ce_mois || 0),
+          nombre_collecteurs: statsCarto.nombre_collecteurs || collecteurs.length,
+          zones_couvertes: statsCarto.zones_couvertes || 0,
+          zones_non_couvertes: statsCarto.zones_non_couvertes || 0
+        };
+        this.zoneStats = (statsCarto.stats_par_zone || []).map((z: any) => ({
+          nom: z.nom,
+          total_contribuables: z.total_contribuables,
+          contribuables_payes: z.contribuables_payes,
+          taux_paiement: z.taux_paiement,
+          total_collecte: parseFloat(z.total_collecte || 0)
+        }));
+      } else {
+        // Fallback: calculer manuellement
+        this.calculateStats(contribuables || [], statsCarto, collecteurs || []);
+        this.calculateZoneStats();
+      }
+      
+      // Mettre à jour le graphique d'évolution si les données sont disponibles
+      if (evolutionData && this.collecteChart) {
+        this.updateCollecteChart(evolutionData);
+      }
+
+      this.loading = false;
+      
+      // Initialiser les graphiques après le chargement
+      setTimeout(() => {
+        this.initCharts();
+      }, 500);
+    } catch (err: any) {
+      this.error = 'Erreur lors du chargement des données';
+      this.loading = false;
+      console.error('Erreur:', err);
+    }
+  }
+
+  calculateStats(contribuables: any[], statsGen: any, collecteurs: any[]): void {
+    const total = contribuables.length;
+    const payes = contribuables.filter(c => c.a_paye).length;
+    const impayes = total - payes;
+    const taux = total > 0 ? (payes / total) * 100 : 0;
+
+    this.stats = {
+      total_contribuables: total,
+      contribuables_payes: payes,
+      contribuables_impayes: impayes,
+      taux_paiement: taux,
+      total_collecte: parseFloat(statsGen?.total_collecte || 0),
+      collecte_aujourd_hui: parseFloat(statsGen?.collecte_aujourd_hui || 0),
+      collecte_ce_mois: parseFloat(statsGen?.collecte_ce_mois || 0),
+      nombre_collecteurs: collecteurs.length,
+      zones_couvertes: this.zones.length,
+      zones_non_couvertes: 0
+    };
+  }
+
+  calculateZoneStats(): void {
+    const zoneMap = new Map<string, ZoneStats>();
+
+    this.allContribuables.forEach(contrib => {
+      const zoneName = contrib.zone || 'Non assigné';
+      if (!zoneMap.has(zoneName)) {
+        zoneMap.set(zoneName, {
+          nom: zoneName,
+          total_contribuables: 0,
+          contribuables_payes: 0,
+          taux_paiement: 0,
+          total_collecte: 0
+        });
+      }
+
+      const zone = zoneMap.get(zoneName)!;
+      zone.total_contribuables++;
+      if (contrib.a_paye) {
+        zone.contribuables_payes++;
+      }
+      zone.total_collecte += contrib.total_collecte || 0;
+    });
+
+    // Calculer les taux
+    zoneMap.forEach(zone => {
+      zone.taux_paiement = zone.total_contribuables > 0 
+        ? (zone.contribuables_payes / zone.total_contribuables) * 100 
+        : 0;
+    });
+
+    this.zoneStats = Array.from(zoneMap.values())
+      .sort((a, b) => b.total_collecte - a.total_collecte)
+      .slice(0, 10);
+  }
+
+  initCharts(): void {
+    this.initPaiementChart();
+    this.initCollecteChart();
+    this.initZonesChart();
+  }
+
+  initPaiementChart(): void {
+    if (this.paiementChart) {
+      this.paiementChart.destroy();
+    }
+    const ctx = document.getElementById('paiementChart') as HTMLCanvasElement;
+    if (!ctx) return;
+
+    const config: ChartConfiguration = {
+      type: 'doughnut',
+      data: {
+        labels: ['Payés', 'Impayés'],
+        datasets: [{
+          data: [this.stats.contribuables_payes, this.stats.contribuables_impayes],
+          backgroundColor: ['#10b981', '#ef4444'],
+          borderWidth: 0
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: {
+              padding: 15,
+              font: { size: 12 }
+            }
+          }
+        }
+      }
+    };
+
+    this.paiementChart = new Chart(ctx, config);
+  }
+
+  initCollecteChart(): void {
+    if (this.collecteChart) {
+      this.collecteChart.destroy();
+    }
+    const ctx = document.getElementById('collecteChart') as HTMLCanvasElement;
+    if (!ctx) return;
+
+    // Labels par défaut (7 derniers jours)
+    const labels = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
+    const data = [0, 0, 0, 0, 0, 0, 0];
+
+    const config: ChartConfiguration = {
+      type: 'line',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: 'Collecte (FCFA)',
+          data: data,
+          borderColor: '#3b82f6',
+          backgroundColor: 'rgba(59, 130, 246, 0.1)',
+          tension: 0.4,
+          fill: true,
+          pointRadius: 4,
+          pointHoverRadius: 6
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            display: false
+          },
+          tooltip: {
+            callbacks: {
+              label: function(context) {
+                return new Intl.NumberFormat('fr-FR', { 
+                  style: 'currency', 
+                  currency: 'XAF',
+                  minimumFractionDigits: 0 
+                }).format(context.parsed.y);
+              }
+            }
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: {
+              callback: function(value) {
+                const numValue = typeof value === 'number' ? value : Number(value);
+                if (numValue >= 1000000) {
+                  return (numValue / 1000000).toFixed(1) + 'M';
+                } else if (numValue >= 1000) {
+                  return (numValue / 1000).toFixed(0) + 'K';
+                }
+                return numValue.toString();
+              }
+            }
+          }
+        }
+      }
+    };
+
+    this.collecteChart = new Chart(ctx, config);
+  }
+
+  updateCollecteChart(evolutionData: any): void {
+    if (!this.collecteChart || !evolutionData) return;
+
+    // Formater les labels de dates
+    const labels = evolutionData.jours?.map((jour: string) => {
+      const date = new Date(jour);
+      return date.toLocaleDateString('fr-FR', { weekday: 'short' });
+    }) || ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
+
+    this.collecteChart.data.labels = labels;
+    this.collecteChart.data.datasets[0].data = evolutionData.montants || [0, 0, 0, 0, 0, 0, 0];
+    this.collecteChart.update();
+  }
+
+  initZonesChart(): void {
+    if (this.zonesChart) {
+      this.zonesChart.destroy();
+    }
+    const ctx = document.getElementById('zonesChart') as HTMLCanvasElement;
+    if (!ctx) return;
+
+    const topZones = this.zoneStats.slice(0, 5);
+
+    const config: ChartConfiguration = {
+      type: 'bar',
+      data: {
+        labels: topZones.map(z => z.nom),
+        datasets: [{
+          label: 'Taux de paiement (%)',
+          data: topZones.map(z => z.taux_paiement),
+          backgroundColor: '#8b5cf6',
+          borderRadius: 8
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            display: false
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            max: 100,
+            ticks: {
+              callback: function(value) {
+                return value + '%';
+              }
+            }
+          }
+        }
+      }
+    };
+
+    this.zonesChart = new Chart(ctx, config);
   }
 
   applyFilters(): void {
-    // Debounce pour éviter trop de mises à jour
-    if (this.searchTimeout) {
-      clearTimeout(this.searchTimeout);
-    }
-    
-    this.searchTimeout = setTimeout(() => {
-      this._applyFilters();
-    }, 300);
-  }
-
-  private _applyFilters(): void {
     let filtered = [...this.allContribuables];
 
-    // Filtre par recherche textuelle
-    if (this.searchTerm && this.searchTerm.trim()) {
-      const search = this.searchTerm.toLowerCase().trim();
+    // Filtre par recherche
+    if (this.searchTerm) {
+      const term = this.searchTerm.toLowerCase();
       filtered = filtered.filter(c => 
-        c.nom?.toLowerCase().includes(search) ||
-        c.prenom?.toLowerCase().includes(search) ||
-        c.telephone?.includes(search) ||
-        c.nom_activite?.toLowerCase().includes(search) ||
-        c.adresse?.toLowerCase().includes(search)
+        c.nom?.toLowerCase().includes(term) ||
+        c.prenom?.toLowerCase().includes(term) ||
+        c.telephone?.includes(term) ||
+        c.nom_activite?.toLowerCase().includes(term)
       );
     }
 
     // Filtre par statut de paiement
     if (this.filterPaye === 'paye') {
-      filtered = filtered.filter(c => c.a_paye === true);
+      filtered = filtered.filter(c => c.a_paye);
     } else if (this.filterPaye === 'non-paye') {
-      filtered = filtered.filter(c => c.a_paye === false);
+      filtered = filtered.filter(c => !c.a_paye);
     }
 
-    // Filtre par quartier
-    if (this.filterQuartier) {
-      filtered = filtered.filter(c => 
-        c.quartier === this.filterQuartier || 
-        c.quartier_id?.toString() === this.filterQuartier
-      );
-    }
-
-    // Filtre par collecteur
-    if (this.filterCollecteur) {
-      filtered = filtered.filter(c => 
-        c.collecteur?.includes(this.filterCollecteur) ||
-        c.collecteur_id?.toString() === this.filterCollecteur
-      );
+    // Filtre par zone
+    if (this.selectedZone) {
+      filtered = filtered.filter(c => c.zone === this.selectedZone);
     }
 
     this.filteredContribuables = filtered;
-    this.currentPage = 1;
-
-    // Mettre à jour la carte avec les résultats filtrés de manière stable
+    
+    // Mettre à jour la carte
     if (this.mapComponent) {
-      // Utiliser requestAnimationFrame pour une mise à jour fluide
-      requestAnimationFrame(() => {
-        this.mapComponent.setFilteredContribuables(filtered);
-      });
+      this.mapComponent.setFilteredContribuables(filtered);
     }
   }
 
   clearFilters(): void {
     this.searchTerm = '';
     this.filterPaye = 'all';
-    this.filterQuartier = '';
-    this.filterCollecteur = '';
+    this.selectedZone = '';
     this.applyFilters();
   }
 
-  get totalPages(): number {
-    return Math.ceil(this.filteredContribuables.length / this.itemsPerPage);
-  }
-
-  get paginatedContribuables(): any[] {
-    const start = (this.currentPage - 1) * this.itemsPerPage;
-    const end = start + this.itemsPerPage;
-    return this.filteredContribuables.slice(start, end);
-  }
-
-  goToPage(page: number): void {
-    if (page >= 1 && page <= this.totalPages) {
-      this.currentPage = page;
+  switchView(view: 'dashboard' | 'map' | 'analytics'): void {
+    this.activeView = view;
+    if (view === 'map' && this.mapComponent) {
+      setTimeout(() => {
+        this.mapComponent.setFilteredContribuables(this.filteredContribuables);
+      }, 100);
     }
   }
 
-  zoomToContribuable(contribuable: any): void {
-    if (this.mapComponent && contribuable.latitude && contribuable.longitude) {
-      this.mapComponent.zoomToPoint(
-        parseFloat(contribuable.latitude),
-        parseFloat(contribuable.longitude)
-      );
-    }
+  formatNumber(num: number): string {
+    return new Intl.NumberFormat('fr-FR').format(num);
   }
 
-  toggleFilters(): void {
-    this.showFilters = !this.showFilters;
+  formatCurrency(amount: number): string {
+    return new Intl.NumberFormat('fr-FR', { 
+      style: 'currency', 
+      currency: 'XAF',
+      minimumFractionDigits: 0 
+    }).format(amount);
   }
 
-  toggleResults(): void {
-    this.showResults = !this.showResults;
+  getProgressColor(value: number): string {
+    if (value >= 80) return 'bg-green-500';
+    if (value >= 50) return 'bg-yellow-500';
+    return 'bg-red-500';
   }
 
-  getStats(): any {
-    const total = this.allContribuables.length;
-    const payes = this.allContribuables.filter(c => c.a_paye === true).length;
-    const nonPayes = this.allContribuables.filter(c => c.a_paye === false).length;
-    const filtered = this.filteredContribuables.length;
-    
-    return { total, payes, nonPayes, filtered };
+  getZoneColor(taux: number): string {
+    if (taux >= 80) return '#10b981';
+    if (taux >= 50) return '#f59e0b';
+    return '#ef4444';
   }
 }

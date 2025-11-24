@@ -171,6 +171,7 @@ class Collecteur(Base):
     zone = relationship("Zone")
     contribuables = relationship("Contribuable", back_populates="collecteur")
     collectes = relationship("InfoCollecte", back_populates="collecteur")
+    dossiers_impayes = relationship("DossierImpaye", back_populates="collecteur")
 
 
 # ==================== TABLE CONTRIBUABLE ====================
@@ -203,6 +204,8 @@ class Contribuable(Base):
     collecteur = relationship("Collecteur", back_populates="contribuables")
     affectations_taxes = relationship("AffectationTaxe", back_populates="contribuable")
     collectes = relationship("InfoCollecte", back_populates="contribuable")
+    relances = relationship("Relance", back_populates="contribuable")
+    dossiers_impayes = relationship("DossierImpaye", back_populates="contribuable")
 
 
 # ==================== TABLE TAXE ====================
@@ -249,6 +252,8 @@ class AffectationTaxe(Base):
     # Relations
     contribuable = relationship("Contribuable", back_populates="affectations_taxes")
     taxe = relationship("Taxe", back_populates="affectations_taxes")
+    relances = relationship("Relance", back_populates="affectation_taxe")
+    dossiers_impayes = relationship("DossierImpaye", back_populates="affectation_taxe")
 
 
 # ==================== TABLE INFO_COLLECTE ====================
@@ -328,3 +333,136 @@ class Utilisateur(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
+
+# ==================== ENUMS POUR RELANCES ====================
+class TypeRelanceEnum(str, enum.Enum):
+    """Types de relances"""
+    SMS = "sms"
+    EMAIL = "email"
+    APPEL = "appel"
+    COURRIER = "courrier"
+    VISITE = "visite"
+
+
+class StatutRelanceEnum(str, enum.Enum):
+    """Statut d'une relance"""
+    EN_ATTENTE = "en_attente"
+    ENVOYEE = "envoyee"
+    ECHEC = "echec"
+    ANNULEE = "annulee"
+
+
+# ==================== TABLE RELANCE ====================
+class Relance(Base):
+    """Historique des relances envoyées aux contribuables"""
+    __tablename__ = "relance"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    contribuable_id = Column(Integer, ForeignKey("contribuable.id"), nullable=False)
+    affectation_taxe_id = Column(Integer, ForeignKey("affectation_taxe.id"), nullable=True)
+    type_relance = Column(Enum(TypeRelanceEnum, name='type_relance_enum', create_type=False, values_callable=lambda x: [e.value for e in TypeRelanceEnum]), nullable=False)
+    statut = Column(Enum(StatutRelanceEnum, name='statut_relance_enum', create_type=False, values_callable=lambda x: [e.value for e in StatutRelanceEnum]), default=StatutRelanceEnum.EN_ATTENTE)
+    message = Column(Text, nullable=True)
+    montant_due = Column(Numeric(12, 2), nullable=False)
+    date_echeance = Column(DateTime, nullable=True)
+    date_envoi = Column(DateTime, nullable=True)
+    date_planifiee = Column(DateTime, nullable=False)
+    canal_envoi = Column(String(100), nullable=True)
+    reponse_recue = Column(Boolean, default=False)
+    date_reponse = Column(DateTime, nullable=True)
+    notes = Column(Text, nullable=True)
+    utilisateur_id = Column(Integer, ForeignKey("utilisateur.id"), nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Relations
+    contribuable = relationship("Contribuable", back_populates="relances")
+    affectation_taxe = relationship("AffectationTaxe", back_populates="relances")
+    utilisateur = relationship("Utilisateur")
+
+
+# ==================== TABLE DOSSIER_IMPAYE ====================
+class StatutTransactionEnum(str, enum.Enum):
+    """Statut d'une transaction de paiement"""
+    PENDING = "pending"
+    SUCCESS = "success"
+    FAILED = "failed"
+    CANCELLED = "cancelled"
+    REFUNDED = "refunded"
+
+
+class TransactionBambooPay(Base):
+    """Transactions de paiement via BambooPay"""
+    __tablename__ = "transaction_bamboopay"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    contribuable_id = Column(Integer, ForeignKey("contribuable.id"), nullable=True)  # Optionnel si paiement sans compte
+    affectation_taxe_id = Column(Integer, ForeignKey("affectation_taxe.id"), nullable=True)  # Optionnel
+    taxe_id = Column(Integer, ForeignKey("taxe.id"), nullable=True)  # Pour paiement direct d'une taxe
+    
+    # Informations du payeur
+    payer_name = Column(String(200), nullable=False)
+    phone = Column(String(20), nullable=False)
+    matricule = Column(String(50), nullable=True)
+    raison_sociale = Column(String(200), nullable=True)
+    
+    # Informations de transaction
+    billing_id = Column(String(100), unique=True, nullable=False, index=True)  # ID facture côté marchand
+    transaction_amount = Column(Numeric(12, 2), nullable=False)
+    reference_bp = Column(String(100), nullable=True, index=True)  # Référence BambooPay
+    transaction_id = Column(String(100), nullable=True, index=True)  # ID transaction BambooPay
+    
+    # Statut
+    statut = Column(Enum(StatutTransactionEnum, name='statut_transaction_enum', create_type=False, values_callable=lambda x: [e.value for e in StatutTransactionEnum]), default=StatutTransactionEnum.PENDING)
+    statut_message = Column(Text, nullable=True)
+    
+    # URLs
+    return_url = Column(String(500), nullable=True)
+    callback_url = Column(String(500), nullable=True)
+    
+    # Métadonnées
+    operateur = Column(String(50), nullable=True)  # moov_money, airtel_money, etc.
+    payment_method = Column(String(50), nullable=True)  # web, mobile_instant
+    metadata_json = Column(JSON, nullable=True)  # Données additionnelles (renommé car 'metadata' est réservé dans SQLAlchemy)
+    
+    # Dates
+    date_initiation = Column(DateTime, default=datetime.utcnow)
+    date_paiement = Column(DateTime, nullable=True)
+    date_callback = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Relations
+    contribuable = relationship("Contribuable")
+    affectation_taxe = relationship("AffectationTaxe")
+    taxe = relationship("Taxe")
+
+
+class DossierImpaye(Base):
+    """Dossiers d'impayés pour suivi et recouvrement"""
+    __tablename__ = "dossier_impaye"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    contribuable_id = Column(Integer, ForeignKey("contribuable.id"), nullable=False)
+    affectation_taxe_id = Column(Integer, ForeignKey("affectation_taxe.id"), nullable=False)
+    montant_initial = Column(Numeric(12, 2), nullable=False)
+    montant_paye = Column(Numeric(12, 2), default=0.00)
+    montant_restant = Column(Numeric(12, 2), nullable=False)
+    penalites = Column(Numeric(12, 2), default=0.00)
+    date_echeance = Column(DateTime, nullable=False)
+    jours_retard = Column(Integer, default=0)
+    statut = Column(String(50), default="en_cours")  # en_cours, partiellement_paye, paye, archive
+    priorite = Column(String(20), default="normale")  # faible, normale, elevee, urgente
+    dernier_contact = Column(DateTime, nullable=True)
+    nombre_relances = Column(Integer, default=0)
+    notes = Column(Text, nullable=True)
+    assigne_a = Column(Integer, ForeignKey("collecteur.id"), nullable=True)
+    date_assignation = Column(DateTime, nullable=True)
+    date_cloture = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Relations
+    contribuable = relationship("Contribuable", back_populates="dossiers_impayes")
+    affectation_taxe = relationship("AffectationTaxe", back_populates="dossiers_impayes")
+    collecteur = relationship("Collecteur", back_populates="dossiers_impayes")

@@ -4,12 +4,14 @@ Routes pour la gestion des collecteurs
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
-from sqlalchemy import func
+from sqlalchemy import func, extract
 from typing import List, Optional
 from database.database import get_db
-from database.models import Collecteur, StatutCollecteurEnum, EtatCollecteurEnum
+from database.models import Collecteur, StatutCollecteurEnum, EtatCollecteurEnum, InfoCollecte, StatutCollecteEnum
 from schemas.collecteur import CollecteurCreate, CollecteurUpdate, CollecteurResponse
-from datetime import datetime
+from schemas.activite_collecteur import ActiviteCollecteurResponse, ActiviteJour
+from datetime import datetime, timedelta
+from decimal import Decimal
 
 router = APIRouter(prefix="/api/collecteurs", tags=["collecteurs"])
 
@@ -192,4 +194,114 @@ def delete_collecteur(collecteur_id: int, db: Session = Depends(get_db)):
     db_collecteur.updated_at = datetime.utcnow()
     db.commit()
     return None
+
+
+@router.get("/{collecteur_id}/activites", response_model=ActiviteCollecteurResponse)
+def get_activites_collecteur(
+    collecteur_id: int,
+    date_debut: Optional[str] = Query(None, description="Date de début (YYYY-MM-DD). Par défaut: 30 derniers jours"),
+    date_fin: Optional[str] = Query(None, description="Date de fin (YYYY-MM-DD). Par défaut: aujourd'hui"),
+    db: Session = Depends(get_db)
+):
+    """
+    Récupère les activités d'un collecteur (collectes par jour, heures de travail, etc.)
+    """
+    # Vérifier que le collecteur existe
+    collecteur = db.query(Collecteur).filter(Collecteur.id == collecteur_id).first()
+    if not collecteur:
+        raise HTTPException(status_code=404, detail="Collecteur non trouvé")
+    
+    # Définir les dates par défaut (30 derniers jours)
+    if not date_fin:
+        date_fin = datetime.utcnow().date()
+    else:
+        try:
+            date_fin = datetime.strptime(date_fin, "%Y-%m-%d").date()
+        except ValueError:
+            raise HTTPException(status_code=400, detail="Format de date_fin invalide. Utilisez YYYY-MM-DD")
+    
+    if not date_debut:
+        date_debut = date_fin - timedelta(days=30)
+    else:
+        try:
+            date_debut = datetime.strptime(date_debut, "%Y-%m-%d").date()
+        except ValueError:
+            raise HTTPException(status_code=400, detail="Format de date_debut invalide. Utilisez YYYY-MM-DD")
+    
+    # Récupérer les collectes du collecteur dans la période
+    collectes = db.query(InfoCollecte).filter(
+        InfoCollecte.collecteur_id == collecteur_id,
+        InfoCollecte.annule == False,
+        func.date(InfoCollecte.date_collecte) >= date_debut,
+        func.date(InfoCollecte.date_collecte) <= date_fin
+    ).order_by(InfoCollecte.date_collecte).all()
+    
+    # Grouper par jour
+    activites_par_jour = {}
+    for collecte in collectes:
+        date_collecte = collecte.date_collecte.date()
+        date_str = date_collecte.strftime("%Y-%m-%d")
+        
+        if date_str not in activites_par_jour:
+            activites_par_jour[date_str] = {
+                "date": date_str,
+                "collectes": [],
+                "montant_total": Decimal("0.00")
+            }
+        
+        activites_par_jour[date_str]["collectes"].append(collecte)
+        activites_par_jour[date_str]["montant_total"] += collecte.montant
+    
+    # Construire la liste des activités
+    activites = []
+    total_collectes = 0
+    total_montant = Decimal("0.00")
+    
+    for date_str in sorted(activites_par_jour.keys()):
+        jour_data = activites_par_jour[date_str]
+        collectes_du_jour = jour_data["collectes"]
+        
+        # Trouver la première et dernière collecte du jour
+        premiere_collecte = min(collectes_du_jour, key=lambda c: c.date_collecte).date_collecte
+        derniere_collecte = max(collectes_du_jour, key=lambda c: c.date_collecte).date_collecte
+        
+        # Calculer la durée de travail en minutes
+        duree_minutes = None
+        if premiere_collecte and derniere_collecte:
+            delta = derniere_collecte - premiere_collecte
+            duree_minutes = int(delta.total_seconds() / 60)
+        
+        activite = ActiviteJour(
+            date=date_str,
+            nombre_collectes=len(collectes_du_jour),
+            montant_total=jour_data["montant_total"],
+            premiere_collecte=premiere_collecte,
+            derniere_collecte=derniere_collecte,
+            duree_travail_minutes=duree_minutes
+        )
+        activites.append(activite)
+        
+        total_collectes += len(collectes_du_jour)
+        total_montant += jour_data["montant_total"]
+    
+    # Calculer les moyennes
+    nombre_jours_actifs = len(activites)
+    moyenne_collectes = total_collectes / nombre_jours_actifs if nombre_jours_actifs > 0 else None
+    moyenne_montant = total_montant / nombre_jours_actifs if nombre_jours_actifs > 0 else None
+    
+    return ActiviteCollecteurResponse(
+        collecteur_id=collecteur.id,
+        collecteur_nom=collecteur.nom,
+        collecteur_prenom=collecteur.prenom,
+        collecteur_matricule=collecteur.matricule,
+        periode_debut=date_debut.strftime("%Y-%m-%d"),
+        periode_fin=date_fin.strftime("%Y-%m-%d"),
+        activites=activites,
+        total_collectes=total_collectes,
+        total_montant=total_montant,
+        nombre_jours_actifs=nombre_jours_actifs,
+        moyenne_collectes_par_jour=moyenne_collectes,
+        moyenne_montant_par_jour=moyenne_montant
+    )
+
 

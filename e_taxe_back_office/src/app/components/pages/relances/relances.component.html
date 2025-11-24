@@ -1,0 +1,397 @@
+<div class="relances-container p-6">
+  <div class="mb-6">
+    <h1 class="text-3xl font-bold text-gray-900 mb-2">Gestion des Relances</h1>
+    <p class="text-gray-600">Gérez les relances envoyées aux contribuables en retard de paiement</p>
+  </div>
+
+  @if (error) {
+    <div class="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
+      {{ error }}
+    </div>
+  }
+
+  <!-- Statistiques -->
+  @if (stats) {
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+      <div class="bg-white p-4 rounded-lg shadow border">
+        <div class="text-sm text-gray-600">Total relances</div>
+        <div class="text-2xl font-bold text-gray-900">{{ stats.total_relances }}</div>
+      </div>
+      <div class="bg-white p-4 rounded-lg shadow border">
+        <div class="text-sm text-gray-600">Envoyées</div>
+        <div class="text-2xl font-bold text-green-600">{{ stats.relances_envoyees }}</div>
+      </div>
+      <div class="bg-white p-4 rounded-lg shadow border">
+        <div class="text-sm text-gray-600">En attente</div>
+        <div class="text-2xl font-bold text-yellow-600">{{ stats.relances_en_attente }}</div>
+      </div>
+      <div class="bg-white p-4 rounded-lg shadow border">
+        <div class="text-sm text-gray-600">Taux de réponse</div>
+        <div class="text-2xl font-bold text-blue-600">{{ stats.taux_reponse | number:'1.1-1' }}%</div>
+      </div>
+    </div>
+  }
+
+  <!-- Actions -->
+  <div class="mb-6 flex gap-4">
+    <button
+      (click)="openCreateModal()"
+      [disabled]="loading"
+      class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
+    >
+      Créer une relance manuelle
+    </button>
+    <button
+      (click)="genererRelancesAutomatiques()"
+      [disabled]="loading"
+      class="px-4 py-2 bg-main text-white rounded-lg hover:bg-main/90 disabled:opacity-50"
+    >
+      Générer relances automatiques
+    </button>
+  </div>
+
+  <!-- Filtres -->
+  <div class="bg-white p-4 rounded-lg shadow border mb-6">
+    <h2 class="text-lg font-semibold mb-4">Filtres</h2>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Type de relance</label>
+        <select
+          [(ngModel)]="filters.type_relance"
+          class="w-full px-3 py-2 border border-gray-300 rounded-lg"
+        >
+          <option value="">Tous</option>
+          <option value="sms">SMS</option>
+          <option value="email">Email</option>
+          <option value="appel">Appel</option>
+          <option value="courrier">Courrier</option>
+          <option value="visite">Visite</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Statut</label>
+        <select
+          [(ngModel)]="filters.statut"
+          class="w-full px-3 py-2 border border-gray-300 rounded-lg"
+        >
+          <option value="">Tous</option>
+          <option value="en_attente">En attente</option>
+          <option value="envoyee">Envoyée</option>
+          <option value="echec">Échec</option>
+          <option value="annulee">Annulée</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Date début</label>
+        <input
+          type="date"
+          [(ngModel)]="filters.date_debut"
+          class="w-full px-3 py-2 border border-gray-300 rounded-lg"
+        >
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Date fin</label>
+        <input
+          type="date"
+          [(ngModel)]="filters.date_fin"
+          class="w-full px-3 py-2 border border-gray-300 rounded-lg"
+        >
+      </div>
+      <div class="flex items-end gap-2">
+        <button
+          (click)="applyFilters()"
+          class="px-4 py-2 bg-main text-white rounded-lg hover:bg-main/90"
+        >
+          Appliquer
+        </button>
+        <button
+          (click)="resetFilters()"
+          class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
+        >
+          Réinitialiser
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tableau des relances -->
+  <div class="bg-white rounded-lg shadow border overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50">
+          <tr>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contribuable</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Montant dû</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date planifiée</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Statut</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-200">
+          @if (loading) {
+            <tr>
+              <td colspan="6" class="px-6 py-4 text-center text-gray-500">Chargement...</td>
+            </tr>
+          } @else if (relances.length === 0) {
+            <tr>
+              <td colspan="6" class="px-6 py-4 text-center text-gray-500">Aucune relance trouvée</td>
+            </tr>
+          } @else {
+            @for (relance of relances; track relance.id) {
+              <tr class="hover:bg-gray-50">
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <div class="text-sm font-medium text-gray-900">
+                    {{ relance.contribuable?.nom }} {{ relance.contribuable?.prenom }}
+                  </div>
+                  <div class="text-sm text-gray-500">{{ relance.contribuable?.telephone }}</div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  {{ getTypeRelanceLabel(relance.type_relance) }}
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                  {{ relance.montant_due | number:'1.0-0' }} FCFA
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  {{ relance.date_planifiee | date:'dd/MM/yyyy HH:mm' }}
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <span class="px-2 py-1 text-xs font-semibold rounded-full {{ getStatutClass(relance.statut) }}">
+                    {{ relance.statut }}
+                  </span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                  @if (relance.statut === 'en_attente') {
+                    <button
+                      (click)="envoyerRelance(relance.id)"
+                      class="text-main hover:text-main/80"
+                    >
+                      Marquer envoyée
+                    </button>
+                  }
+                </td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    @if (getTotalPages() > 1) {
+      <div class="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
+        <div class="text-sm text-gray-700">
+          Page {{ currentPage + 1 }} sur {{ getTotalPages() }} ({{ total }} relances)
+        </div>
+        <div class="flex gap-2">
+          <button
+            (click)="onPageChange(currentPage - 1)"
+            [disabled]="currentPage === 0"
+            class="px-3 py-1 border border-gray-300 rounded-lg disabled:opacity-50"
+          >
+            Précédent
+          </button>
+          <button
+            (click)="onPageChange(currentPage + 1)"
+            [disabled]="currentPage >= getTotalPages() - 1"
+            class="px-3 py-1 border border-gray-300 rounded-lg disabled:opacity-50"
+          >
+            Suivant
+          </button>
+        </div>
+      </div>
+    }
+  </div>
+</div>
+
+<!-- Modal de création de relance -->
+@if (showCreateModal) {
+  <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+      <div class="p-6">
+        <div class="flex justify-between items-center mb-6">
+          <h2 class="text-2xl font-bold text-gray-900">Créer une relance</h2>
+          <button
+            (click)="closeCreateModal()"
+            class="text-gray-400 hover:text-gray-600"
+          >
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        @if (error) {
+          <div class="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+            {{ error }}
+          </div>
+        }
+
+        <form (ngSubmit)="createRelance()" class="space-y-4">
+          <!-- Recherche de contribuable -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Contribuable *</label>
+            <div class="relative">
+              <input
+                type="text"
+                [(ngModel)]="searchContribuableTerm"
+                (input)="searchContribuables()"
+                name="searchContribuable"
+                placeholder="Rechercher un contribuable (nom, téléphone...)"
+                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-main"
+              />
+              @if (contribuables.length > 0) {
+                <div class="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                  @for (contribuable of contribuables; track contribuable.id) {
+                    <div
+                      (click)="selectContribuable(contribuable)"
+                      class="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                    >
+                      <div class="font-medium">{{ contribuable.nom }} {{ contribuable.prenom }}</div>
+                      <div class="text-sm text-gray-500">{{ contribuable.telephone }}</div>
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+            @if (selectedContribuable) {
+              <div class="mt-2 p-2 bg-green-50 border border-green-200 rounded-lg">
+                <div class="text-sm font-medium text-green-800">
+                  ✓ {{ selectedContribuable.nom }} {{ selectedContribuable.prenom }}
+                </div>
+                <div class="text-xs text-green-600">{{ selectedContribuable.telephone }}</div>
+              </div>
+            }
+          </div>
+
+          <!-- Affectation de taxe (optionnel) -->
+          @if (selectedContribuable) {
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Taxe concernée (optionnel)</label>
+              <select
+                [(ngModel)]="selectedAffectationTaxe"
+                (change)="selectAffectationTaxe()"
+                name="affectation_taxe"
+                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-main"
+              >
+                <option [ngValue]="null">Aucune (relance générale - saisir montant manuellement)</option>
+                @if (affectationsTaxes.length > 0) {
+                  @for (affectation of affectationsTaxes; track affectation.id) {
+                    <option [ngValue]="affectation">
+                      {{ affectation.taxe?.nom }} - {{ affectation.montant_custom || affectation.taxe?.montant }} FCFA
+                    </option>
+                  }
+                }
+              </select>
+              <p class="mt-1 text-xs text-gray-500">
+                Si aucune taxe n'est sélectionnée, vous pouvez saisir le montant manuellement ci-dessous
+              </p>
+            </div>
+          }
+
+          <!-- Type de relance -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Type de relance *</label>
+            <select
+              [(ngModel)]="newRelance.type_relance"
+              (change)="onTypeRelanceChange()"
+              name="type_relance"
+              required
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-main"
+            >
+              <option value="sms">SMS</option>
+              <option value="email">Email</option>
+              <option value="appel">Appel téléphonique</option>
+              <option value="courrier">Courrier</option>
+              <option value="visite">Visite</option>
+            </select>
+          </div>
+
+          <!-- Montant dû -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Montant dû (FCFA) *</label>
+            <input
+              type="number"
+              [(ngModel)]="newRelance.montant_due"
+              name="montant_due"
+              required
+              min="0"
+              step="0.01"
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-main"
+            />
+          </div>
+
+          <!-- Date planifiée -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Date planifiée *</label>
+            <input
+              type="date"
+              [(ngModel)]="newRelance.date_planifiee"
+              name="date_planifiee"
+              required
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-main"
+            />
+          </div>
+
+          <!-- Date d'échéance (optionnel) -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Date d'échéance (optionnel)</label>
+            <input
+              type="date"
+              [(ngModel)]="newRelance.date_echeance"
+              name="date_echeance"
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-main"
+            />
+          </div>
+
+          <!-- Message -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Message (optionnel)</label>
+            <textarea
+              [(ngModel)]="newRelance.message"
+              name="message"
+              rows="3"
+              placeholder="Message personnalisé pour la relance..."
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-main"
+            ></textarea>
+          </div>
+
+          <!-- Notes (optionnel) -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Notes internes (optionnel)</label>
+            <textarea
+              [(ngModel)]="newRelance.notes"
+              name="notes"
+              rows="2"
+              placeholder="Notes internes..."
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-main"
+            ></textarea>
+          </div>
+
+          <!-- Boutons -->
+          <div class="flex gap-4 pt-4">
+            <button
+              type="button"
+              (click)="closeCreateModal()"
+              class="flex-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
+            >
+              Annuler
+            </button>
+            <button
+              type="submit"
+              [disabled]="loading"
+              class="flex-1 px-4 py-2 bg-main text-white rounded-lg hover:bg-main/90 disabled:opacity-50"
+            >
+              @if (loading) {
+                Création...
+              } @else {
+                Créer la relance
+              }
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+}
+

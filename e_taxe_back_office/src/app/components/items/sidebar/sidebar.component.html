@@ -69,6 +69,23 @@
                 Cartographie
               </a>
             </li>
+             <li class="{{isCurrentUrl('relances')}} [&.active]:bg-main hover:bg-gray-50 px-6 rounded-lg py-3 mx-3 [&.active]:text-secondary">
+              <a routerLink="/relances" class="group flex gap-x-3 items-center rounded-md text-sm/6 font-semibold">
+                <svg class="size-4 shrink-0" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24">
+                  <path fill="currentColor" d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2m0 4l-8 5l-8-5V6l8 5l8-5z"/>
+                  <circle cx="19" cy="5" r="3" fill="currentColor"/>
+                </svg>
+                Relances
+              </a>
+            </li>
+             <li class="{{isCurrentUrl('impayes')}} [&.active]:bg-main hover:bg-gray-50 px-6 rounded-lg py-3 mx-3 [&.active]:text-secondary">
+              <a routerLink="/impayes" class="group flex gap-x-3 items-center rounded-md text-sm/6 font-semibold">
+                <svg class="size-4 shrink-0" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24">
+                  <path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10s10-4.48 10-10S17.52 2 12 2m1 15h-2v-2h2zm0-4h-2V7h2z"/>
+                </svg>
+                Impayés
+              </a>
+            </li>
           </ul>
         </li>
 <!--        <li></li>-->
