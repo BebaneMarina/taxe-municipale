@@ -10,8 +10,13 @@ from database.database import get_db
 from database.models import Contribuable
 from schemas.contribuable import ContribuableCreate, ContribuableUpdate, ContribuableResponse
 from datetime import datetime
+from auth.security import get_current_active_user
 
-router = APIRouter(prefix="/api/contribuables", tags=["contribuables"])
+router = APIRouter(
+    prefix="/api/contribuables",
+    tags=["contribuables"],
+    dependencies=[Depends(get_current_active_user)],
+)
 
 
 def make_point(longitude: Optional[float], latitude: Optional[float]):

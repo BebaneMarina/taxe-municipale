@@ -9,8 +9,13 @@ from database.database import get_db
 from database.models import Taxe
 from schemas.taxe import TaxeCreate, TaxeUpdate, TaxeResponse
 from datetime import datetime
+from auth.security import get_current_active_user
 
-router = APIRouter(prefix="/api/taxes", tags=["taxes"])
+router = APIRouter(
+    prefix="/api/taxes",
+    tags=["taxes"],
+    dependencies=[Depends(get_current_active_user)],
+)
 
 
 @router.get("/", response_model=List[TaxeResponse])

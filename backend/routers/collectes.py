@@ -10,8 +10,18 @@ from database.models import InfoCollecte, Taxe, StatutCollecteEnum
 from schemas.info_collecte import InfoCollecteCreate, InfoCollecteUpdate, InfoCollecteResponse
 from datetime import datetime, date
 from decimal import Decimal
+from pydantic import BaseModel, Field
+from auth.security import get_current_active_user
 
-router = APIRouter(prefix="/api/collectes", tags=["collectes"])
+router = APIRouter(
+    prefix="/api/collectes",
+    tags=["collectes"],
+    dependencies=[Depends(get_current_active_user)],
+)
+
+
+class CollecteAnnulationRequest(BaseModel):
+    raison: str = Field(..., min_length=3, description="Raison de l'annulation")
 
 
 @router.get("/", response_model=List[InfoCollecteResponse])
@@ -131,7 +141,7 @@ def update_collecte(collecte_id: int, collecte_update: InfoCollecteUpdate, db: S
 @router.patch("/{collecte_id}/annuler", response_model=InfoCollecteResponse)
 def annuler_collecte(
     collecte_id: int,
-    raison: str = Query(..., description="Raison de l'annulation"),
+    payload: CollecteAnnulationRequest,
     db: Session = Depends(get_db)
 ):
     """Annule une collecte"""
@@ -140,8 +150,26 @@ def annuler_collecte(
         raise HTTPException(status_code=404, detail="Collecte non trouvée")
     
     db_collecte.annule = True
-    db_collecte.raison_annulation = raison
+    db_collecte.raison_annulation = payload.raison
     db_collecte.statut = StatutCollecteEnum.CANCELLED
+    db_collecte.updated_at = datetime.utcnow()
+    db.commit()
+    db.refresh(db_collecte)
+    return db_collecte
+
+
+@router.patch("/{collecte_id}/valider", response_model=InfoCollecteResponse)
+def valider_collecte(collecte_id: int, db: Session = Depends(get_db)):
+    """Valide une collecte et met à jour son statut"""
+    db_collecte = db.query(InfoCollecte).filter(InfoCollecte.id == collecte_id).first()
+    if not db_collecte:
+        raise HTTPException(status_code=404, detail="Collecte non trouvée")
+
+    if db_collecte.annule:
+        raise HTTPException(status_code=400, detail="Impossible de valider une collecte annulée")
+
+    db_collecte.statut = StatutCollecteEnum.COMPLETED
+    db_collecte.date_cloture = datetime.utcnow()
     db_collecte.updated_at = datetime.utcnow()
     db.commit()
     db.refresh(db_collecte)

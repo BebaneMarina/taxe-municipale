@@ -11,8 +11,15 @@ from database.models import InfoCollecte, Collecteur, Taxe, StatutCollecteEnum
 from datetime import datetime, date, timedelta
 from decimal import Decimal
 from pydantic import BaseModel
+from auth.security import get_current_active_user
+from schemas.statistiques_collecteur import StatistiquesCollecteurResponse
+from services.statistiques_collecteur import compute_statistiques_collecteur
 
-router = APIRouter(prefix="/api/rapports", tags=["rapports"])
+router = APIRouter(
+    prefix="/api/rapports",
+    tags=["rapports"],
+    dependencies=[Depends(get_current_active_user)],
+)
 
 
 # Schémas de réponse
@@ -429,4 +436,13 @@ def get_rapport_complet(
         import traceback
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Erreur lors de la génération du rapport: {str(e)}")
+
+
+@router.get("/collecteur/{collecteur_id}", response_model=StatistiquesCollecteurResponse)
+def get_collecteur_stats_via_rapports(collecteur_id: int, db: Session = Depends(get_db)):
+    """Expose /api/rapports/collecteur/{collecteur_id} pour l'app mobile"""
+    stats = compute_statistiques_collecteur(db, collecteur_id)
+    if not stats:
+        raise HTTPException(status_code=404, detail="Collecteur non trouvé")
+    return stats
 

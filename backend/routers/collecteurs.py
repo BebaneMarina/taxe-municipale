@@ -10,10 +10,17 @@ from database.database import get_db
 from database.models import Collecteur, StatutCollecteurEnum, EtatCollecteurEnum, InfoCollecte, StatutCollecteEnum
 from schemas.collecteur import CollecteurCreate, CollecteurUpdate, CollecteurResponse
 from schemas.activite_collecteur import ActiviteCollecteurResponse, ActiviteJour
+from schemas.statistiques_collecteur import StatistiquesCollecteurResponse
+from services.statistiques_collecteur import compute_statistiques_collecteur
+from auth.security import get_current_active_user
 from datetime import datetime, timedelta
 from decimal import Decimal
 
-router = APIRouter(prefix="/api/collecteurs", tags=["collecteurs"])
+router = APIRouter(
+    prefix="/api/collecteurs",
+    tags=["collecteurs"],
+    dependencies=[Depends(get_current_active_user)],
+)
 
 
 def make_point(longitude: Optional[float], latitude: Optional[float]):
@@ -31,6 +38,7 @@ def get_collecteurs(
     zone_id: Optional[int] = None,
     actif: Optional[bool] = None,
     search: Optional[str] = None,
+    email: Optional[str] = None,
     db: Session = Depends(get_db)
 ):
     """Récupère la liste des collecteurs avec filtres"""
@@ -60,6 +68,8 @@ def get_collecteurs(
             (Collecteur.matricule.ilike(search_term)) |
             (Collecteur.email.ilike(search_term))
         )
+    if email:
+        query = query.filter(func.lower(Collecteur.email) == email.lower())
     
     collecteurs = query.offset(skip).limit(limit).all()
     return collecteurs
@@ -99,6 +109,7 @@ def create_collecteur(collecteur: CollecteurCreate, db: Session = Depends(get_db
 
 
 @router.put("/{collecteur_id}", response_model=CollecteurResponse)
+@router.patch("/{collecteur_id}", response_model=CollecteurResponse)
 def update_collecteur(collecteur_id: int, collecteur_update: CollecteurUpdate, db: Session = Depends(get_db)):
     """Met à jour un collecteur"""
     db_collecteur = db.query(Collecteur).filter(Collecteur.id == collecteur_id).first()
@@ -125,6 +136,15 @@ def update_collecteur(collecteur_id: int, collecteur_update: CollecteurUpdate, d
     db.commit()
     db.refresh(db_collecteur)
     return db_collecteur
+
+
+@router.get("/{collecteur_id}/statistiques", response_model=StatistiquesCollecteurResponse)
+def get_collecteur_statistiques(collecteur_id: int, db: Session = Depends(get_db)):
+    """Expose les statistiques nécessaires à l'application mobile"""
+    stats = compute_statistiques_collecteur(db, collecteur_id)
+    if not stats:
+        raise HTTPException(status_code=404, detail="Collecteur non trouvé")
+    return stats
 
 
 @router.patch("/{collecteur_id}/position", response_model=CollecteurResponse)
