@@ -1,62 +1,55 @@
 <div class="">
-  <div class="table-wrapper">
-    <div class="flow-root rounded">
-      <div class="-mx-4 -my-2 sm:-mx-6 lg:-mx-8">
-        <div class="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
-          <table class="min-w-full">
-          <thead>
-          <tr>
-            <th scope="col" class="py-3.5 pl-10 text-left text-sm font-semibold bg-main text-white rounded-l-lg">Date</th>
-            <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold bg-main text-white">Contribuable</th>
-            <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold bg-main text-white">Taxe</th>
-            <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold bg-main text-white">Collecteur</th>
-            <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold bg-main text-white">Montant</th>
-            <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold bg-main text-white">Moyen de paiement</th>
-            <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold bg-main text-white">Référence</th>
-            <th scope="col" class="pr-10 py-3.5 text-sm font-semibold bg-main text-white text-right rounded-r-lg">Statut</th>
+  <div class="rounded-3xl border border-gray-100 shadow-[0_20px_60px_rgba(15,23,42,0.08)] bg-white overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="min-w-full text-sm text-gray-600">
+        <thead class="bg-white sticky top-0 z-10 shadow-[0_1px_0_rgba(15,23,42,0.08)]">
+          <tr class="text-xs font-semibold uppercase tracking-[0.2em] text-gray-500">
+            <th class="px-6 py-4 text-left">Collecte</th>
+            <th class="px-6 py-4 text-left">Contribuable</th>
+            <th class="px-6 py-4 text-left">Taxe & référence</th>
+            <th class="px-6 py-4 text-left">Collecteur</th>
+            <th class="px-6 py-4 text-left">Montant</th>
+            <th class="px-6 py-4 text-left">Paiement</th>
+            <th class="px-6 py-4 text-right">Statut</th>
           </tr>
-          </thead>
-          <tbody class="bg-white">
+        </thead>
+        <tbody class="divide-y divide-gray-100">
           @if (loading) {
             <tr>
-              <td colspan="8" class="px-6 py-8 text-center text-gray-500">
+              <td colspan="7" class="px-6 py-12 text-center text-gray-500">
                 Chargement...
               </td>
             </tr>
           } @else {
             @for (collecte of collectes; track collecte.id) {
-              <tr (click)="onActiveModalItem(true, collecte)" class="even:bg-gray-50 cursor-pointer hover:bg-gray-100">
-                <td class="whitespace-nowrap py-4 pl-10 text-sm text-main-text-color">
-                  <div>{{ dateFormater(collecte.date_collecte, "/") }}</div>
-                  @if (collecte.date_collecte) {
-                    <div class="text-xs text-gray-500">{{ getTimeFromDate(collecte.date_collecte) }}</div>
-                  }
+              <tr (click)="onActiveModalItem(true, collecte)" class="cursor-pointer hover:bg-slate-50 transition-colors">
+                <td class="px-6 py-4">
+                  <p class="font-semibold text-gray-900">{{ dateFormater(collecte.date_collecte, "/") }}</p>
+                  <p class="text-xs text-gray-500">{{ getTimeFromDate(collecte.date_collecte) }}</p>
                 </td>
-                <td class="whitespace-nowrap px-3 py-4 text-sm text-main-text-color">
-                  <div class="font-medium">{{ collecte.contribuable?.nom || 'N/A' }} {{ collecte.contribuable?.prenom || '' }}</div>
+                <td class="px-6 py-4">
+                  <div class="font-semibold text-gray-900">{{ collecte.contribuable?.nom || 'N/A' }} {{ collecte.contribuable?.prenom || '' }}</div>
                   @if (collecte.contribuable?.telephone) {
-                    <div class="text-xs text-gray-500">{{ collecte.contribuable?.telephone }}</div>
+                    <p class="text-xs text-gray-500">{{ collecte.contribuable?.telephone }}</p>
                   }
                 </td>
-                <td class="whitespace-nowrap px-3 py-4 text-sm text-main-text-color">
-                  <div class="font-medium">{{ collecte.taxe?.nom || 'N/A' }}</div>
-                  @if (collecte.taxe?.code) {
-                    <div class="text-xs text-gray-500">{{ collecte.taxe?.code }}</div>
-                  }
+                <td class="px-6 py-4">
+                  <p class="font-semibold text-gray-900">{{ collecte.taxe?.nom || 'N/A' }}</p>
+                  <p class="text-xs font-mono text-gray-500">{{ collecte.reference }}</p>
                 </td>
-                <td class="whitespace-nowrap px-3 py-4 text-sm text-main-text-color">
-                  <div>{{ collecte.collecteur?.nom || 'N/A' }} {{ collecte.collecteur?.prenom || '' }}</div>
+                <td class="px-6 py-4 text-sm">
+                  <p class="font-medium text-gray-900">{{ collecte.collecteur?.nom || 'N/A' }} {{ collecte.collecteur?.prenom || '' }}</p>
                   @if (collecte.collecteur?.matricule) {
-                    <div class="text-xs text-gray-500">Mat: {{ collecte.collecteur?.matricule }}</div>
+                    <p class="text-xs text-gray-500">Mat : {{ collecte.collecteur?.matricule }}</p>
                   }
                 </td>
-                <td class="whitespace-nowrap px-3 py-4 text-sm text-main-text-color">
-                  <div class="font-semibold text-main">{{ parseMount(collecte.montant.toString(), ',') }} XAF</div>
+                <td class="px-6 py-4">
+                  <p class="font-semibold text-gray-900">{{ parseMount(collecte.montant.toString(), ',') }} XAF</p>
                   @if (collecte.commission > 0) {
-                    <div class="text-xs text-gray-500">Commission: {{ parseMount(collecte.commission.toString(), ',') }} XAF</div>
+                    <p class="text-xs text-gray-500">Commission : {{ parseMount(collecte.commission.toString(), ',') }} XAF</p>
                   }
                 </td>
-                <td class="whitespace-nowrap px-3 py-4 text-sm text-main-text-color">
+                <td class="px-6 py-4">
                   <div class="flex items-center gap-2">
                     @if (collecte.type_paiement === 'mobile_money') {
                       <img src="{{paiementLogo[0]}}" alt="Mobile Money" class="size-6 rounded-full object-contain">
@@ -69,10 +62,7 @@
                     }
                   </div>
                 </td>
-                <td class="whitespace-nowrap px-3 py-4 text-sm text-main-text-color">
-                  <div class="font-mono text-xs">{{ collecte.reference }}</div>
-                </td>
-                <td class="whitespace-nowrap py-4 text-sm text-main-text-color text-right pr-10">
+                <td class="px-6 py-4 text-right">
                   <app-badge 
                     [text]="collecte.statut === 'completed' ? 'Succès' : collecte.statut === 'pending' ? 'En cours' : collecte.statut === 'cancelled' ? 'Annulé' : 'Échec'" 
                     [type]="collecte.statut === 'completed' ? statusBilling[1] : collecte.statut === 'pending' ? statusBilling[2] : statusBilling[0]"
@@ -84,16 +74,14 @@
               </tr>
             } @empty {
               <tr>
-                <td colspan="8" class="px-6 py-8 text-center text-gray-500">
+                <td colspan="7" class="px-6 py-12 text-center text-gray-500">
                   Aucune collecte trouvée
                 </td>
               </tr>
             }
           }
-          </tbody>
-          </table>
-        </div>
-      </div>
+        </tbody>
+      </table>
     </div>
   </div>
   

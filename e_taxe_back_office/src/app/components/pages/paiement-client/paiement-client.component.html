@@ -4,11 +4,7 @@
     <div class="header-container">
       <div class="logo-section">
         <div class="logo-wrapper">
-          <svg class="logo-icon" viewBox="0 0 100 100" fill="none">
-            <circle cx="50" cy="50" r="45" fill="#2563eb" opacity="0.1"/>
-            <path d="M50 20 L50 40 M50 60 L50 80 M30 50 L70 50" stroke="#2563eb" stroke-width="4" stroke-linecap="round"/>
-            <circle cx="50" cy="50" r="8" fill="#2563eb"/>
-          </svg>
+          <img src="/assets/logo/logo_app.png" alt="Logo Mairie de Libreville" class="logo-img">
         </div>
         <div class="logo-text">
           <h1>Mairie de Libreville</h1>
@@ -93,6 +89,90 @@
     </div>
   </section>
 
+  <!-- Synthèse taxes -->
+  <section class="taxes-section" *ngIf="!showPaymentForm && !showStatus">
+    <div class="taxes-header">
+      <p class="kicker">Panorama fiscal local</p>
+      <h2>Principales taxes municipales couvertes par le portail</h2>
+      <p>
+        Basé sur le référentiel fiscal urbain (TPU, OTDP, droit de place, TEOM, etc.). Ce tableau synthétise les modalités de paiement
+        pour guider les contribuables avant d’entamer la démarche en ligne.
+      </p>
+    </div>
+    <div class="taxes-filters">
+      <input
+        type="text"
+        placeholder="Rechercher une taxe, un service…"
+        [(ngModel)]="taxSearch"
+        (input)="applyTaxFilters()"
+      />
+      <select [(ngModel)]="periodiciteFilter" (change)="applyTaxFilters()">
+        <option value="">Périodicité (toutes)</option>
+        <option value="annuelle">Annuelle</option>
+        <option value="mensuelle">Mensuelle</option>
+        <option value="hebdomadaire">Hebdomadaire</option>
+        <option value="quotidienne">Quotidienne</option>
+      </select>
+      <select [(ngModel)]="serviceFilter" (change)="applyTaxFilters()">
+        <option value="">Service municipal (tous)</option>
+        <option value="économiques">Affaires économiques</option>
+        <option value="urbanisme">Urbanisme & domaine</option>
+        <option value="marchés">Gestion des marchés</option>
+        <option value="communication">Communication municipale</option>
+        <option value="hygiène">Hygiène & salubrité</option>
+      </select>
+    </div>
+    <div class="taxes-table-wrapper">
+      <table class="taxes-table">
+        <thead>
+          <tr>
+            <th>Taxe / Redevance</th>
+            <th>Description & périodicité</th>
+            <th>Service municipal</th>
+            <th>Mode de paiement</th>
+            <th>Justificatifs</th>
+            <th>Montant indicatif</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (tax of filteredFeaturedTaxes; track tax.categorie) {
+            <tr>
+              <td>
+                <strong>{{ tax.categorie }}</strong>
+                @if (tax.tag) {
+                  <span class="tax-tag">{{ tax.tag }}</span>
+                }
+              </td>
+              <td>
+                <p>{{ tax.description }}</p>
+                <p class="periodicite">Périodicité : {{ tax.periodicite }}</p>
+              </td>
+              <td>{{ tax.service_ref }}</td>
+              <td>{{ tax.mode_paiement }}</td>
+              <td>{{ tax.justificatifs }}</td>
+              <td>{{ tax.montant_base }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- CTA contextuelle -->
+  <section class="cta-section" *ngIf="!showPaymentForm && !showStatus">
+    <div class="cta-card">
+      <div>
+        <p class="kicker">Besoin d’être guidé ?</p>
+        <h3>Nos conseillers fiscaux peuvent vous aider à choisir la taxe adéquate</h3>
+        <p>Planifiez un rappel téléphonique ou discutez avec un agent via WhatsApp pour finaliser votre paiement.</p>
+      </div>
+      <div class="cta-actions">
+        <a href="tel:+24100000000" class="hero-button primary">Appeler la mairie</a>
+        <a href="https://wa.me/24100000000" target="_blank" class="hero-button ghost">WhatsApp fiscalité</a>
+      </div>
+    </div>
+  </section>
+
   <!-- Highlight section -->
   <section class="highlight-section" *ngIf="!showPaymentForm && !showStatus">
     <div class="highlight-container">
@@ -125,6 +205,22 @@
         <h3>Support premium</h3>
         <p>Assistance multicanale, guides interactifs et actualisation automatique des statuts.</p>
       </div>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section class="faq-section" *ngIf="!showPaymentForm && !showStatus">
+    <div class="faq-header">
+      <p class="kicker">FAQ</p>
+      <h2>Questions fréquentes sur les taxes municipales</h2>
+    </div>
+    <div class="faq-accordion">
+      @for (item of faqItems; track item.question) {
+        <details>
+          <summary>{{ item.question }}</summary>
+          <p>{{ item.answer }}</p>
+        </details>
+      }
     </div>
   </section>
 
