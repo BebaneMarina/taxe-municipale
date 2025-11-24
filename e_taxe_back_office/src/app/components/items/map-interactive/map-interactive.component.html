@@ -4,20 +4,32 @@
     <h3>Statistiques</h3>
     <div class="stats-grid">
       <div class="stat-item stat-total">
-        <div class="stat-label">Total</div>
-        <div class="stat-value">{{ totalContribuables }}</div>
+        <div class="stat-label">Contribuables</div>
+        <div class="stat-value">{{ formatNumber(totalContribuables) }}</div>
       </div>
       <div class="stat-item stat-success">
-        <div class="stat-label">✓ Payés</div>
-        <div class="stat-value">{{ payes }}</div>
+        <div class="stat-label">Payés</div>
+        <div class="stat-value">{{ formatNumber(payes) }}</div>
       </div>
       <div class="stat-item stat-danger">
-        <div class="stat-label">✗ Non payés</div>
-        <div class="stat-value">{{ nonPayes }}</div>
+        <div class="stat-label">Non payés</div>
+        <div class="stat-value">{{ formatNumber(nonPayes) }}</div>
       </div>
       <div class="stat-item stat-info">
-        <div class="stat-label">Taux</div>
+        <div class="stat-label">Taux de paiement</div>
         <div class="stat-value">{{ tauxPaiement }}%</div>
+      </div>
+      <div class="stat-item stat-collecte">
+        <div class="stat-label">Montant collecté</div>
+        <div class="stat-value">{{ formatCurrency(montantCollecteTotal) }}</div>
+      </div>
+      <div class="stat-item stat-collectes">
+        <div class="stat-label">Nombre de collectes</div>
+        <div class="stat-value">{{ formatNumber(nombreCollectesTotal) }}</div>
+      </div>
+      <div class="stat-item stat-ticket">
+        <div class="stat-label">Ticket moyen</div>
+        <div class="stat-value">{{ formatCurrency(ticketMoyen) }}</div>
       </div>
     </div>
   </div>

@@ -3,7 +3,7 @@ Modèles SQLAlchemy pour la base de données PostgreSQL
 Application de Collecte de Taxe Municipale - Mairie de Libreville
 """
 
-from sqlalchemy import Column, Integer, String, Float, Boolean, DateTime, ForeignKey, Enum, Text, Numeric, JSON
+from sqlalchemy import Column, Integer, String, Float, Boolean, DateTime, ForeignKey, Enum, Text, Numeric, JSON, UniqueConstraint
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
 from datetime import datetime
@@ -172,6 +172,10 @@ class Collecteur(Base):
     contribuables = relationship("Contribuable", back_populates="collecteur")
     collectes = relationship("InfoCollecte", back_populates="collecteur")
     dossiers_impayes = relationship("DossierImpaye", back_populates="collecteur")
+    performances = relationship("PerformanceCollecteur", back_populates="collecteur")
+    objectifs = relationship("ObjectifCollecteur", back_populates="collecteur", uselist=False)
+    badges = relationship("BadgeCollecteur", back_populates="collecteur")
+    preferences = relationship("PreferenceUtilisateur", back_populates="collecteur", uselist=False)
 
 
 # ==================== TABLE CONTRIBUABLE ====================
@@ -332,6 +336,139 @@ class Utilisateur(Base):
     derniere_connexion = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relations
+    preferences = relationship("PreferenceUtilisateur", back_populates="user", uselist=False)
+
+
+# ==================== TABLE PREFERENCE_UTILISATEUR ====================
+class PreferenceUtilisateur(Base):
+    """Préférences d'accessibilité / UI par utilisateur ou collecteur"""
+    __tablename__ = "preference_utilisateur"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("utilisateur.id"), nullable=True, unique=True)
+    collecteur_id = Column(Integer, ForeignKey("collecteur.id"), nullable=True, unique=True)
+    theme = Column(String(50), default="systeme")
+    contraste = Column(String(50), default="normal")
+    taille_police = Column(String(50), default="moyen")
+    animations = Column(Boolean, default=True)
+    sons = Column(Boolean, default=True)
+    lang = Column(String(10), default="fr")
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    user = relationship("Utilisateur", back_populates="preferences")
+    collecteur = relationship("Collecteur", back_populates="preferences")
+
+
+# ==================== TABLE LANGUE DISPONIBLE ====================
+class LangueDisponible(Base):
+    """Langues disponibles pour la localisation"""
+    __tablename__ = "langue_disponible"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    code = Column(String(10), unique=True, nullable=False)
+    nom = Column(String(100), nullable=False)
+    direction = Column(String(3), default="ltr")
+    defaut = Column(Boolean, default=False)
+    version = Column(Integer, default=1)
+    active = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    textes = relationship("TexteLocalisation", back_populates="langue")
+
+
+class TexteLocalisation(Base):
+    """Ressources de traduction disponibles pour le mobile"""
+    __tablename__ = "texte_localisation"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    langue_id = Column(Integer, ForeignKey("langue_disponible.id"), nullable=False)
+    version = Column(Integer, default=1)
+    strings = Column(JSON, default=dict)
+    actif = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    
+    langue = relationship("LangueDisponible", back_populates="textes")
+
+
+# ==================== ENUM BADGE ====================
+class BadgeStatutEnum(str, enum.Enum):
+    LOCKED = "locked"
+    IN_PROGRESS = "in_progress"
+    EARNED = "earned"
+
+
+# ==================== OBJECTIFS & PERFORMANCES ====================
+class ObjectifCollecteur(Base):
+    """Objectifs (jour/semaine/mois) attribués à un collecteur"""
+    __tablename__ = "objectif_collecteur"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    collecteur_id = Column(Integer, ForeignKey("collecteur.id"), nullable=False, unique=True)
+    objectif_journalier = Column(Numeric(12, 2), default=0)
+    objectif_hebdo = Column(Numeric(12, 2), default=0)
+    objectif_mensuel = Column(Numeric(12, 2), default=0)
+    devise = Column(String(10), default="XAF")
+    periode_courante = Column(String(20), default="jour")
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    collecteur = relationship("Collecteur", back_populates="objectifs")
+
+
+class PerformanceCollecteur(Base):
+    """Points de performance agrégés par période"""
+    __tablename__ = "performance_collecteur"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    collecteur_id = Column(Integer, ForeignKey("collecteur.id"), nullable=False)
+    periode = Column(String(20), nullable=False)  # jour, semaine, mois
+    label = Column(String(50), nullable=False)
+    date_debut = Column(DateTime, nullable=False)
+    date_fin = Column(DateTime, nullable=False)
+    montant = Column(Numeric(12, 2), default=0)
+    nombre_collectes = Column(Integer, default=0)
+    progression_vs_objectif = Column(Numeric(5, 2), default=0)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    
+    collecteur = relationship("Collecteur", back_populates="performances")
+    
+    __table_args__ = (
+        UniqueConstraint("collecteur_id", "periode", "label", name="uniq_collecteur_periode_label"),
+    )
+
+
+class BadgeCollecteur(Base):
+    """Badges gamification pour les collecteurs"""
+    __tablename__ = "badge_collecteur"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    collecteur_id = Column(Integer, ForeignKey("collecteur.id"), nullable=False)
+    code = Column(String(50), nullable=False)
+    label = Column(String(150), nullable=False)
+    description = Column(Text, nullable=True)
+    statut = Column(Enum(BadgeStatutEnum, name='badge_statut_enum', create_type=False, values_callable=lambda x: [e.value for e in BadgeStatutEnum]), default=BadgeStatutEnum.LOCKED)
+    date_obtention = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    collecteur = relationship("Collecteur", back_populates="badges")
+
+
+class BadgeFeedback(Base):
+    """Feedbacks envoyés depuis le mobile pour les badges / paliers"""
+    __tablename__ = "badge_feedback"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    collecteur_id = Column(Integer, ForeignKey("collecteur.id"), nullable=False)
+    badge_code = Column(String(50), nullable=False)
+    feedback = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    collecteur = relationship("Collecteur")
 
 
 # ==================== ENUMS POUR RELANCES ====================

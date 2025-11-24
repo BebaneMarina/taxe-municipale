@@ -17,6 +17,8 @@ export class MapInteractiveComponent implements OnInit, AfterViewInit, OnDestroy
   private map: L.Map | null = null;
   private markerLayer: L.LayerGroup | null = null;
   private markers: L.Marker[] = [];
+  private hasInitialFit = false;
+  private readonly librevilleBounds = L.latLngBounds([0.15, 9.2], [0.6, 9.8]);
   
   @Input() filteredContribuables: any[] | null = null;
   
@@ -30,13 +32,16 @@ export class MapInteractiveComponent implements OnInit, AfterViewInit, OnDestroy
   payes = 0;
   nonPayes = 0;
   tauxPaiement = 0;
+  montantCollecteTotal = 0;
+  nombreCollectesTotal = 0;
+  ticketMoyen = 0;
 
   ngOnInit(): void {}
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['filteredContribuables'] && !changes['filteredContribuables'].firstChange) {
       const value = changes['filteredContribuables'].currentValue;
-      if (value && Array.isArray(value) && value.length > 0) {
+      if (Array.isArray(value)) {
         this.setFilteredContribuables(value);
       }
     }
@@ -61,7 +66,7 @@ export class MapInteractiveComponent implements OnInit, AfterViewInit, OnDestroy
   private initMap(): void {
     // Initialiser la carte centrée sur Libreville
     this.map = L.map('map', {
-      center: [0.3901, 9.4544], // Libreville
+      center: this.librevilleBounds.getCenter(), // Libreville
       zoom: 13,
       zoomControl: true
     });
@@ -73,6 +78,7 @@ export class MapInteractiveComponent implements OnInit, AfterViewInit, OnDestroy
     }).addTo(this.map);
 
     this.markerLayer = L.layerGroup().addTo(this.map);
+    this.hasInitialFit = false;
   }
 
   private loadContribuables(): void {
@@ -99,6 +105,22 @@ export class MapInteractiveComponent implements OnInit, AfterViewInit, OnDestroy
     this.tauxPaiement = this.totalContribuables > 0 
       ? Math.round((this.payes / this.totalContribuables) * 100) 
       : 0;
+
+    this.montantCollecteTotal = contribuables.reduce((sum, c) => {
+      const montant = typeof c.total_collecte === 'string'
+        ? parseFloat(c.total_collecte)
+        : Number(c.total_collecte || 0);
+      return sum + (isNaN(montant) ? 0 : montant);
+    }, 0);
+
+    this.nombreCollectesTotal = contribuables.reduce((sum, c) => {
+      const nb = Number(c.nombre_collectes || 0);
+      return sum + (isNaN(nb) ? 0 : nb);
+    }, 0);
+
+    this.ticketMoyen = this.nombreCollectesTotal > 0
+      ? this.montantCollecteTotal / this.nombreCollectesTotal
+      : 0;
   }
 
   private updateMarkers(): void {
@@ -113,7 +135,7 @@ export class MapInteractiveComponent implements OnInit, AfterViewInit, OnDestroy
       const lat = parseFloat(contrib.latitude);
       const lng = parseFloat(contrib.longitude);
 
-      if (isNaN(lat) || isNaN(lng)) return;
+      if (isNaN(lat) || isNaN(lng)) continue;
 
       const aPaye = contrib.a_paye !== false;
       const markerColor = aPaye ? '#10B981' : '#EF4444';
@@ -151,6 +173,21 @@ export class MapInteractiveComponent implements OnInit, AfterViewInit, OnDestroy
       this.markers.push(marker);
       this.markerLayer.addLayer(marker);
     }
+
+    if (this.map) {
+      if (this.markers.length === 1) {
+        const point = this.markers[0].getLatLng();
+        this.map.setView(point, 16, { animate: this.hasInitialFit });
+        this.hasInitialFit = true;
+      } else if (this.markers.length > 1) {
+        const bounds = L.featureGroup(this.markers).getBounds().pad(0.15);
+        const safeBounds = bounds.isValid() ? bounds : this.librevilleBounds;
+        this.map.fitBounds(safeBounds, { animate: this.hasInitialFit, maxZoom: 16 });
+        this.hasInitialFit = true;
+      } else {
+        this.map.fitBounds(this.librevilleBounds, { animate: this.hasInitialFit });
+      }
+    }
   }
 
   private createPopup(contrib: any): string {
@@ -187,9 +224,12 @@ export class MapInteractiveComponent implements OnInit, AfterViewInit, OnDestroy
 
   // Méthode publique pour définir les contribuables filtrés
   setFilteredContribuables(contribuables: any[]): void {
-    this.contribuables = contribuables;
-    this.calculateStats(contribuables);
+    const list = Array.isArray(contribuables) ? contribuables : [];
+    this.contribuables = list;
+    this.hasInitialFit = false;
+    this.calculateStats(list);
     this.updateMarkers();
+    this.refreshView();
   }
 
   // Méthode pour zoomer sur un point
@@ -197,5 +237,25 @@ export class MapInteractiveComponent implements OnInit, AfterViewInit, OnDestroy
     if (this.map) {
       this.map.setView([latitude, longitude], zoom, { animate: true });
     }
+  }
+
+  refreshView(): void {
+    if (this.map) {
+      setTimeout(() => {
+        this.map?.invalidateSize();
+      }, 50);
+    }
+  }
+
+  formatCurrency(amount: number): string {
+    return new Intl.NumberFormat('fr-FR', {
+      style: 'currency',
+      currency: 'XAF',
+      minimumFractionDigits: 0
+    }).format(amount || 0);
+  }
+
+  formatNumber(value: number): string {
+    return new Intl.NumberFormat('fr-FR').format(value || 0);
   }
 }

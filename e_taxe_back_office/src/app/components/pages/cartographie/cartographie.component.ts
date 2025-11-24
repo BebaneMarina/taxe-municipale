@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { MapInteractiveComponent } from '../../items/map-interactive/map-interactive.component';
 import { ApiService } from '../../../services/api.service';
 import { Chart, ChartConfiguration, ChartType, registerables } from 'chart.js';
+import { firstValueFrom } from 'rxjs';
 
 Chart.register(...registerables);
 
@@ -91,56 +92,52 @@ export class CartographieComponent implements OnInit, AfterViewInit {
 
   async loadData(): Promise<void> {
     this.loading = true;
+    this.error = '';
     try {
-      // Charger les contribuables
-      const contribuables = await this.apiService.getContribuablesForMap(true).toPromise();
-      this.allContribuables = contribuables || [];
+      const [
+        contribuablesResult,
+        zonesResult,
+        collecteursResult,
+        statsResult,
+        evolutionResult
+      ] = await Promise.allSettled([
+        firstValueFrom(this.apiService.getContribuablesForMap(true)),
+        firstValueFrom(this.apiService.getZones(true)),
+        firstValueFrom(this.apiService.getCollecteurs({ actif: true })),
+        this.fetchCartographieStats(),
+        firstValueFrom(this.apiService.getEvolutionJournaliere(7)).catch(() => null)
+      ]);
+
+      this.allContribuables = contribuablesResult.status === 'fulfilled' && contribuablesResult.value
+        ? contribuablesResult.value
+        : [];
       this.filteredContribuables = [...this.allContribuables];
 
-      // Charger les zones et quartiers
-      const zones = await this.apiService.getZones(true).toPromise();
-      this.zones = zones || [];
-      
-      // Charger les statistiques de cartographie
-      let statsCarto: any = {};
-      try {
-        statsCarto = await this.apiService.getStatistiquesCartographie().toPromise() || {};
-      } catch (err) {
-        console.warn('Erreur chargement stats cartographie:', err);
-        // Fallback sur les stats générales
-        try {
-          const statsGen = await this.apiService.getStatistiquesGenerales().toPromise() || {};
-          statsCarto = {
-            total_collecte: statsGen.total_collecte || 0,
-            collecte_aujourd_hui: statsGen.collecte_aujourd_hui || 0,
-            collecte_ce_mois: statsGen.collecte_ce_mois || 0
-          };
-        } catch (e) {
-          console.error('Erreur fallback stats:', e);
-        }
-      }
-      
-      // Charger l'évolution journalière pour le graphique
-      let evolutionData: any = null;
-      try {
-        evolutionData = await this.apiService.getEvolutionJournaliere(7).toPromise();
-      } catch (err) {
-        console.warn('Erreur chargement évolution:', err);
-      }
-      
-      // Charger les collecteurs
-      const collecteurs = await this.apiService.getCollecteurs({ actif: true }).toPromise();
+      this.zones = zonesResult.status === 'fulfilled' && zonesResult.value
+        ? zonesResult.value
+        : [];
 
-      // Utiliser les stats de cartographie si disponibles
+      const collecteurs = collecteursResult.status === 'fulfilled' && Array.isArray(collecteursResult.value)
+        ? collecteursResult.value
+        : [];
+
+      const statsCarto = statsResult.status === 'fulfilled' && statsResult.value
+        ? statsResult.value
+        : {};
+
+      const evolutionData = evolutionResult.status === 'fulfilled'
+        ? evolutionResult.value
+        : null;
+
       if (statsCarto && statsCarto.stats_par_zone) {
         this.stats = {
           total_contribuables: statsCarto.total_contribuables || 0,
           contribuables_payes: statsCarto.contribuables_payes || 0,
           contribuables_impayes: statsCarto.contribuables_impayes || 0,
           taux_paiement: statsCarto.taux_paiement || 0,
-          total_collecte: parseFloat(statsCarto.total_collecte || 0),
-          collecte_aujourd_hui: parseFloat(statsCarto.collecte_aujourd_hui || 0),
-          collecte_ce_mois: parseFloat(statsCarto.collecte_ce_mois || 0),
+          total_collecte: Number(statsCarto.total_collecte || 0),
+          collecte_aujourd_hui: Number(statsCarto.collecte_aujourd_hui || 0),
+          collecte_ce_mois: Number(statsCarto.collecte_ce_mois || 0),
           nombre_collecteurs: statsCarto.nombre_collecteurs || collecteurs.length,
           zones_couvertes: statsCarto.zones_couvertes || 0,
           zones_non_couvertes: statsCarto.zones_non_couvertes || 0
@@ -150,29 +147,25 @@ export class CartographieComponent implements OnInit, AfterViewInit {
           total_contribuables: z.total_contribuables,
           contribuables_payes: z.contribuables_payes,
           taux_paiement: z.taux_paiement,
-          total_collecte: parseFloat(z.total_collecte || 0)
+          total_collecte: Number(z.total_collecte || 0)
         }));
       } else {
-        // Fallback: calculer manuellement
-        this.calculateStats(contribuables || [], statsCarto, collecteurs || []);
+        this.calculateStats(this.allContribuables, statsCarto, collecteurs);
         this.calculateZoneStats();
       }
-      
-      // Mettre à jour le graphique d'évolution si les données sont disponibles
+
       if (evolutionData && this.collecteChart) {
         this.updateCollecteChart(evolutionData);
       }
 
-      this.loading = false;
-      
-      // Initialiser les graphiques après le chargement
       setTimeout(() => {
         this.initCharts();
-      }, 500);
+      }, 300);
     } catch (err: any) {
       this.error = 'Erreur lors du chargement des données';
-      this.loading = false;
       console.error('Erreur:', err);
+    } finally {
+      this.loading = false;
     }
   }
 
@@ -443,7 +436,8 @@ export class CartographieComponent implements OnInit, AfterViewInit {
     this.activeView = view;
     if (view === 'map' && this.mapComponent) {
       setTimeout(() => {
-        this.mapComponent.setFilteredContribuables(this.filteredContribuables);
+        this.mapComponent.setFilteredContribuables(this.filteredContribuables ?? []);
+        this.mapComponent.refreshView();
       }, 100);
     }
   }
@@ -470,5 +464,27 @@ export class CartographieComponent implements OnInit, AfterViewInit {
     if (taux >= 80) return '#10b981';
     if (taux >= 50) return '#f59e0b';
     return '#ef4444';
+  }
+
+  private async fetchCartographieStats(): Promise<any> {
+    try {
+      const stats = await firstValueFrom(this.apiService.getStatistiquesCartographie());
+      return stats || {};
+    } catch (err) {
+      console.warn('Erreur chargement stats cartographie:', err);
+      try {
+        const statsGen = await firstValueFrom(this.apiService.getStatistiquesGenerales());
+        if (statsGen) {
+          return {
+            total_collecte: statsGen.total_collecte || 0,
+            collecte_aujourd_hui: statsGen.collecte_aujourd_hui || 0,
+            collecte_ce_mois: statsGen.collecte_ce_mois || 0
+          };
+        }
+      } catch (e) {
+        console.error('Erreur fallback stats:', e);
+      }
+      return {};
+    }
   }
 }
