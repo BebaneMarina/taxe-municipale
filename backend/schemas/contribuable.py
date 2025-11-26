@@ -25,6 +25,7 @@ class ContribuableBase(BaseModel):
     nom_activite: Optional[str] = Field(None, max_length=200)
     photo_url: Optional[str] = Field(None, max_length=500)
     numero_identification: Optional[str] = None
+    qr_code: Optional[str] = Field(None, max_length=100)
     actif: bool = True
 
 
@@ -45,6 +46,8 @@ class ContribuableUpdate(BaseModel):
     longitude: Optional[Decimal] = None
     nom_activite: Optional[str] = None
     photo_url: Optional[str] = None
+    numero_identification: Optional[str] = None
+    qr_code: Optional[str] = None
     actif: Optional[bool] = None
 
 
@@ -53,6 +56,7 @@ class ContribuableResponse(ContribuableBase):
     type_contribuable: Optional[TypeContribuableBase] = None
     quartier: Optional[QuartierBase] = None
     collecteur: Optional[CollecteurBase] = None
+    distance_quartier_m: Optional[Decimal] = None
     created_at: datetime
     updated_at: datetime
 

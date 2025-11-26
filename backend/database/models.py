@@ -3,7 +3,7 @@ Modèles SQLAlchemy pour la base de données PostgreSQL
 Application de Collecte de Taxe Municipale - Mairie de Libreville
 """
 
-from sqlalchemy import Column, Integer, String, Float, Boolean, DateTime, ForeignKey, Enum, Text, Numeric, JSON, UniqueConstraint
+from sqlalchemy import Column, Integer, String, Float, Boolean, DateTime, Date, ForeignKey, Enum, Text, Numeric, JSON, UniqueConstraint, BigInteger
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
 from datetime import datetime
@@ -32,6 +32,18 @@ class EtatCollecteurEnum(str, enum.Enum):
     CONNECTE = "connecte"
     DECONNECTE = "deconnecte"
 
+class StatutJournalEnum(str, enum.Enum):
+    """Statut d'un journal de travaux"""
+    EN_COURS = "en_cours"
+    CLOTURE = "cloture"
+
+
+class StatutCommissionEnum(str, enum.Enum):
+    """Statut d'une commission"""
+    EN_ATTENTE = "en_attente"
+    ENVOYEE = "envoyee"
+    PAYEE = "payee"
+
 
 class StatutCollecteEnum(str, enum.Enum):
     """Statut d'une collecte"""
@@ -46,6 +58,12 @@ class TypePaiementEnum(str, enum.Enum):
     ESPECES = "especes"
     MOBILE_MONEY = "mobile_money"
     CARTE = "carte"
+
+
+class TypeCoupureEnum(str, enum.Enum):
+    """Type de coupure (billet / pièce)"""
+    BILLET = "billet"
+    PIECE = "piece"
 
 
 class PeriodiciteEnum(str, enum.Enum):
@@ -118,6 +136,10 @@ class Quartier(Base):
     zone_id = Column(Integer, ForeignKey("zone.id"), nullable=False)
     description = Column(Text, nullable=True)
     actif = Column(Boolean, default=True)
+    geom = Column(Geometry(geometry_type='POINT', srid=4326), nullable=True)
+    osm_id = Column(BigInteger, unique=True, nullable=True, index=True)
+    place_type = Column(String(50), nullable=True)
+    tags = Column(JSON, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
@@ -176,6 +198,9 @@ class Collecteur(Base):
     objectifs = relationship("ObjectifCollecteur", back_populates="collecteur", uselist=False)
     badges = relationship("BadgeCollecteur", back_populates="collecteur")
     preferences = relationship("PreferenceUtilisateur", back_populates="collecteur", uselist=False)
+    caisses = relationship("Caisse", back_populates="collecteur")
+    operations_caisse = relationship("OperationCaisse", back_populates="collecteur")
+    commissions_journalieres = relationship("CommissionJournaliere", back_populates="collecteur")
 
 
 # ==================== TABLE CONTRIBUABLE ====================
@@ -198,6 +223,8 @@ class Contribuable(Base):
     nom_activite = Column(String(200), nullable=True)  # Nom de l'activité/commerce
     photo_url = Column(String(500), nullable=True)  # URL de la photo du lieu
     numero_identification = Column(String(50), unique=True, nullable=True, index=True)
+    qr_code = Column(String(100), unique=True, nullable=True, index=True)  # QR code du contribuable
+    distance_quartier_m = Column(Numeric(10, 2), nullable=True)
     actif = Column(Boolean, default=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -288,6 +315,7 @@ class InfoCollecte(Base):
     contribuable = relationship("Contribuable", back_populates="collectes")
     taxe = relationship("Taxe", back_populates="collectes")
     collecteur = relationship("Collecteur", back_populates="collectes")
+    location = relationship("CollecteLocation", back_populates="collecte", uselist=False)
 
 
 # ==================== TABLE ZONE_GEOGRAPHIQUE ====================
@@ -603,3 +631,250 @@ class DossierImpaye(Base):
     contribuable = relationship("Contribuable", back_populates="dossiers_impayes")
     affectation_taxe = relationship("AffectationTaxe", back_populates="dossiers_impayes")
     collecteur = relationship("Collecteur", back_populates="dossiers_impayes")
+
+
+# ==================== ENUM TYPE CAISSE ====================
+class TypeCaisseEnum(str, enum.Enum):
+    """Types de caisses"""
+    PHYSIQUE = "physique"  # Caisse physique (espèces)
+    EN_LIGNE = "en_ligne"  # Caisse en ligne (mobile money, carte)
+
+
+# ==================== ENUM ETAT CAISSE ====================
+class EtatCaisseEnum(str, enum.Enum):
+    """États d'une caisse"""
+    OUVERTE = "ouverte"  # Caisse ouverte et opérationnelle
+    FERMEE = "fermee"  # Caisse fermée
+    SUSPENDUE = "suspendue"  # Caisse suspendue temporairement
+    CLOTUREE = "cloturee"  # Caisse clôturée (fin de journée)
+
+
+# ==================== ENUM TYPE OPERATION CAISSE ====================
+class TypeOperationCaisseEnum(str, enum.Enum):
+    """Types d'opérations de caisse"""
+    OUVERTURE = "ouverture"  # Ouverture de caisse
+    FERMETURE = "fermeture"  # Fermeture de caisse
+    ENTREE = "entree"  # Collecte en espèces, dépôt initial
+    SORTIE = "sortie"  # Remise, retrait, frais
+    AJUSTEMENT = "ajustement"  # Correction, ajustement manuel
+    CLOTURE = "cloture"  # Clôture de journée
+
+
+# ==================== TABLE CAISSE ====================
+class Caisse(Base):
+    """Référentiel des caisses des collecteurs"""
+    __tablename__ = "caisse"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    collecteur_id = Column(Integer, ForeignKey("collecteur.id"), nullable=False, index=True)
+    type_caisse = Column(Enum(TypeCaisseEnum, name='type_caisse_enum', create_type=False, values_callable=lambda x: [e.value for e in TypeCaisseEnum]), nullable=False)
+    etat = Column(Enum(EtatCaisseEnum, name='etat_caisse_enum', create_type=False, values_callable=lambda x: [e.value for e in EtatCaisseEnum]), default=EtatCaisseEnum.FERMEE)
+    code = Column(String(50), unique=True, nullable=False, index=True)  # Code unique de la caisse
+    nom = Column(String(100), nullable=True)  # Nom optionnel de la caisse
+    solde_initial = Column(Numeric(12, 2), default=0.00)  # Solde initial à l'ouverture
+    solde_actuel = Column(Numeric(12, 2), default=0.00)  # Solde actuel calculé
+    date_ouverture = Column(DateTime, nullable=True)  # Date de dernière ouverture
+    date_fermeture = Column(DateTime, nullable=True)  # Date de dernière fermeture
+    date_cloture = Column(DateTime, nullable=True)  # Date de dernière clôture
+    montant_cloture = Column(Numeric(12, 2), nullable=True)  # Montant à la clôture
+    notes = Column(Text, nullable=True)  # Notes sur la caisse
+    actif = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Relations
+    collecteur = relationship("Collecteur", back_populates="caisses")
+    operations = relationship("OperationCaisse", back_populates="caisse", order_by="OperationCaisse.date_operation.desc()")
+
+
+# ==================== TABLE OPERATION_CAISSE ====================
+class OperationCaisse(Base):
+    """Opérations de caisse des collecteurs"""
+    __tablename__ = "operation_caisse"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    caisse_id = Column(Integer, ForeignKey("caisse.id"), nullable=False, index=True)
+    collecteur_id = Column(Integer, ForeignKey("collecteur.id"), nullable=False, index=True)  # Redondant mais utile pour requêtes
+    type_operation = Column(Enum(TypeOperationCaisseEnum, name='type_operation_caisse_enum', create_type=False, values_callable=lambda x: [e.value for e in TypeOperationCaisseEnum]), nullable=False)
+    montant = Column(Numeric(12, 2), nullable=False)
+    libelle = Column(String(200), nullable=False)  # Description de l'opération
+    collecte_id = Column(Integer, ForeignKey("info_collecte.id"), nullable=True)  # Lien vers collecte si entrée
+    reference = Column(String(50), unique=True, nullable=True, index=True)  # Référence unique
+    solde_avant = Column(Numeric(12, 2), nullable=True)  # Solde avant l'opération
+    solde_apres = Column(Numeric(12, 2), nullable=True)  # Solde après l'opération
+    notes = Column(Text, nullable=True)  # Notes additionnelles
+    date_operation = Column(DateTime, nullable=False, default=datetime.utcnow, index=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Relations
+    caisse = relationship("Caisse", back_populates="operations")
+    collecteur = relationship("Collecteur", back_populates="operations_caisse")
+    collecte = relationship("InfoCollecte")
+
+
+# ==================== TABLE COUPURE_CAISSE ====================
+class CoupureCaisse(Base):
+    """Paramétrage des coupures acceptées pour les caisses"""
+    __tablename__ = "coupure_caisse"
+    __table_args__ = (
+        UniqueConstraint("valeur", "devise", "type_coupure", name="uq_coupure_valeur_devise_type"),
+    )
+
+    id = Column(Integer, primary_key=True, index=True)
+    valeur = Column(Numeric(12, 2), nullable=False)
+    devise = Column(String(3), nullable=False, default="XAF")
+    type_coupure = Column(Enum(
+        TypeCoupureEnum,
+        name='type_coupure_enum',
+        create_type=False,
+        values_callable=lambda x: [e.value for e in TypeCoupureEnum]
+    ), nullable=False, default=TypeCoupureEnum.BILLET)
+    description = Column(String(255), nullable=True)
+    ordre_affichage = Column(Integer, nullable=False, default=0)
+    actif = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+# ==================== TABLE JOURNAL TRAVAUX ====================
+class JournalTravaux(Base):
+    """Journal des travaux quotidiens"""
+    __tablename__ = "journal_travaux"
+
+    id = Column(Integer, primary_key=True, index=True)
+    date_jour = Column(Date, unique=True, nullable=False)
+    statut = Column(Enum(StatutJournalEnum, name='statut_journal_enum', create_type=False,
+                         values_callable=lambda x: [e.value for e in StatutJournalEnum]),
+                    default=StatutJournalEnum.EN_COURS, nullable=False)
+    nb_collectes = Column(Integer, default=0)
+    montant_collectes = Column(Numeric(12, 2), default=0)
+    nb_operations_caisse = Column(Integer, default=0)
+    total_entrees_caisse = Column(Numeric(12, 2), default=0)
+    total_sorties_caisse = Column(Numeric(12, 2), default=0)
+    relances_envoyees = Column(Integer, default=0)
+    impayes_regles = Column(Integer, default=0)
+    remarque = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    closed_at = Column(DateTime, nullable=True)
+    closed_by = Column(Integer, ForeignKey("utilisateur.id"), nullable=True)
+
+
+# ==================== TABLE COMMISSION FICHIER ====================
+class CommissionFichier(Base):
+    """Fichiers de commissions générés"""
+    __tablename__ = "commission_fichier"
+
+    id = Column(Integer, primary_key=True, index=True)
+    date_jour = Column(Date, nullable=False)
+    chemin = Column(String(255), nullable=False)
+    type_fichier = Column(String(20), default="csv")
+    statut = Column(Enum(StatutCommissionEnum, name='statut_commission_enum', create_type=False,
+                         values_callable=lambda x: [e.value for e in StatutCommissionEnum]),
+                    default=StatutCommissionEnum.EN_ATTENTE, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    created_by = Column(Integer, ForeignKey("utilisateur.id"), nullable=True)
+    file_metadata = Column(JSON, nullable=True)
+    commissions = relationship("CommissionJournaliere", back_populates="fichier")
+
+
+# ==================== TABLE COMMISSION JOURNALIERE ====================
+class CommissionJournaliere(Base):
+    """Montants de commission par collecteur et par journée"""
+    __tablename__ = "commission_journaliere"
+
+    id = Column(Integer, primary_key=True, index=True)
+    date_jour = Column(Date, nullable=False, index=True)
+    collecteur_id = Column(Integer, ForeignKey("collecteur.id"), nullable=False, index=True)
+    montant_collecte = Column(Numeric(12, 2), default=0)
+    commission_montant = Column(Numeric(12, 2), default=0)
+    commission_pourcentage = Column(Numeric(5, 2), default=0)
+    statut_paiement = Column(Enum(StatutCommissionEnum, name='statut_commission_enum', create_type=False,
+                                  values_callable=lambda x: [e.value for e in StatutCommissionEnum]),
+                             default=StatutCommissionEnum.EN_ATTENTE, nullable=False)
+    fichier_id = Column(Integer, ForeignKey("commission_fichier.id"), nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    collecteur = relationship("Collecteur", back_populates="commissions_journalieres")
+    fichier = relationship("CommissionFichier", back_populates="commissions")
+
+
+# ==================== TABLE COLLECTE_LOCATION ====================
+class CollecteLocation(Base):
+    """Position GPS d'une collecte"""
+    __tablename__ = "collecte_location"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    collecte_id = Column(Integer, ForeignKey("info_collecte.id", ondelete="CASCADE"), nullable=False, unique=True)
+    latitude = Column(Numeric(10, 8), nullable=False)
+    longitude = Column(Numeric(11, 8), nullable=False)
+    accuracy = Column(Numeric(10, 2), nullable=True)  # Précision en mètres
+    altitude = Column(Numeric(10, 2), nullable=True)  # Altitude en mètres
+    heading = Column(Numeric(5, 2), nullable=True)  # Direction en degrés (0-360)
+    speed = Column(Numeric(10, 2), nullable=True)  # Vitesse en m/s
+    timestamp = Column(DateTime, nullable=True)  # Timestamp de la position
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Relations
+    collecte = relationship("InfoCollecte", back_populates="location")
+
+
+# ==================== TABLE COLLECTEUR_ZONE ====================
+class CollecteurZone(Base):
+    """Zones géographiques autorisées pour un collecteur"""
+    __tablename__ = "collecteur_zone"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    collecteur_id = Column(Integer, ForeignKey("collecteur.id", ondelete="CASCADE"), nullable=False)
+    nom = Column(String(255), nullable=False)
+    latitude = Column(Numeric(10, 8), nullable=False)
+    longitude = Column(Numeric(11, 8), nullable=False)
+    radius = Column(Numeric(10, 2), nullable=False, default=1000.0)  # Rayon en mètres
+    description = Column(Text, nullable=True)
+    actif = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Relations
+    collecteur = relationship("Collecteur", backref="zones_autorisees")
+
+
+# ==================== TABLE NOTIFICATION_TOKEN ====================
+class NotificationToken(Base):
+    """Tokens FCM pour les notifications push"""
+    __tablename__ = "notification_token"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("utilisateur.id", ondelete="CASCADE"), nullable=False)
+    token = Column(String(500), nullable=False)
+    platform = Column(String(50), nullable=False)  # 'mobile', 'web', etc.
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Relations
+    user = relationship("Utilisateur", backref="notification_tokens")
+    
+    __table_args__ = (
+        UniqueConstraint("user_id", "token", name="uniq_user_token"),
+    )
+
+
+# ==================== TABLE NOTIFICATION ====================
+class Notification(Base):
+    """Notifications pour les utilisateurs"""
+    __tablename__ = "notification"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("utilisateur.id", ondelete="CASCADE"), nullable=False)
+    type = Column(String(50), nullable=False)  # 'collecte', 'cloture', 'alerte', etc.
+    title = Column(String(255), nullable=False)
+    message = Column(Text, nullable=False)
+    read = Column(Boolean, default=False)
+    data = Column(JSON, nullable=True)  # Données additionnelles (JSON)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Relations
+    user = relationship("Utilisateur", backref="notifications")

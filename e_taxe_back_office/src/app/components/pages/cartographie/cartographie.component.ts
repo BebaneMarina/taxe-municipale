@@ -65,7 +65,8 @@ export class CartographieComponent implements OnInit, AfterViewInit {
 
   // Filtres
   searchTerm = '';
-  filterPaye: 'all' | 'paye' | 'non-paye' = 'all';
+  showPayes = true;
+  showNonPayes = true;
   selectedZone: string = '';
 
   // Données
@@ -405,12 +406,7 @@ export class CartographieComponent implements OnInit, AfterViewInit {
       );
     }
 
-    // Filtre par statut de paiement
-    if (this.filterPaye === 'paye') {
-      filtered = filtered.filter(c => c.a_paye);
-    } else if (this.filterPaye === 'non-paye') {
-      filtered = filtered.filter(c => !c.a_paye);
-    }
+    // Le filtre payés / impayés est géré au niveau de la carte via les couches
 
     // Filtre par zone
     if (this.selectedZone) {
@@ -427,7 +423,8 @@ export class CartographieComponent implements OnInit, AfterViewInit {
 
   clearFilters(): void {
     this.searchTerm = '';
-    this.filterPaye = 'all';
+    this.showPayes = true;
+    this.showNonPayes = true;
     this.selectedZone = '';
     this.applyFilters();
   }

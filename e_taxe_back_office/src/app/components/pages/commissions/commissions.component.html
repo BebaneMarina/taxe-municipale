@@ -1,0 +1,93 @@
+<div class="commissions-page">
+  <header>
+    <div>
+      <p class="kicker">Commissions</p>
+      <h1>Exports des commissions collecteurs</h1>
+      <p>Générez un fichier regroupant les commissions à verser pour une date donnée puis téléchargez les fichiers archivés.</p>
+    </div>
+    <div class="actions">
+      <label>
+        Date de calcul
+        <input type="date" [(ngModel)]="selectedDate">
+      </label>
+      <label>
+        Format du fichier
+        <select [(ngModel)]="selectedFormat">
+          <option *ngFor="let format of formats" [ngValue]="format.value">
+            {{ format.label }}
+          </option>
+        </select>
+      </label>
+      <button class="btn primary" (click)="generateFile()" [disabled]="generating()">
+        {{ generating() ? 'Génération...' : 'Générer le fichier' }}
+      </button>
+    </div>
+  </header>
+
+  <p class="message" *ngIf="message()">{{ message() }}</p>
+
+  <section class="files-card" *ngIf="!loading(); else loadingState">
+    <h2>Derniers fichiers générés</h2>
+    <table>
+      <thead>
+      <tr>
+        <th>Date</th>
+        <th>Chemin</th>
+        <th>Type</th>
+        <th>Statut</th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr *ngFor="let file of files()">
+        <td>{{ file.date_jour }}</td>
+        <td>
+          <a [href]="getFileUrl(file)" target="_blank" rel="noopener noreferrer">
+            {{ file.chemin }}
+          </a>
+        </td>
+        <td>{{ file.type_fichier }}</td>
+        <td>{{ file.statut }}</td>
+      </tr>
+      <tr *ngIf="!files().length">
+        <td colspan="4">Aucun fichier disponible.</td>
+      </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <ng-template #loadingState>
+    <p>Chargement des fichiers...</p>
+  </ng-template>
+
+  <section class="commissions-card" *ngIf="!loadingCommissions(); else loadingCommissionsState">
+    <h2>Détail des commissions par collecteur ({{ selectedDate }})</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Collecteur</th>
+          <th>Montant collecté</th>
+          <th>Commission</th>
+          <th>Pourcentage</th>
+          <th>Statut paiement</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let c of commissions()">
+          <td>{{ c.collecteur_nom || 'N/A' }}</td>
+          <td>{{ c.montant_collecte | number:'1.0-0' }} FCFA</td>
+          <td>{{ c.commission_montant | number:'1.0-0' }} FCFA</td>
+          <td>{{ c.commission_pourcentage | number:'1.2-2' }}%</td>
+          <td>{{ c.statut_paiement }}</td>
+        </tr>
+        <tr *ngIf="!commissions().length">
+          <td colspan="5">Aucune commission enregistrée pour cette date. Générez un fichier de commission pour voir les détails.</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <ng-template #loadingCommissionsState>
+    <p>Chargement des commissions...</p>
+  </ng-template>
+</div>
+

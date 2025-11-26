@@ -56,3 +56,22 @@ class RelanceListResponse(BaseModel):
     skip: int
     limit: int
 
+
+class RelanceManuelleItem(BaseModel):
+    contribuable_id: int
+    telephone_override: Optional[str] = None
+    montant_due: Optional[Decimal] = None
+    date_echeance: Optional[datetime] = None
+    message: Optional[str] = None
+    notes: Optional[str] = None
+
+
+class RelanceManuelleRequest(BaseModel):
+    type_relance: str
+    message: Optional[str] = None
+    montant_due: Optional[Decimal] = None
+    date_echeance: Optional[datetime] = None
+    date_planifiee: Optional[datetime] = None
+    utilisateur_id: Optional[int] = None
+    notes: Optional[str] = None
+    contribuables: List[RelanceManuelleItem] = Field(..., min_length=1)

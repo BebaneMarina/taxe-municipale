@@ -17,6 +17,7 @@ export interface Contribuable {
   nom_activite?: string;
   photo_url?: string;
   numero_identification?: string;
+  qr_code?: string;
   actif: boolean;
   type_contribuable?: TypeContribuable;
   quartier?: Quartier;

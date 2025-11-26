@@ -4,7 +4,7 @@ Routes pour la cartographie et les statistiques géographiques avancées
 
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
-from sqlalchemy import func, text
+from sqlalchemy import func, text, or_
 from typing import Optional, List, Dict
 from database.database import get_db
 from database.models import Contribuable, ZoneGeographique, Quartier, InfoCollecte, StatutCollecteEnum, Collecteur
@@ -300,43 +300,193 @@ def get_evolution_journaliere(
 @router.get("/map/contribuables")
 def get_contribuables_for_map(
     actif: Optional[bool] = Query(True, description="Filtrer par contribuables actifs"),
+    distance_max_m: Optional[float] = Query(
+        None,
+        description="Distance maximale en mètres par rapport au quartier (laisser vide pour tout afficher)",
+    ),
+    fallback_distance_m: float = Query(
+        1000.0,
+        description="Si un contribuable est plus éloigné que cette distance de son quartier, on affiche le point du quartier",
+    ),
     db: Session = Depends(get_db)
 ):
     """
-    Récupère les contribuables via la vue cartographie_contribuable_view
+    Récupère les contribuables avec coordonnées GPS valides et assignés à un quartier.
+    Filtre les points qui sont trop loin des quartiers (pour éviter l'affichage sur l'eau).
     """
-    params = {}
-    sql = "SELECT * FROM cartographie_contribuable_view"
+    from database.models import Contribuable, Quartier
+    
+    # Construire la requête avec jointure spatiale
+    # On calcule toujours la distance au quartier ; on ne filtre que si distance_max_m est fourni
+    distance_expr = func.ST_DistanceSphere(Contribuable.geom, Quartier.geom)
+
+    query = (
+        db.query(
+            Contribuable,
+            Quartier,
+            distance_expr.label("distance_m"),
+            func.ST_X(Quartier.geom).label("quartier_lon"),
+            func.ST_Y(Quartier.geom).label("quartier_lat"),
+        )
+        .join(Quartier, Contribuable.quartier_id == Quartier.id)
+        .filter(
+            Quartier.geom.isnot(None),
+            Quartier.actif == True,
+        )
+    )
+    
     if actif is not None:
-        sql += " WHERE actif = :actif"
-        params["actif"] = actif
-
-    rows = db.execute(text(sql), params).mappings().all()
-
+        query = query.filter(Contribuable.actif == actif)
+    if distance_max_m is not None:
+        query = query.filter(
+            or_(
+                Contribuable.geom.is_(None),
+                distance_expr <= distance_max_m
+            )
+        )
+    
+    results = query.all()
+    
+    # Récupérer les statistiques de collecte pour chaque contribuable
+    from database.models import InfoCollecte, AffectationTaxe, StatutCollecteEnum
+    
+    aujourd_hui = date.today()
+    debut_mois = date(aujourd_hui.year, aujourd_hui.month, 1)
+    
     result = []
-    for row in rows:
+    for contrib, quartier, distance_m, quartier_lon, quartier_lat in results:
+        # Vérifier le statut de paiement
+        affectations = db.query(AffectationTaxe).filter(
+            AffectationTaxe.contribuable_id == contrib.id,
+            AffectationTaxe.actif == True,
+            AffectationTaxe.date_debut <= datetime.utcnow(),
+            (
+                (AffectationTaxe.date_fin.is_(None)) |
+                (AffectationTaxe.date_fin >= datetime.utcnow())
+            )
+        ).all()
+        
+        a_paye = True
+        taxes_impayees = []
+        if affectations:
+            for affectation in affectations:
+                date_ref = max(affectation.date_debut.date(), debut_mois)
+                collecte = db.query(InfoCollecte).filter(
+                    InfoCollecte.contribuable_id == contrib.id,
+                    InfoCollecte.taxe_id == affectation.taxe_id,
+                    InfoCollecte.statut == StatutCollecteEnum.COMPLETED,
+                    InfoCollecte.annule == False,
+                    func.date(InfoCollecte.date_collecte) >= date_ref
+                ).first()
+                
+                if not collecte:
+                    a_paye = False
+                    from database.models import Taxe
+                    taxe = db.query(Taxe).filter(Taxe.id == affectation.taxe_id).first()
+                    if taxe:
+                        taxes_impayees.append(taxe.nom)
+        
+        # Statistiques de collecte
+        collectes = db.query(InfoCollecte).filter(
+            InfoCollecte.contribuable_id == contrib.id,
+            InfoCollecte.statut == StatutCollecteEnum.COMPLETED,
+            InfoCollecte.annule == False
+        ).all()
+        
+        total_collecte = sum(c.montant for c in collectes) or Decimal('0')
+        nombre_collectes = len(collectes)
+        derniere_collecte = max([c.date_collecte for c in collectes], default=None)
+        
+        # Choisir le point à afficher : si trop éloigné, utiliser le point du quartier
+        use_quartier_point = (
+            distance_m is None or
+            (fallback_distance_m is not None and distance_m > fallback_distance_m)
+        )
+        latitude = (
+            float(quartier_lat) if use_quartier_point and quartier_lat is not None
+            else (float(contrib.latitude) if contrib.latitude is not None else None)
+        )
+        longitude = (
+            float(quartier_lon) if use_quartier_point and quartier_lon is not None
+            else (float(contrib.longitude) if contrib.longitude is not None else None)
+        )
+
         result.append({
-            "id": row["id"],
-            "nom": row["nom"],
-            "prenom": row["prenom"],
-            "nom_activite": row["nom_activite"],
-            "telephone": row["telephone"],
-            "adresse": row["adresse"],
-            "latitude": float(row["latitude"]) if row["latitude"] is not None else None,
-            "longitude": float(row["longitude"]) if row["longitude"] is not None else None,
-            "photo_url": row["photo_url"],
-            "type_contribuable": row["type_contribuable"],
-            "quartier": row["quartier"],
-            "zone": row["zone"],
-            "collecteur": row["collecteur"],
-            "actif": row["actif"],
-            "a_paye": bool(row["a_paye"]),
-            "taxes_impayees": row["taxes_impayees"] if row["taxes_impayees"] else [],
-            "total_collecte": float(row["total_collecte"]) if row["total_collecte"] is not None else 0.0,
-            "nombre_collectes": int(row["nombre_collectes"]) if row["nombre_collectes"] is not None else 0,
-            "derniere_collecte": row["derniere_collecte"].isoformat() if row["derniere_collecte"] else None
+            "id": contrib.id,
+            "nom": contrib.nom,
+            "prenom": contrib.prenom,
+            "nom_activite": contrib.nom_activite,
+            "telephone": contrib.telephone,
+            "adresse": contrib.adresse,
+            "latitude": latitude,
+            "longitude": longitude,
+            "photo_url": contrib.photo_url,
+            "type_contribuable": contrib.type_contribuable.nom if contrib.type_contribuable else None,
+            "quartier": quartier.nom if quartier else None,
+            "zone": quartier.zone.nom if quartier and quartier.zone else None,
+            "collecteur": f"{contrib.collecteur.nom} {contrib.collecteur.prenom or ''}".strip() if contrib.collecteur else None,
+            "actif": contrib.actif,
+            "a_paye": a_paye,
+            "taxes_impayees": taxes_impayees,
+            "total_collecte": float(total_collecte),
+            "nombre_collectes": nombre_collectes,
+            "derniere_collecte": derniere_collecte.isoformat() if derniere_collecte else None,
+            "distance_quartier_m": float(distance_m) if distance_m is not None else None
         })
 
+    return result
+
+
+@router.get("/map/quartiers")
+def get_quartiers_for_map(
+    actif: Optional[bool] = Query(True, description="Filtrer par quartiers actifs"),
+    db: Session = Depends(get_db)
+):
+    """
+    Récupère les quartiers avec leurs géométries pour affichage sur la carte.
+    Retourne uniquement les quartiers qui ont une géométrie valide.
+    """
+    query = (
+        db.query(
+            Quartier,
+            func.ST_AsGeoJSON(Quartier.geom).label("geom_geojson"),
+            func.ST_X(Quartier.geom).label("longitude"),
+            func.ST_Y(Quartier.geom).label("latitude")
+        )
+        .filter(
+            Quartier.geom.isnot(None),
+            Quartier.actif == True if actif else True
+        )
+    )
+    
+    if actif is not None:
+        query = query.filter(Quartier.actif == actif)
+    
+    results = query.all()
+    
+    result = []
+    for quartier, geom_geojson, longitude, latitude in results:
+        import json
+        result.append({
+            "id": quartier.id,
+            "nom": quartier.nom,
+            "code": quartier.code,
+            "description": quartier.description,
+            "place_type": quartier.place_type,
+            "latitude": float(latitude) if latitude is not None else None,
+            "longitude": float(longitude) if longitude is not None else None,
+            "geom_geojson": json.loads(geom_geojson) if geom_geojson else None,
+            "zone": {
+                "id": quartier.zone.id,
+                "nom": quartier.zone.nom,
+                "code": quartier.zone.code
+            } if quartier.zone else None,
+            "nombre_contribuables": db.query(Contribuable).filter(
+                Contribuable.quartier_id == quartier.id,
+                Contribuable.actif == True
+            ).count()
+        })
+    
     return result
 
 

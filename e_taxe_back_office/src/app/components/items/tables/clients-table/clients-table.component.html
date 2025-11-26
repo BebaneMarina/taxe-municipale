@@ -65,6 +65,7 @@
             <th class="px-6 py-4 text-left">Contribuable</th>
             <th class="px-6 py-4 text-left">Contacts</th>
             <th class="px-6 py-4 text-left">Profil</th>
+            <th class="px-6 py-4 text-left">QR Code</th>
             <th class="px-6 py-4 text-left">Territoire</th>
             <th class="px-6 py-4 text-left">Collecteur assigné</th>
             <th class="px-6 py-4 text-right">Statut & actions</th>
@@ -73,7 +74,7 @@
         <tbody class="bg-white divide-y divide-gray-100">
             @if (loading) {
               <tr>
-                <td colspan="6" class="px-6 py-12 text-center text-gray-500">
+                <td colspan="7" class="px-6 py-12 text-center text-gray-500">
                   Chargement...
                 </td>
               </tr>
@@ -101,6 +102,18 @@
                         {{ contribuable.numero_identification || 'Identifiant ND' }}
                       </span>
                     </div>
+                  </td>
+                  <td class="px-6 py-4">
+                    @if (contribuable.qr_code) {
+                      <div class="flex items-center gap-2">
+                        <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/>
+                        </svg>
+                        <span class="text-xs font-mono text-gray-600">{{ contribuable.qr_code }}</span>
+                      </div>
+                    } @else {
+                      <span class="text-xs text-gray-400">Non généré</span>
+                    }
                   </td>
                   <td class="px-6 py-4 text-sm">
                     <p class="font-medium text-gray-900">{{ contribuable.quartier?.nom || 'N/A' }}</p>
@@ -138,7 +151,7 @@
                 </tr>
               } @empty {
                 <tr>
-                  <td colspan="6" class="px-6 py-12 text-center text-gray-500">
+                  <td colspan="7" class="px-6 py-12 text-center text-gray-500">
                     Aucun contribuable trouvé
                   </td>
                 </tr>

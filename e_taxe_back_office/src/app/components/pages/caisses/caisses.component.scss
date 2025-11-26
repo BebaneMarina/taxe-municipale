@@ -1,0 +1,471 @@
+.caisses-page {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  padding: 2rem;
+  color: #0b182f;
+  background: #f8fafc;
+  min-height: 100vh;
+
+  .caisses-header {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 2rem;
+    margin-bottom: 1rem;
+
+    > div:first-child {
+      flex: 1;
+      min-width: 300px;
+    }
+
+    .caisses-kicker {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      color: #64748b;
+      font-weight: 600;
+      letter-spacing: 0.1rem;
+      margin-bottom: 0.5rem;
+    }
+
+    h1 {
+      font-size: 2rem;
+      font-weight: 700;
+      margin: 0 0 0.75rem 0;
+      color: #0f172a;
+      line-height: 1.2;
+    }
+
+    .caisses-subtitle {
+      max-width: 600px;
+      color: #64748b;
+      line-height: 1.6;
+      font-size: 0.95rem;
+      margin: 0;
+    }
+
+    .caisses-actions {
+      display: flex;
+      gap: 1rem;
+      align-items: flex-end;
+      flex-wrap: wrap;
+
+      select {
+        padding: 0.6rem 1rem;
+        border-radius: 0.5rem;
+        border: 1.5px solid #e2e8f0;
+        background: #fff;
+        font-weight: 500;
+        font-size: 0.9rem;
+        color: #334155;
+        cursor: pointer;
+        transition: all 0.2s ease;
+
+        &:hover {
+          border-color: #cbd5e1;
+        }
+
+        &:focus {
+          outline: none;
+          border-color: #0c529c;
+          box-shadow: 0 0 0 3px rgba(12, 82, 156, 0.1);
+        }
+      }
+
+      label {
+        font-size: 0.8rem;
+        color: #64748b;
+        display: flex;
+        flex-direction: column;
+        gap: 0.4rem;
+        font-weight: 500;
+      }
+
+      .btn {
+        border-radius: 0.5rem;
+        padding: 0.6rem 1.5rem;
+        font-weight: 600;
+        font-size: 0.9rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        border: 1.5px solid transparent;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        white-space: nowrap;
+
+        &.btn-primary {
+          background: #0c529c;
+          color: #fff;
+
+          &:hover {
+            background: #0a4280;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(12, 82, 156, 0.3);
+          }
+        }
+
+        &.btn-secondary {
+          background: #fff;
+          color: #0c529c;
+          border-color: #e2e8f0;
+
+          &:hover {
+            background: #f8fafc;
+            border-color: #cbd5e1;
+            transform: translateY(-1px);
+          }
+        }
+      }
+    }
+  }
+
+  .caisses-grid {
+    display: grid;
+    grid-template-columns: 380px 1fr;
+    gap: 2rem;
+    align-items: start;
+
+    @media (max-width: 1200px) {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .caisses-card {
+    background: #fff;
+    border-radius: 1rem;
+    padding: 2rem;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    transition: box-shadow 0.2s ease;
+
+    &:hover {
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05), 0 10px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .card-header {
+      margin-bottom: 0.5rem;
+
+      h2, h3 {
+        margin: 0;
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: #0f172a;
+      }
+    }
+
+    h2, h3 {
+      margin: 0 0 1rem 0;
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #0f172a;
+    }
+
+    p {
+      margin: 0;
+      color: #475569;
+      line-height: 1.6;
+    }
+
+    .caisses-summary {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+
+      > div {
+        padding-bottom: 1.5rem;
+        border-bottom: 1px solid #f1f5f9;
+
+        &:last-child {
+          border-bottom: none;
+          padding-bottom: 0;
+        }
+      }
+
+      .label {
+        color: #64748b;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        display: block;
+      }
+
+      .value {
+        font-size: 1.75rem;
+        font-weight: 700;
+        color: #0c529c;
+        line-height: 1.2;
+      }
+    }
+
+    .caisses-info {
+      font-size: 0.875rem;
+      color: #64748b;
+      padding-top: 1rem;
+      border-top: 1px solid #f1f5f9;
+      margin-top: auto;
+
+      &.error {
+        color: #dc2626;
+        background: #fef2f2;
+        padding: 0.75rem 1rem;
+        border-radius: 0.5rem;
+        border: 1px solid #fecaca;
+      }
+    }
+
+    .loading-message {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+      color: #64748b;
+      font-size: 0.9rem;
+
+      &::before {
+        content: '';
+        width: 1rem;
+        height: 1rem;
+        border: 2px solid #e2e8f0;
+        border-top-color: #0c529c;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+        margin-right: 0.75rem;
+      }
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+  }
+
+  .caisses-list {
+    padding: 0;
+    overflow: hidden;
+
+    .card-header {
+      margin-bottom: 1.5rem;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+
+      thead {
+        background: #f8fafc;
+        border-bottom: 2px solid #e2e8f0;
+      }
+
+      th {
+        text-align: left;
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08rem;
+        color: #64748b;
+        padding: 1rem 1.25rem;
+        font-weight: 600;
+        white-space: nowrap;
+      }
+
+      tbody {
+        tr {
+          cursor: pointer;
+          transition: all 0.15s ease;
+          border-bottom: 1px solid #f1f5f9;
+
+          &:last-child {
+            border-bottom: none;
+          }
+
+          &.active {
+            background: linear-gradient(90deg, rgba(12, 82, 156, 0.08) 0%, rgba(12, 82, 156, 0.04) 100%);
+            border-left: 3px solid #0c529c;
+          }
+
+          &:hover:not(.active) {
+            background: #f8fafc;
+          }
+
+          td {
+            padding: 1rem 1.25rem;
+            color: #334155;
+            vertical-align: middle;
+
+            &:first-child {
+              font-weight: 600;
+              color: #0f172a;
+            }
+          }
+        }
+      }
+
+      .etat {
+        display: inline-block;
+        padding: 0.35rem 0.75rem;
+        border-radius: 0.375rem;
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-transform: capitalize;
+        white-space: nowrap;
+
+        &.ouverte {
+          background: #d1fae5;
+          color: #065f46;
+        }
+
+        &.fermee {
+          background: #fed7aa;
+          color: #92400e;
+        }
+
+        &.cloturee {
+          background: #dbeafe;
+          color: #1e40af;
+        }
+      }
+
+      .type-badge {
+        display: inline-block;
+        padding: 0.35rem 0.75rem;
+        border-radius: 0.375rem;
+        font-size: 0.8rem;
+        font-weight: 600;
+        white-space: nowrap;
+
+        &.physique {
+          background: #e0e7ff;
+          color: #3730a3;
+        }
+
+        &.en-ligne {
+          background: #fce7f3;
+          color: #9f1239;
+        }
+      }
+    }
+  }
+
+  .caisses-details {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    margin-top: 1rem;
+
+    @media (max-width: 1024px) {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .detail-header {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+
+    > div:first-child {
+      .label {
+        color: #64748b;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+      }
+
+      h2 {
+        font-size: 1.5rem;
+        margin: 0 0 0.5rem 0;
+        color: #0f172a;
+      }
+
+      .caisses-subtitle {
+        color: #64748b;
+        font-size: 0.9rem;
+      }
+    }
+  }
+
+  .detail-summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid #f1f5f9;
+
+    > div {
+      .label {
+        color: #64748b;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        display: block;
+      }
+
+      .value {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: #0c529c;
+      }
+    }
+  }
+
+  // Style pour la table des opérations
+  .caisses-card table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+
+    thead {
+      background: #f8fafc;
+      border-bottom: 2px solid #e2e8f0;
+    }
+
+    th {
+      text-align: left;
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08rem;
+      color: #64748b;
+      padding: 1rem 1.25rem;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    tbody {
+      tr {
+        border-bottom: 1px solid #f1f5f9;
+        transition: background 0.15s ease;
+
+        &:last-child {
+          border-bottom: none;
+        }
+
+        &:hover {
+          background: #f8fafc;
+        }
+
+        td {
+          padding: 1rem 1.25rem;
+          color: #334155;
+          vertical-align: middle;
+
+          strong {
+            color: #0f172a;
+            font-weight: 600;
+          }
+        }
+      }
+    }
+  }
+}
+

@@ -1,0 +1,44 @@
+<div class="appro-page">
+  <header class="appro-header">
+    <div>
+      <p class="kicker">Gestion caisse</p>
+      <h1>Approvisionnement d’une caisse</h1>
+      <p>Déclarez rapidement une entrée d’espèces ou un dépôt mobile money pour alimenter une caisse collecteur.</p>
+    </div>
+  </header>
+
+  <section class="appro-card">
+    <h2>Nouvelle opération d’entrée</h2>
+    <form (ngSubmit)="approvisionner()">
+      <label>
+        Caisse
+        <select [(ngModel)]="form.caisse_id" name="caisse" required>
+          <option [ngValue]="undefined">Sélectionner une caisse</option>
+          <option *ngFor="let c of caisses" [ngValue]="c.id">
+            {{ c.code }} – {{ c.collecteur?.nom }} {{ c.collecteur?.prenom }}
+          </option>
+        </select>
+      </label>
+
+      <label>
+        Montant (FCFA)
+        <input type="number" min="1" [(ngModel)]="form.montant" name="montant" placeholder="Ex : 150 000" required>
+      </label>
+
+      <label>
+        Libellé de l’opération
+        <input type="text" maxlength="120" [(ngModel)]="form.libelle" name="libelle" placeholder="Ex : Remise espèces marché Mont-Bouët">
+      </label>
+
+      <label class="notes">
+        Notes (optionnel)
+        <textarea [(ngModel)]="form.notes" name="notes" placeholder="Ajoutez des précisions sur la provenance, le reçu, etc."></textarea>
+      </label>
+
+      <button type="submit" class="btn primary">Enregistrer l’entrée</button>
+    </form>
+
+    <p class="message" *ngIf="message">{{ message }}</p>
+  </section>
+</div>
+

@@ -26,6 +26,11 @@ from routers import (
     statistiques,
     app_preferences,
     localisation,
+    caisses,
+    journal,
+    qr_code,
+    geolocalisation,
+    notifications,
 )
 from pathlib import Path
 import json
@@ -81,6 +86,11 @@ app.include_router(cartographie.router)
 app.include_router(statistiques.router)
 app.include_router(app_preferences.router)
 app.include_router(localisation.router)
+app.include_router(caisses.router)
+app.include_router(journal.router)
+app.include_router(qr_code.router)
+app.include_router(geolocalisation.router)
+app.include_router(notifications.router)
 
 # Servir les fichiers statiques (photos uploadées)
 uploads_dir = Path(__file__).parent / "uploads"

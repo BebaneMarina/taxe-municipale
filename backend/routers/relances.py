@@ -9,7 +9,13 @@ from sqlalchemy import func, and_, or_
 from typing import List, Optional
 from database.database import get_db
 from database.models import Relance, Contribuable, AffectationTaxe, InfoCollecte, StatutCollecteEnum, TypeRelanceEnum, StatutRelanceEnum
-from schemas.relance import RelanceCreate, RelanceUpdate, RelanceResponse, RelanceListResponse
+from schemas.relance import (
+    RelanceCreate,
+    RelanceUpdate,
+    RelanceResponse,
+    RelanceListResponse,
+    RelanceManuelleRequest,
+)
 from datetime import datetime, date, timedelta
 from decimal import Decimal
 from services.ventis_messaging import ventis_messaging_service
@@ -430,4 +436,76 @@ def get_statistiques_relances(
         "taux_reponse": (relances_avec_reponse / total_relances * 100) if total_relances > 0 else 0,
         "par_type": par_type
     }
+
+
+@router.post("/manuelles", response_model=List[RelanceResponse], status_code=201)
+def creer_relances_manuelles(
+    payload: RelanceManuelleRequest,
+    db: Session = Depends(get_db),
+):
+    """Crée plusieurs relances manuelles en sélectionnant n'importe quels contribuables."""
+    try:
+        type_enum = TypeRelanceEnum(payload.type_relance)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Type de relance invalide")
+
+    if not payload.contribuables:
+        raise HTTPException(status_code=400, detail="Merci de sélectionner au moins un contribuable")
+
+    date_planifiee = payload.date_planifiee or datetime.utcnow()
+    created_ids: List[int] = []
+
+    for item in payload.contribuables:
+        contribuable = (
+            db.query(Contribuable)
+            .filter(Contribuable.id == item.contribuable_id)
+            .first()
+        )
+        if not contribuable:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Contribuable {item.contribuable_id} introuvable",
+            )
+
+        montant = item.montant_due or payload.montant_due
+        if montant is None:
+            raise HTTPException(
+                status_code=400,
+                detail="Merci d'indiquer un montant dû (global ou par contribuable)",
+            )
+
+        message = item.message or payload.message
+        if not message:
+            message = f"Rappel : vous avez une somme de {montant} FCFA à payer."
+
+        relance = Relance(
+            contribuable_id=item.contribuable_id,
+            type_relance=type_enum,
+            montant_due=montant,
+            date_echeance=item.date_echeance or payload.date_echeance,
+            date_planifiee=date_planifiee,
+            message=message,
+            utilisateur_id=payload.utilisateur_id,
+            canal_envoi=item.telephone_override or contribuable.telephone,
+            notes=item.notes or payload.notes,
+        )
+        db.add(relance)
+        db.flush()
+        created_ids.append(relance.id)
+
+    db.commit()
+
+    relances = (
+        db.query(Relance)
+        .options(
+            joinedload(Relance.contribuable),
+            joinedload(Relance.affectation_taxe),
+        )
+        .filter(Relance.id.in_(created_ids))
+        .all()
+    )
+    return [
+        RelanceResponse.model_validate(relance, from_attributes=True)
+        for relance in relances
+    ]
 

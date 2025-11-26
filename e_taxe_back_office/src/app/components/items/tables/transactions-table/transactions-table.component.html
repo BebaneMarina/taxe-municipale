@@ -10,13 +10,14 @@
             <th class="px-6 py-4 text-left">Collecteur</th>
             <th class="px-6 py-4 text-left">Montant</th>
             <th class="px-6 py-4 text-left">Paiement</th>
+            <th class="px-6 py-4 text-left">Localisation</th>
             <th class="px-6 py-4 text-right">Statut</th>
           </tr>
         </thead>
         <tbody class="divide-y divide-gray-100">
           @if (loading) {
             <tr>
-              <td colspan="7" class="px-6 py-12 text-center text-gray-500">
+              <td colspan="8" class="px-6 py-12 text-center text-gray-500">
                 Chargement...
               </td>
             </tr>
@@ -62,6 +63,24 @@
                     }
                   </div>
                 </td>
+                <td class="px-6 py-4">
+                  @if (collecte.location) {
+                    <div class="flex items-center gap-2">
+                      <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                      </svg>
+                      <div class="text-xs">
+                        <div class="text-gray-900">{{ collecte.location.latitude }}, {{ collecte.location.longitude }}</div>
+                        @if (collecte.location.accuracy) {
+                          <div class="text-gray-500">±{{ collecte.location.accuracy }}m</div>
+                        }
+                      </div>
+                    </div>
+                  } @else {
+                    <span class="text-xs text-gray-400">Non disponible</span>
+                  }
+                </td>
                 <td class="px-6 py-4 text-right">
                   <app-badge 
                     [text]="collecte.statut === 'completed' ? 'Succès' : collecte.statut === 'pending' ? 'En cours' : collecte.statut === 'cancelled' ? 'Annulé' : 'Échec'" 
@@ -74,7 +93,7 @@
               </tr>
             } @empty {
               <tr>
-                <td colspan="7" class="px-6 py-12 text-center text-gray-500">
+                <td colspan="8" class="px-6 py-12 text-center text-gray-500">
                   Aucune collecte trouvée
                 </td>
               </tr>
