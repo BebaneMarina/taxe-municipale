@@ -113,6 +113,7 @@ export class CartographieComponent implements OnInit, AfterViewInit {
         ? contribuablesResult.value
         : [];
       this.filteredContribuables = [...this.allContribuables];
+      this.scheduleMapRefresh();
 
       this.zones = zonesResult.status === 'fulfilled' && zonesResult.value
         ? zonesResult.value
@@ -418,6 +419,7 @@ export class CartographieComponent implements OnInit, AfterViewInit {
     // Mettre à jour la carte
     if (this.mapComponent) {
       this.mapComponent.setFilteredContribuables(filtered);
+        this.scheduleMapRefresh();
     }
   }
 
@@ -482,6 +484,12 @@ export class CartographieComponent implements OnInit, AfterViewInit {
         console.error('Erreur fallback stats:', e);
       }
       return {};
+    }
+  }
+
+  private scheduleMapRefresh(): void {
+    if (this.mapComponent) {
+      setTimeout(() => this.mapComponent?.refreshView(), 80);
     }
   }
 }

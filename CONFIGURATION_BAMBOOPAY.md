@@ -7,10 +7,32 @@ Ajoutez ces variables dans votre fichier `.env` du backend :
 ```env
 # Configuration BambooPay
 BAMBOOPAY_BASE_URL=https://client.bamboopay-ga.com/api
-BAMBOOPAY_MERCHANT_ID=votre_merchant_id
-BAMBOOPAY_MERCHANT_SECRET=votre_merchant_secret
+# ⚠️ merchant_id = Numéro du marchand (sert aussi de username Basic Auth)
+BAMBOOPAY_MERCHANT_ID=6008889
+BAMBOOPAY_MERCHANT_USERNAME=6008889
+BAMBOOPAY_MERCHANT_SECRET=12345678
+# Métadonnées du compte ITAXE (facultatif mais utile pour la traçabilité)
+BAMBOOPAY_MERCHANT_NAME=ITAXE
+BAMBOOPAY_MERCHANT_UID=9de41a58-3bd4-454e-9956-39b5b888261e
+BAMBOOPAY_MERCHANT_ACCOUNT=60088890901
+BAMBOOPAY_MERCHANT_EMAIL=test@test.com
+BAMBOOPAY_MERCHANT_CONTACT=+24174086886
 BAMBOOPAY_DEBUG=false
 ```
+
+| Information BambooPay | Valeur ITAXE |
+| --- | --- |
+| Nom du marchand | ITAXE |
+| ID du marchand (UUID) | `9de41a58-3bd4-454e-9956-39b5b888261e` |
+| **Numéro du marchand (username Basic Auth / merchant_id)** | `6008889` |
+| Mot de passe (merchant_secret) | `12345678` |
+| Email | `test@test.com` |
+| Contact | `+241 74 08 68 86` |
+| Numéro de compte | `60088890901` |
+| Date de création | `27/11/2025 12:19` |
+
+> ℹ️ *Numéro du marchand* = `merchant_id` = username Basic Auth.  
+> *Mot de passe* = `merchant_secret`.
 
 ## Migration de la base de données
 

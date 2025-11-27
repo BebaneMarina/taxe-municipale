@@ -89,6 +89,63 @@
     </div>
   </section>
 
+  <!-- BambooPay partner section -->
+  <section class="bamboopay-section" *ngIf="!showPaymentForm && !showStatus">
+    <div class="bamboopay-card">
+      <div class="bamboopay-header">
+        <div>
+          <p class="kicker">Passerelle de paiement</p>
+          <h2>BambooPay • Marchand ITAXE</h2>
+          <p>Identifiant activé le {{ bambooPayMerchant.createdAt }} – flux supervisé par la Trésorerie municipale.</p>
+        </div>
+        <div class="bamboopay-credentials">
+          <div>
+            <span>merchant_id / username</span>
+            <strong>{{ bambooPayMerchant.merchantNumber }}</strong>
+          </div>
+          <div>
+            <span>merchant_secret</span>
+            <strong>••••••••</strong>
+            <small>Stocké côté serveur</small>
+          </div>
+        </div>
+      </div>
+
+      <div class="bamboopay-grid">
+        <div class="bamboopay-info">
+          <ul>
+            @for (item of bambooPayAssurances; track item) {
+              <li>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="20 6 9 17 4 12"/>
+                </svg>
+                <span>{{ item }}</span>
+              </li>
+            }
+          </ul>
+        </div>
+        <div class="bamboopay-meta">
+          <div class="meta-row">
+            <span>ID marchand :</span>
+            <strong>{{ bambooPayMerchant.merchantUid }}</strong>
+          </div>
+          <div class="meta-row">
+            <span>Compte BambooPay :</span>
+            <strong>{{ bambooPayMerchant.merchantAccount }}</strong>
+          </div>
+          <div class="meta-row">
+            <span>Email support :</span>
+            <strong>{{ bambooPayMerchant.merchantEmail }}</strong>
+          </div>
+          <div class="meta-row">
+            <span>Contact :</span>
+            <strong>{{ bambooPayMerchant.merchantContact }}</strong>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <!-- Synthèse taxes -->
   <section class="taxes-section" *ngIf="!showPaymentForm && !showStatus">
     <div class="taxes-header">

@@ -24,6 +24,17 @@ interface FeaturedTax {
   tag?: string;
 }
 
+interface BambooPayMerchant {
+  merchantName: string;
+  merchantUid: string;
+  merchantNumber: string;
+  merchantAccount: string;
+  merchantEmail: string;
+  merchantContact: string;
+  createdAt: string;
+  username: string;
+}
+
 @Component({
   selector: 'app-paiement-client',
   standalone: true,
@@ -112,6 +123,24 @@ export class PaiementClientComponent implements OnInit {
       question: 'Comment recevoir une quittance officielle ?',
       answer: 'Après validation du paiement, la quittance est envoyée par email et reste accessible dans l’espace contribuable.'
     }
+  ];
+
+  bambooPayMerchant: BambooPayMerchant = {
+    merchantName: 'ITAXE',
+    merchantUid: '9de41a58-3bd4-454e-9956-39b5b888261e',
+    merchantNumber: '6008889',
+    merchantAccount: '60088890901',
+    merchantEmail: 'test@test.com',
+    merchantContact: '+24174086886',
+    createdAt: '27/11/2025 12:19',
+    username: '6008889'
+  };
+
+  bambooPayAssurances = [
+    'Identifiants ITAXE validés par BambooPay',
+    'Authentification Basic via le numéro du marchand',
+    'Double parcours : redirection web ou Mobile Money instantané',
+    'Callbacks sécurisés /api/client/paiement/callback pour tracer les reçus'
   ];
 
   ngOnInit(): void {

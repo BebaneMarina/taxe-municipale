@@ -1,0 +1,14 @@
+{
+  "Centre Ville": { "lat_min": 0.335, "lat_max": 0.385, "lon_min": 9.445, "lon_max": 9.525 },
+  "Quaben": { "lat_min": 0.330, "lat_max": 0.405, "lon_min": 9.430, "lon_max": 9.520 },
+  "Camp des Boys": { "lat_min": 0.365, "lat_max": 0.430, "lon_min": 9.455, "lon_max": 9.530 },
+  "Haut de Gué-Gué": { "lat_min": 0.360, "lat_max": 0.415, "lon_min": 9.460, "lon_max": 9.525 },
+  "Bas de Gué-Gué": { "lat_min": 0.345, "lat_max": 0.395, "lon_min": 9.455, "lon_max": 9.515 },
+  "Bel-Air": { "lat_min": 0.425, "lat_max": 0.470, "lon_min": 9.465, "lon_max": 9.535 },
+  "Ondogo": { "lat_min": 0.455, "lat_max": 0.530, "lon_min": 9.520, "lon_max": 9.600 },
+  "I.A.I-Golf": { "lat_min": 0.360, "lat_max": 0.415, "lon_min": 9.465, "lon_max": 9.525 },
+  "Zone Quarter": { "lat_min": 0.320, "lat_max": 0.580, "lon_min": 9.380, "lon_max": 9.590 },
+  "Zone Neighbourhood": { "lat_min": 0.360, "lat_max": 0.520, "lon_min": 9.480, "lon_max": 9.560 },
+  "Zone Suburb": { "lat_min": 0.335, "lat_max": 0.600, "lon_min": 9.400, "lon_max": 9.600 }
+}
+

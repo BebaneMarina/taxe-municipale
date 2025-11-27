@@ -17,16 +17,20 @@ class BambooPayService:
     
     def __init__(self):
         self.base_url = os.getenv("BAMBOOPAY_BASE_URL", "https://client.bamboopay-ga.com/api")
-        self.merchant_id = os.getenv("BAMBOOPAY_MERCHANT_ID", "")
-        self.merchant_secret = os.getenv("BAMBOOPAY_MERCHANT_SECRET", "")
+        # Par convention BambooPay : le « Numéro du marchand » sert également de username Basic Auth
+        default_merchant_number = "6008889"
+        default_password = "12345678"
+        self.merchant_id = os.getenv("BAMBOOPAY_MERCHANT_ID", default_merchant_number)
+        self.merchant_secret = os.getenv("BAMBOOPAY_MERCHANT_SECRET", default_password)
+        self.merchant_username = os.getenv("BAMBOOPAY_MERCHANT_USERNAME", self.merchant_id)
         self.debug_mode = os.getenv("BAMBOOPAY_DEBUG", "false").lower() == "true"
         
-        if not self.merchant_id or not self.merchant_secret:
-            logger.warning("⚠️ BAMBOOPAY_MERCHANT_ID ou BAMBOOPAY_MERCHANT_SECRET non configurés")
+        if (not os.getenv("BAMBOOPAY_MERCHANT_ID") or not os.getenv("BAMBOOPAY_MERCHANT_SECRET")):
+            logger.warning("⚠️ Identifiants BambooPay non fournis dans l'environnement, utilisation des valeurs ITAXE par défaut.")
     
     def _get_auth_header(self) -> str:
         """Génère l'en-tête d'authentification Basic"""
-        credentials = f"{self.merchant_id}:{self.merchant_secret}"
+        credentials = f"{self.merchant_username}:{self.merchant_secret}"
         encoded = base64.b64encode(credentials.encode()).decode()
         return f"Basic {encoded}"
     

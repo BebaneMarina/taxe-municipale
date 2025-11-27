@@ -21,6 +21,8 @@ export class MapInteractiveComponent implements OnInit, AfterViewInit, OnDestroy
   private markersNonPayes: L.Marker[] = [];
   private hasInitialFit = false;
   private readonly gabonBounds = L.latLngBounds([-3.5, 8.2], [2.5, 15]);
+  private readonly librevilleBounds = L.latLngBounds([0.2, 9.2], [0.6, 9.7]);
+  private readonly librevilleCenter = L.latLng(0.39, 9.45);
   
   @Input() filteredContribuables: any[] | null = null;
   @Input() showPayes = true;
@@ -89,6 +91,7 @@ export class MapInteractiveComponent implements OnInit, AfterViewInit, OnDestroy
 
     this.payesLayer = L.layerGroup().addTo(this.map);
     this.nonPayesLayer = L.layerGroup().addTo(this.map);
+    this.map.on('click', () => this.zoomToLibreville());
     this.hasInitialFit = false;
   }
 
@@ -275,6 +278,13 @@ export class MapInteractiveComponent implements OnInit, AfterViewInit, OnDestroy
   zoomToPoint(latitude: number, longitude: number, zoom: number = 16): void {
     if (this.map) {
       this.map.setView([latitude, longitude], zoom, { animate: true });
+    }
+  }
+
+  zoomToLibreville(): void {
+    if (this.map) {
+      this.map.fitBounds(this.librevilleBounds, { maxZoom: 14, animate: true });
+      this.hasInitialFit = true;
     }
   }
 
