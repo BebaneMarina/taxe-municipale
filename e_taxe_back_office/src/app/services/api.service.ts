@@ -595,6 +595,11 @@ export class ApiService {
     return this.http.post(`${this.apiUrl}/journal/commissions/generer`, {}, { params });
   }
 
+  getCommissions(params?: any): Observable<any> {
+    const httpParams = params ? createHttpParams(params) : new HttpParams();
+    return this.http.get(`${this.apiUrl}/journal/commissions`, httpParams.keys().length > 0 ? { params: httpParams } : {});
+  }
+
   getCollectesJour(jour: string): Observable<any> {
     return this.http.get(`${this.apiUrl}/journal/travaux/${jour}/collectes`);
   }

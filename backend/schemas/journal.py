@@ -67,3 +67,17 @@ class CommissionGenerationResponse(BaseModel):
     fichier: CommissionFichierResponse
     commissions: List[CommissionItem]
 
+
+class CommissionJournalResponse(BaseModel):
+    id: int
+    date_jour: date
+    collecteur_id: int
+    collecteur_nom: Optional[str] = None
+    collecteur_matricule: Optional[str] = None
+    montant_collecte: Decimal
+    commission_montant: Decimal
+    commission_pourcentage: Decimal
+    statut_paiement: str
+    fichier_id: Optional[int] = None
+    created_at: datetime
+

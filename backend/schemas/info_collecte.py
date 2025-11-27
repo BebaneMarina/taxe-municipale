@@ -20,6 +20,38 @@ class InfoCollecteBase(BaseModel):
     billetage: Optional[str] = None  # JSON string
     date_collecte: datetime = Field(default_factory=datetime.utcnow)
 
+    @field_validator("type_paiement", mode="before")
+    @classmethod
+    def normalize_type_paiement(cls, value: str) -> str:
+        """
+        Convertit les variantes saisies côté mobile en valeurs supportées par l'enum.
+        - "cash", "especes", "espece" -> "especes"
+        - "bamboo", "bamboopay" -> "mobile_money"
+        - "mobile", "mobile_money" -> "mobile_money"
+        - "card", "carte" -> "carte"
+        """
+        if not value:
+            return "especes"
+
+        normalized = value.strip().lower()
+        mapping = {
+            "cash": "especes",
+            "espece": "especes",
+            "especes": "especes",
+            "mobile": "mobile_money",
+            "mobile_money": "mobile_money",
+            "mobile-money": "mobile_money",
+            "bamboo": "mobile_money",
+            "bamboopay": "mobile_money",
+            "carte": "carte",
+            "card": "carte",
+            "visa": "carte",
+            "mastercard": "carte",
+        }
+        allowed = {"especes", "mobile_money", "carte"}
+        mapped = mapping.get(normalized, normalized)
+        return mapped if mapped in allowed else "especes"
+
 
 class InfoCollecteCreate(InfoCollecteBase):
     pass

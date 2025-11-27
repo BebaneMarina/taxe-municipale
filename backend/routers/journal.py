@@ -4,6 +4,7 @@ Routes pour les journaux de travaux quotidiens et les commissions
 
 from datetime import date, datetime
 from pathlib import Path
+from typing import Optional
 import csv
 import json
 from decimal import Decimal
@@ -37,6 +38,7 @@ from schemas.journal import (
     CommissionGenerationResponse,
     CommissionItem,
     CommissionFichierResponse,
+    CommissionJournalResponse,
 )
 from schemas.info_collecte import InfoCollecteResponse
 from schemas.caisse import OperationCaisseResponse
@@ -359,6 +361,67 @@ def generer_commissions(
         fichier=fichier,
         commissions=commissions_items,
     )
+
+
+@router.get("/commissions", response_model=list[CommissionJournalResponse])
+def list_commissions(
+    date_debut: Optional[date] = Query(default=None),
+    date_fin: Optional[date] = Query(default=None),
+    collecteur_id: Optional[int] = Query(default=None),
+    statut: Optional[StatutCommissionEnum] = Query(default=None),
+    skip: int = Query(default=0, ge=0),
+    limit: int = Query(default=500, ge=1, le=1000),
+    db: Session = Depends(get_db),
+):
+    query = (
+        db.query(CommissionJournaliere, Collecteur)
+        .join(Collecteur, CommissionJournaliere.collecteur_id == Collecteur.id, isouter=True)
+    )
+
+    if date_debut:
+        query = query.filter(CommissionJournaliere.date_jour >= date_debut)
+    if date_fin:
+        query = query.filter(CommissionJournaliere.date_jour <= date_fin)
+    if collecteur_id:
+        query = query.filter(CommissionJournaliere.collecteur_id == collecteur_id)
+    if statut:
+        query = query.filter(CommissionJournaliere.statut_paiement == statut)
+
+    records = (
+        query.order_by(CommissionJournaliere.date_jour.desc(), CommissionJournaliere.id.desc())
+        .offset(skip)
+        .limit(limit)
+        .all()
+    )
+
+    response: list[CommissionJournalResponse] = []
+    for commission, collecteur in records:
+        if collecteur:
+            collecteur_nom = f"{collecteur.nom or ''} {collecteur.prenom or ''}".strip() or None
+            collecteur_matricule = collecteur.matricule
+        else:
+            collecteur_nom = None
+            collecteur_matricule = None
+
+        response.append(
+            CommissionJournalResponse(
+                id=commission.id,
+                date_jour=commission.date_jour,
+                collecteur_id=commission.collecteur_id,
+                collecteur_nom=collecteur_nom,
+                collecteur_matricule=collecteur_matricule,
+                montant_collecte=commission.montant_collecte,
+                commission_montant=commission.commission_montant,
+                commission_pourcentage=commission.commission_pourcentage,
+                statut_paiement=commission.statut_paiement.value
+                if hasattr(commission.statut_paiement, "value")
+                else commission.statut_paiement,
+                fichier_id=commission.fichier_id,
+                created_at=commission.created_at,
+            )
+        )
+
+    return response
 
 
 @router.get("/travaux/{jour}/collectes", response_model=list[InfoCollecteResponse])

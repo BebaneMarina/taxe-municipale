@@ -2,7 +2,20 @@ import { CommonModule } from '@angular/common';
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../../services/api.service';
-import { environment } from '../../../../environments/environment';
+
+interface CommissionRecord {
+  id: number;
+  date_jour: string;
+  collecteur_id: number;
+  collecteur_nom?: string;
+  collecteur_matricule?: string;
+  montant_collecte: number;
+  commission_montant: number;
+  commission_pourcentage: number;
+  statut_paiement: string;
+  fichier_id?: number;
+  created_at: string;
+}
 
 @Component({
   selector: 'app-commissions',
@@ -13,79 +26,85 @@ import { environment } from '../../../../environments/environment';
 })
 export class CommissionsComponent implements OnInit {
   private apiService = inject(ApiService);
-  private readonly backendBaseUrl = environment.apiUrl.replace(/\/api\/?$/, '');
-  private readonly uploadsBaseUrl = `${this.backendBaseUrl}/uploads`;
 
-  today = new Date().toISOString().substring(0, 10);
-  selectedDate = this.today;
-  selectedFormat: 'json' | 'csv' | 'pdf' = 'json';
-  formats = [
-    { label: 'JSON (technique)', value: 'json' },
-    { label: 'CSV (Excel)', value: 'csv' },
-    { label: 'PDF (lecture)', value: 'pdf' },
-  ];
+  filters = {
+    dateDebut: '',
+    dateFin: '',
+    statut: ''
+  };
 
-  files = signal<any[]>([]);
-  commissions = signal<any[]>([]);
-  generating = signal<boolean>(false);
-  loading = signal<boolean>(true);
+  commissions = signal<CommissionRecord[]>([]);
   loadingCommissions = signal<boolean>(false);
   message = signal<string | null>(null);
 
   ngOnInit(): void {
-    this.loadFiles();
     this.loadCommissions();
   }
 
-  loadFiles(): void {
-    this.loading.set(true);
-    this.apiService.listCommissionFiles().subscribe({
-      next: (items) => {
-        this.files.set(items || []);
-        this.loading.set(false);
-      },
-      error: () => {
-        this.loading.set(false);
-        this.message.set("Impossible de charger les fichiers de commission");
-      }
-    });
-  }
-
-  getFileUrl(file: any): string {
-    const chemin: string = file?.chemin || '';
-    const normalized = chemin.startsWith('/') ? chemin.slice(1) : chemin;
-    return `${this.uploadsBaseUrl}/${normalized}`;
-  }
-
-  generateFile(): void {
-    this.generating.set(true);
+  refreshCommissions(): void {
     this.message.set(null);
-    this.apiService.genererCommissions(this.selectedDate, this.selectedFormat).subscribe({
-      next: () => {
-        this.generating.set(false);
-        this.message.set(`Fichier ${this.selectedFormat.toUpperCase()} généré`);
-        this.loadFiles();
-        this.loadCommissions();
-      },
-      error: (err) => {
-        this.generating.set(false);
-        this.message.set(err?.error?.detail || "Échec de la génération");
-      }
-    });
+    this.loadCommissions();
   }
 
-  loadCommissions(): void {
+  resetFilters(): void {
+    this.filters = {
+      dateDebut: '',
+      dateFin: '',
+      statut: ''
+    };
+    this.refreshCommissions();
+  }
+
+  private buildParams(): Record<string, string | number> {
+    const params: Record<string, string | number> = { limit: 500 };
+    if (this.filters.dateDebut) {
+      params['date_debut'] = this.filters.dateDebut;
+    }
+    if (this.filters.dateFin) {
+      params['date_fin'] = this.filters.dateFin;
+    }
+    if (this.filters.statut) {
+      params['statut'] = this.filters.statut;
+    }
+    return params;
+  }
+
+  private loadCommissions(): void {
     this.loadingCommissions.set(true);
-    this.apiService.getCommissionsDetails(this.selectedDate).subscribe({
-      next: (data) => {
+    this.apiService.getCommissions(this.buildParams()).subscribe({
+      next: (data: CommissionRecord[]) => {
         this.commissions.set(data || []);
         this.loadingCommissions.set(false);
+        if (!data || !data.length) {
+          this.message.set('Aucune commission enregistrée pour ces critères.');
+        }
       },
-      error: () => {
+      error: (err) => {
         this.commissions.set([]);
         this.loadingCommissions.set(false);
+        this.message.set(err?.error?.detail || 'Impossible de charger les commissions');
       }
     });
+  }
+
+  formatCurrency(value: number): string {
+    return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'XAF', maximumFractionDigits: 0 }).format(value || 0);
+  }
+
+  getStatutLabel(statut: string): string {
+    switch (statut) {
+      case 'success':
+      case 'reglee':
+        return 'Réglée';
+      case 'en_attente':
+      case 'pending':
+        return 'En attente';
+      case 'annulee':
+      case 'cancelled':
+        return 'Annulée';
+      default:
+        return statut;
+    }
   }
 }
 
