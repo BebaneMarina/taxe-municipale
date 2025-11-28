@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../../services/api.service';
@@ -31,7 +31,7 @@ interface FeaturedTax {
   templateUrl: './paiement-client.component.html',
   styleUrl: './paiement-client.component.scss'
 })
-export class PaiementClientComponent implements OnInit {
+export class PaiementClientComponent implements OnInit, OnDestroy {
   private apiService = inject(ApiService);
   private router = inject(Router);
 
@@ -114,9 +114,55 @@ export class PaiementClientComponent implements OnInit {
     }
   ];
 
+  activeSection: string = 'accueil';
+  private scrollHandler?: () => void;
+
   ngOnInit(): void {
     this.loadTaxes();
     this.applyTaxFilters();
+    this.setupScrollListener();
+  }
+
+  ngOnDestroy(): void {
+    if (this.scrollHandler) {
+      window.removeEventListener('scroll', this.scrollHandler);
+    }
+  }
+
+  scrollToSection(sectionId: string, event: Event): void {
+    event.preventDefault();
+    const element = document.getElementById(sectionId);
+    if (element) {
+      const headerOffset = 120;
+      const elementPosition = element.getBoundingClientRect().top;
+      const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+
+      window.scrollTo({
+        top: offsetPosition,
+        behavior: 'smooth'
+      });
+      this.activeSection = sectionId;
+    }
+  }
+
+  setupScrollListener(): void {
+    this.scrollHandler = () => {
+      const sections = ['accueil', 'taxes', 'services', 'process', 'faq', 'contact'];
+      const scrollPosition = window.scrollY + 150;
+
+      for (let i = sections.length - 1; i >= 0; i--) {
+        const section = document.getElementById(sections[i]);
+        if (section) {
+          const sectionTop = section.offsetTop;
+          const sectionHeight = section.offsetHeight;
+          if (scrollPosition >= sectionTop && scrollPosition < sectionTop + sectionHeight) {
+            this.activeSection = sections[i];
+            break;
+          }
+        }
+      }
+    };
+    window.addEventListener('scroll', this.scrollHandler);
   }
 
   // Formulaire de paiement

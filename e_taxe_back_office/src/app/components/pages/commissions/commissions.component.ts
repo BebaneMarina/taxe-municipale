@@ -29,8 +29,7 @@ export class CommissionsComponent implements OnInit {
 
   filters = {
     dateDebut: '',
-    dateFin: '',
-    statut: ''
+    dateFin: ''
   };
 
   commissions = signal<CommissionRecord[]>([]);
@@ -49,8 +48,7 @@ export class CommissionsComponent implements OnInit {
   resetFilters(): void {
     this.filters = {
       dateDebut: '',
-      dateFin: '',
-      statut: ''
+      dateFin: ''
     };
     this.refreshCommissions();
   }
@@ -62,9 +60,6 @@ export class CommissionsComponent implements OnInit {
     }
     if (this.filters.dateFin) {
       params['date_fin'] = this.filters.dateFin;
-    }
-    if (this.filters.statut) {
-      params['statut'] = this.filters.statut;
     }
     return params;
   }
@@ -91,20 +86,5 @@ export class CommissionsComponent implements OnInit {
     return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'XAF', maximumFractionDigits: 0 }).format(value || 0);
   }
 
-  getStatutLabel(statut: string): string {
-    switch (statut) {
-      case 'success':
-      case 'reglee':
-        return 'Réglée';
-      case 'en_attente':
-      case 'pending':
-        return 'En attente';
-      case 'annulee':
-      case 'cancelled':
-        return 'Annulée';
-      default:
-        return statut;
-    }
-  }
 }
 

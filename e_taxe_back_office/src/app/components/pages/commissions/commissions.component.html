@@ -17,15 +17,6 @@
         Date fin
         <input type="date" [(ngModel)]="filters.dateFin">
       </label>
-      <label>
-        Statut
-        <select [(ngModel)]="filters.statut">
-          <option value="">Tous les statuts</option>
-          <option value="en_attente">En attente</option>
-          <option value="envoyee">Envoyée</option>
-          <option value="payee">Payée</option>
-        </select>
-      </label>
     </div>
     <div class="filter-actions">
       <button class="btn primary" (click)="refreshCommissions()" [disabled]="loadingCommissions()">
@@ -50,7 +41,6 @@
           <th>Montant collecté</th>
           <th>Commission</th>
           <th>Pourcentage</th>
-          <th>Statut</th>
         </tr>
       </thead>
       <tbody>
@@ -61,10 +51,9 @@
           <td>{{ formatCurrency(c.montant_collecte) }}</td>
           <td>{{ formatCurrency(c.commission_montant) }}</td>
           <td>{{ c.commission_pourcentage | number:'1.2-2' }}%</td>
-          <td>{{ getStatutLabel(c.statut_paiement) }}</td>
         </tr>
         <tr *ngIf="!commissions().length">
-          <td colspan="7">Aucune commission ne correspond aux filtres sélectionnés.</td>
+          <td colspan="6">Aucune commission ne correspond aux filtres sélectionnés.</td>
         </tr>
       </tbody>
     </table>
