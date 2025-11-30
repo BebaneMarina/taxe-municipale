@@ -22,7 +22,7 @@ class BambooPayService:
         self.debug_mode = os.getenv("BAMBOOPAY_DEBUG", "false").lower() == "true"
         
         if not self.merchant_id or not self.merchant_secret:
-            logger.warning("⚠️ BAMBOOPAY_MERCHANT_ID ou BAMBOOPAY_MERCHANT_SECRET non configurés")
+            logger.warning(" BAMBOOPAY_MERCHANT_ID ou BAMBOOPAY_MERCHANT_SECRET non configurés")
     
     def _get_auth_header(self) -> str:
         """Génère l'en-tête d'authentification Basic"""
