@@ -73,6 +73,124 @@ password=votre_mot_de_passe
 
 ---
 
+## Paiement client (BambooPay)
+
+### Identifiants ITAXE
+
+| Clé | Valeur |
+| --- | --- |
+| Nom du marchand | ITAXE |
+| ID du marchand (UUID) | `9de41a58-3bd4-454e-9956-39b5b888261e` |
+| **merchant_id (username Basic Auth / Numéro du marchand)** | `6008889` |
+| merchant_secret (mot de passe) | `12345678` |
+| Email marchand | `test@test.com` |
+| Numéro de compte | `60088890901` |
+| Contact | `+24174086886` |
+| Date de création | `27/11/2025 12:19` |
+
+Variables d'environnement à définir côté backend :
+
+```env
+BAMBOOPAY_BASE_URL=https://client.bamboopay-ga.com/api
+BAMBOOPAY_MERCHANT_ID=6008889
+BAMBOOPAY_MERCHANT_USERNAME=6008889 # facultatif, par défaut = merchant_id
+BAMBOOPAY_MERCHANT_SECRET=12345678
+BAMBOOPAY_MERCHANT_NAME=ITAXE
+BAMBOOPAY_MERCHANT_UID=9de41a58-3bd4-454e-9956-39b5b888261e
+BAMBOOPAY_MERCHANT_ACCOUNT=60088890901
+BAMBOOPAY_MERCHANT_EMAIL=test@test.com
+BAMBOOPAY_MERCHANT_CONTACT=+24174086886
+BAMBOOPAY_DEBUG=false
+```
+
+> ⚠️ `merchant_id` **doit** contenir le **Numéro du marchand** (6008889).  
+> C’est ce même identifiant qui est utilisé comme username pour l’authentification Basic `merchant_id:merchant_secret`.
+
+### Endpoints publics
+
+1. `GET /api/client/taxes?actif=true` — liste des taxes disponibles.
+2. `POST /api/client/paiement/initier` — initier un paiement (web ou mobile instantané).
+3. `GET /api/client/paiement/statut/{billing_id}` — récupérer le statut local.
+4. `POST /api/client/paiement/verifier/{billing_id}` — forcer une vérification côté BambooPay.
+5. `POST /api/client/paiement/callback` — endpoint appelé par BambooPay (ne nécessite pas de token).
+
+### Exemple `POST /api/client/paiement/initier`
+
+```json
+{
+  "taxe_id": 2,
+  "payer_name": "Jean Dupont",
+  "phone": "+24174000000",
+  "matricule": "TPU-2025-001",
+  "raison_sociale": "Boutique Jean & Fils",
+  "payment_method": "web",
+  "operateur": null
+}
+```
+
+**Réponse succès (paiement web)**
+```json
+{
+  "id": 12,
+  "billing_id": "TAX-20251127-AB12CD34",
+  "transaction_amount": 25000,
+  "statut": "pending",
+  "redirect_url": "https://client.bamboopay-ga.com/pay/redirect/TAX-20251127-AB12CD34",
+  "message": "Redirection vers BambooPay..."
+}
+```
+
+**Réponse succès (paiement instantané mobile)**
+```json
+{
+  "id": 15,
+  "billing_id": "TAX-20251127-EF56GH78",
+  "transaction_amount": 15000,
+  "statut": "pending",
+  "reference_bp": "BP-8d9f03b4",
+  "message": "Paiement instantané initié. Vérifiez votre téléphone."
+}
+```
+
+### Vérifier un statut
+
+```http
+GET /api/client/paiement/statut/TAX-20251127-AB12CD34
+```
+
+**Réponse**
+```json
+{
+  "id": 12,
+  "billing_id": "TAX-20251127-AB12CD34",
+  "reference_bp": "BP-8d9f03b4",
+  "transaction_id": "TX-0000456",
+  "statut": "success",
+  "statut_message": "Transaction confirmée par BambooPay",
+  "transaction_amount": 25000,
+  "date_initiation": "2025-11-27T12:32:14.852000",
+  "date_paiement": "2025-11-27T12:33:01.004000"
+}
+```
+
+### Forcer une vérification côté BambooPay
+
+```http
+POST /api/client/paiement/verifier/TAX-20251127-AB12CD34
+```
+
+**Réponse**
+```json
+{
+  "billing_id": "TAX-20251127-AB12CD34",
+  "statut_local": "success",
+  "statut_bamboopay": "success",
+  "message": "Paiement confirmé"
+}
+```
+
+---
+
 ## COLLECTEURS
 
 ### 1. Liste des collecteurs

@@ -144,90 +144,90 @@
       <p class="text-gray-500">Chargement...</p>
     </div>
   } @else {
-    <div class="table-wrapper">
-      <table class="min-w-full bg-white rounded-lg shadow">
-        <thead class="bg-main text-white">
-          <tr>
-            <th class="px-6 py-3 text-left text-sm font-semibold">Matricule</th>
-            <th class="px-6 py-3 text-left text-sm font-semibold">Nom</th>
-            <th class="px-6 py-3 text-left text-sm font-semibold">Prénom</th>
-            <th class="px-6 py-3 text-left text-sm font-semibold">Email</th>
-            <th class="px-6 py-3 text-left text-sm font-semibold">Téléphone</th>
-            <th class="px-6 py-3 text-left text-sm font-semibold">Statut</th>
-            <th class="px-6 py-3 text-left text-sm font-semibold">État</th>
-            <th class="px-6 py-3 text-left text-sm font-semibold">Actions</th>
-          </tr>
-        </thead>
-        <tbody class="divide-y divide-gray-200">
-          @for (collecteur of collecteurs; track collecteur.id) {
-            <tr class="hover:bg-gray-50">
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                {{ collecteur.matricule }}
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                {{ collecteur.nom }}
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                {{ collecteur.prenom }}
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                {{ collecteur.email }}
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                {{ collecteur.telephone }}
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap">
-                <span [class]="'px-2 py-1 rounded-full text-xs font-semibold ' + getStatutBadgeClass(collecteur.statut)">
-                  {{ collecteur.statut === 'active' ? 'Actif' : 'Désactivé' }}
-                </span>
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap">
-                <span [class]="'px-2 py-1 rounded-full text-xs font-semibold ' + getEtatBadgeClass(collecteur.etat)">
-                  {{ collecteur.etat === 'connecte' ? 'Connecté' : 'Déconnecté' }}
-                </span>
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm">
-                <div class="flex gap-2">
-                  <button
-                    (click)="viewActivites(collecteur)"
-                    class="px-3 py-1 bg-purple-500 text-white rounded hover:bg-purple-600"
-                    title="Voir les activités"
-                  >
-                    Activités
-                  </button>
-                  <button
-                    (click)="editCollecteur(collecteur)"
-                    class="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
-                    title="Modifier"
-                  >
-                    Modifier
-                  </button>
-                  <button
-                    (click)="toggleStatut(collecteur)"
-                    class="px-3 py-1 bg-gray-200 text-gray-700 rounded hover:bg-gray-300"
-                  >
-                    {{ collecteur.statut === 'active' ? 'Désactiver' : 'Activer' }}
-                  </button>
-                  @if (collecteur.statut === 'active') {
+    <div class="rounded-3xl border border-gray-100 shadow-[0_20px_60px_rgba(15,23,42,0.08)] bg-white overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="min-w-full text-sm text-gray-600">
+          <thead class="bg-white sticky top-0 z-10 shadow-[0_1px_0_rgba(15,23,42,0.08)]">
+            <tr class="text-xs font-semibold uppercase tracking-[0.2em] text-gray-500">
+              <th class="px-6 py-4 text-left">Collecteur</th>
+              <th class="px-6 py-4 text-left">Coordonnées</th>
+              <th class="px-6 py-4 text-left">Matricule / Zone</th>
+              <th class="px-6 py-4 text-left">Statuts</th>
+              <th class="px-6 py-4 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100">
+            @for (collecteur of collecteurs; track collecteur.id) {
+              <tr class="hover:bg-slate-50 transition-colors">
+                <td class="px-6 py-4">
+                  <p class="font-semibold text-gray-900">{{ collecteur.nom }} {{ collecteur.prenom }}</p>
+                  <p class="text-xs text-gray-500">Créé le {{ collecteur.created_at | date:'dd/MM/yyyy' }}</p>
+                </td>
+                <td class="px-6 py-4">
+                  <p class="text-sm font-medium text-gray-900">{{ collecteur.email }}</p>
+                  <p class="text-xs text-gray-500">{{ collecteur.telephone }}</p>
+                </td>
+                <td class="px-6 py-4">
+                  <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-100 text-slate-600 text-xs font-semibold">
+                    <svg class="size-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                      <path d="M4 7h16M4 12h16M4 17h16"/>
+                    </svg>
+                    Matricule : {{ collecteur.matricule }}
+                  </div>
+                </td>
+                <td class="px-6 py-4">
+                  <div class="flex flex-wrap gap-2">
+                    <span [class]="'inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold ' + getStatutBadgeClass(collecteur.statut)">
+                      <span class="size-2 rounded-full bg-current/40"></span>
+                      {{ collecteur.statut === 'active' ? 'Actif' : 'Désactivé' }}
+                    </span>
+                    <span [class]="'inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold ' + getEtatBadgeClass(collecteur.etat)">
+                      <span class="size-2 rounded-full bg-current/40"></span>
+                      {{ collecteur.etat === 'connecte' ? 'Connecté' : 'Déconnecté' }}
+                    </span>
+                  </div>
+                </td>
+                <td class="px-6 py-4 text-right">
+                  <div class="inline-flex gap-2">
                     <button
-                      (click)="toggleConnexion(collecteur)"
-                      class="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600"
+                      (click)="viewActivites(collecteur)"
+                      class="px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50"
                     >
-                      {{ collecteur.etat === 'connecte' ? 'Déconnecter' : 'Connecter' }}
+                      Activités
                     </button>
-                  }
-                </div>
-              </td>
-            </tr>
-          } @empty {
-            <tr>
-              <td colspan="8" class="px-6 py-8 text-center text-gray-500">
-                Aucun collecteur trouvé
-              </td>
-            </tr>
-          }
-        </tbody>
-      </table>
+                    <button
+                      (click)="editCollecteur(collecteur)"
+                      class="px-3 py-1.5 rounded-lg bg-blue-100 text-blue-700 text-xs font-semibold hover:bg-blue-200"
+                    >
+                      Modifier
+                    </button>
+                    <button
+                      (click)="toggleStatut(collecteur)"
+                      class="px-3 py-1.5 rounded-lg bg-gray-100 text-gray-700 text-xs font-semibold hover:bg-gray-200"
+                    >
+                      {{ collecteur.statut === 'active' ? 'Désactiver' : 'Activer' }}
+                    </button>
+                    @if (collecteur.statut === 'active') {
+                      <button
+                        (click)="toggleConnexion(collecteur)"
+                        class="px-3 py-1.5 rounded-lg bg-green-100 text-green-700 text-xs font-semibold hover:bg-green-200"
+                      >
+                        {{ collecteur.etat === 'connecte' ? 'Déconnecter' : 'Connecter' }}
+                      </button>
+                    }
+                  </div>
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="5" class="px-6 py-12 text-center text-gray-500">
+                  Aucun collecteur trouvé
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
     </div>
     
     <!-- Pagination -->

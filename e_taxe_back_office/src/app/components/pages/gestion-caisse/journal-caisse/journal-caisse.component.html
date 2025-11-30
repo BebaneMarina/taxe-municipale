@@ -1,0 +1,58 @@
+<div class="journal-page">
+  <header class="journal-header">
+    <div>
+      <p class="kicker">Gestion caisse</p>
+      <h1>Journal des opérations de caisse</h1>
+      <p>Consultez les entrées et sorties réalisées sur chaque caisse collecteur. Sélectionnez une caisse pour afficher les dernières opérations.</p>
+    </div>
+    <button class="btn secondary" (click)="loadOperations()" [disabled]="!selectedId">Rafraîchir</button>
+  </header>
+
+  <section class="filter-card">
+    <label>
+      Caisse
+      <select [(ngModel)]="selectedId" (change)="loadOperations()">
+        <option *ngFor="let c of caisses" [ngValue]="c.id">{{ c.code }} – {{ c.collecteur?.nom }}</option>
+      </select>
+    </label>
+    <div class="current-info" *ngIf="selectedCaisse as caisse">
+      <p class="code">
+        {{ caisse.code }}
+      </p>
+      <p class="collecteur">
+        {{ caisse.collecteur?.nom }} {{ caisse.collecteur?.prenom }}
+      </p>
+    </div>
+  </section>
+
+  <p class="message warning" *ngIf="message">{{ message }}</p>
+
+  <section class="table-card">
+    <table>
+      <thead>
+      <tr>
+        <th>Date</th>
+        <th>Type</th>
+        <th>Libellé</th>
+        <th>Montant</th>
+        <th>Solde après</th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr *ngFor="let op of operations">
+        <td>{{ op.date_operation | date:'short' }}</td>
+        <td>
+          <span class="chip" [ngClass]="op.type_operation">{{ op.type_operation }}</span>
+        </td>
+        <td>{{ op.libelle }}</td>
+        <td class="montant">{{ op.montant | number:'1.0-0' }} FCFA</td>
+        <td class="solde">{{ op.solde_apres | number:'1.0-0' }} FCFA</td>
+      </tr>
+      <tr *ngIf="!operations.length">
+        <td colspan="5" class="empty">Aucune opération pour cette caisse.</td>
+      </tr>
+      </tbody>
+    </table>
+  </section>
+</div>
+

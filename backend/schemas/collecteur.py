@@ -17,6 +17,9 @@ class CollecteurBase(BaseModel):
     latitude: Optional[float] = None
     longitude: Optional[float] = None
     heure_cloture: Optional[str] = Field(None, pattern=r'^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$')
+    
+    class Config:
+        from_attributes = True
 
 
 class CollecteurCreate(CollecteurBase):

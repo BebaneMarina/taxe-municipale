@@ -5,7 +5,7 @@ Routes pour la gestion des contribuables
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from sqlalchemy import func
-from typing import List, Optional
+from typing import List, Optional, Tuple
 from database.database import get_db
 from database.models import Contribuable
 from schemas.contribuable import ContribuableCreate, ContribuableUpdate, ContribuableResponse
@@ -23,6 +23,40 @@ def make_point(longitude: Optional[float], latitude: Optional[float]):
     if longitude is None or latitude is None:
         return None
     return func.ST_SetSRID(func.ST_MakePoint(longitude, latitude), 4326)
+
+
+def find_nearest_quartier(db: Session, geom_point) -> Tuple[Optional[int], Optional[float]]:
+    """Retourne le quartier le plus proche et la distance en mètres."""
+    if geom_point is None:
+        return None, None
+    from database.models import Quartier
+
+    row = (
+        db.query(
+            Quartier.id,
+            func.ST_DistanceSphere(Quartier.geom, geom_point).label("distance_m"),
+        )
+        .filter(Quartier.geom.isnot(None))
+        .order_by(func.ST_DistanceSphere(Quartier.geom, geom_point))
+        .limit(1)
+        .first()
+    )
+    if not row or row.distance_m is None:
+        return None, None
+    return row.id, float(row.distance_m)
+
+
+def distance_to_quartier(db: Session, quartier_id: Optional[int], geom_point) -> Optional[float]:
+    if not quartier_id or geom_point is None:
+        return None
+    from database.models import Quartier
+
+    distance = (
+        db.query(func.ST_DistanceSphere(Quartier.geom, geom_point))
+        .filter(Quartier.id == quartier_id, Quartier.geom.isnot(None))
+        .scalar()
+    )
+    return float(distance) if distance is not None else None
 
 
 @router.get("/", response_model=List[ContribuableResponse])
@@ -119,16 +153,14 @@ def create_contribuable(contribuable: ContribuableCreate, db: Session = Depends(
     # Détection automatique de zone si GPS disponible
     quartier_id = contribuable.quartier_id
     geom_point = make_point(contribuable.longitude, contribuable.latitude)
+    distance_m = None
     if geom_point is not None:
-        from database.models import ZoneGeographique
-        zone_match = db.query(ZoneGeographique).filter(
-            ZoneGeographique.actif == True,
-            ZoneGeographique.geom.isnot(None),
-            ZoneGeographique.type_zone == 'quartier',
-            func.ST_Contains(ZoneGeographique.geom, geom_point)
-        ).first()
-        if zone_match and zone_match.quartier_id:
-            quartier_id = zone_match.quartier_id
+        auto_quartier_id, auto_distance = find_nearest_quartier(db, geom_point)
+        if auto_quartier_id:
+            quartier_id = auto_quartier_id
+            distance_m = auto_distance
+        if distance_m is None:
+            distance_m = distance_to_quartier(db, quartier_id, geom_point)
     
     # Créer le contribuable avec le quartier_id (détecté ou fourni)
     contribuable_dict = contribuable.dict(exclude={'taxes_ids'})
@@ -136,6 +168,7 @@ def create_contribuable(contribuable: ContribuableCreate, db: Session = Depends(
     db_contribuable = Contribuable(**contribuable_dict)
     if geom_point is not None:
         db_contribuable.geom = geom_point
+    db_contribuable.distance_quartier_m = distance_m
     db.add(db_contribuable)
     db.commit()
     db.refresh(db_contribuable)
@@ -209,15 +242,15 @@ def update_contribuable(contribuable_id: int, contribuable_update: ContribuableU
         geom_point = make_point(db_contribuable.longitude, db_contribuable.latitude)
         db_contribuable.geom = geom_point
         if geom_point is not None:
-            from database.models import ZoneGeographique
-            zone_match = db.query(ZoneGeographique).filter(
-                ZoneGeographique.actif == True,
-                ZoneGeographique.geom.isnot(None),
-                ZoneGeographique.type_zone == 'quartier',
-                func.ST_Contains(ZoneGeographique.geom, geom_point)
-            ).first()
-            if zone_match and zone_match.quartier_id:
-                db_contribuable.quartier_id = zone_match.quartier_id
+            auto_quartier_id, auto_distance = find_nearest_quartier(db, geom_point)
+            if auto_quartier_id:
+                db_contribuable.quartier_id = auto_quartier_id
+                db_contribuable.distance_quartier_m = auto_distance
+            else:
+                db_contribuable.distance_quartier_m = distance_to_quartier(db, db_contribuable.quartier_id, geom_point)
+
+    if "quartier_id" in update_data and db_contribuable.geom is not None:
+        db_contribuable.distance_quartier_m = distance_to_quartier(db, db_contribuable.quartier_id, db_contribuable.geom)
     
     db_contribuable.updated_at = datetime.utcnow()
     db.commit()

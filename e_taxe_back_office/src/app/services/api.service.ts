@@ -409,45 +409,6 @@ export class ApiService {
     return this.http.get(`${this.apiUrl}/rapports/complet`, httpParams.keys().length > 0 ? { params: httpParams } : {});
   }
 
-  // Relances
-  getRelances(params?: any): Observable<any> {
-    const httpParams = params ? createHttpParams(params) : new HttpParams();
-    return this.http.get(`${this.apiUrl}/relances`, httpParams.keys().length > 0 ? { params: httpParams } : {});
-  }
-
-  getRelance(id: number): Observable<any> {
-    return this.http.get(`${this.apiUrl}/relances/${id}`);
-  }
-
-  createRelance(relance: any): Observable<any> {
-    return this.http.post(`${this.apiUrl}/relances`, relance);
-  }
-
-  updateRelance(id: number, relance: any): Observable<any> {
-    return this.http.put(`${this.apiUrl}/relances/${id}`, relance);
-  }
-
-  envoyerRelance(id: number): Observable<any> {
-    return this.http.patch(`${this.apiUrl}/relances/${id}/envoyer`, {});
-  }
-
-  genererRelancesAutomatiques(params?: any): Observable<any> {
-    const httpParams = params ? createHttpParams(params) : new HttpParams();
-    return this.http.post(`${this.apiUrl}/relances/generer-automatique`, {}, httpParams.keys().length > 0 ? { params: httpParams } : {});
-  }
-
-  getHistoriqueRelancesContribuable(contribuableId: number, limit?: number): Observable<any> {
-    const params: { [key: string]: any } = {};
-    if (limit) params['limit'] = limit;
-    const httpParams = createHttpParams(params);
-    return this.http.get(`${this.apiUrl}/relances/contribuable/${contribuableId}/historique`, httpParams.keys().length > 0 ? { params: httpParams } : {});
-  }
-
-  getStatistiquesRelances(params?: any): Observable<any> {
-    const httpParams = params ? createHttpParams(params) : new HttpParams();
-    return this.http.get(`${this.apiUrl}/relances/statistiques`, httpParams.keys().length > 0 ? { params: httpParams } : {});
-  }
-
   // Impayés
   getImpayes(params?: any): Observable<any> {
     const httpParams = params ? createHttpParams(params) : new HttpParams();
@@ -539,6 +500,162 @@ export class ApiService {
 
   getStatsGlobales(): Observable<any> {
     return this.http.get(`${this.apiUrl}/cartographie/stats-globales`);
+  }
+
+  // ==================== CAISSES ====================
+  getCaisses(params?: any): Observable<any> {
+    const httpParams = params ? createHttpParams(params) : new HttpParams();
+    return this.http.get(`${this.apiUrl}/caisses`, httpParams.keys().length > 0 ? { params: httpParams } : {});
+  }
+
+  getCaisse(id: number): Observable<any> {
+    return this.http.get(`${this.apiUrl}/caisses/${id}`);
+  }
+
+  getEtatCaisse(id: number): Observable<any> {
+    return this.http.get(`${this.apiUrl}/caisses/${id}/etat`);
+  }
+
+  ouvrirCaisse(id: number, soldeInitial: number = 0): Observable<any> {
+    const params = createHttpParams({ solde_initial: soldeInitial });
+    return this.http.post(`${this.apiUrl}/caisses/${id}/ouvrir`, {}, { params });
+  }
+
+  fermerCaisse(id: number, notes?: string): Observable<any> {
+    const params = notes ? createHttpParams({ notes }) : new HttpParams();
+    return this.http.post(`${this.apiUrl}/caisses/${id}/fermer`, {}, { params });
+  }
+
+  cloturerCaisse(id: number, montantCloture: number, notes?: string): Observable<any> {
+    const payload: Record<string, string | number> = { montant_cloture: montantCloture };
+    if (notes) {
+      payload['notes'] = notes;
+    }
+    const params = createHttpParams(payload);
+    return this.http.post(`${this.apiUrl}/caisses/${id}/cloturer`, {}, { params });
+  }
+
+  createOperationCaisse(caisseId: number, operation: any): Observable<any> {
+    return this.http.post(`${this.apiUrl}/caisses/${caisseId}/operations`, operation);
+  }
+
+  getOperationsCaisse(caisseId: number, params?: any): Observable<any> {
+    const httpParams = params ? createHttpParams(params) : new HttpParams();
+    return this.http.get(`${this.apiUrl}/caisses/${caisseId}/operations`, httpParams.keys().length > 0 ? { params: httpParams } : {});
+  }
+
+  updateCaisse(id: number, payload: any): Observable<any> {
+    return this.http.put(`${this.apiUrl}/caisses/${id}`, payload);
+  }
+
+  // Coupures de caisse
+  getCoupures(params?: any): Observable<any> {
+    const httpParams = params ? createHttpParams(params) : new HttpParams();
+    return this.http.get(`${this.apiUrl}/caisses/coupures`, httpParams.keys().length > 0 ? { params: httpParams } : {});
+  }
+
+  createCoupure(payload: any): Observable<any> {
+    return this.http.post(`${this.apiUrl}/caisses/coupures`, payload);
+  }
+
+  updateCoupure(id: number, payload: any): Observable<any> {
+    return this.http.put(`${this.apiUrl}/caisses/coupures/${id}`, payload);
+  }
+
+  toggleCoupure(id: number): Observable<any> {
+    return this.http.patch(`${this.apiUrl}/caisses/coupures/${id}/toggle`, {});
+  }
+
+  deleteCoupure(id: number): Observable<any> {
+    return this.http.delete(`${this.apiUrl}/caisses/coupures/${id}`);
+  }
+
+  // ==================== JOURNAL & COMMISSIONS ====================
+  getJournalCurrent(jour?: string): Observable<any> {
+    const params = jour ? createHttpParams({ jour }) : new HttpParams();
+    return this.http.get(`${this.apiUrl}/journal/travaux/current`, { params });
+  }
+
+  getJournalByDate(jour: string): Observable<any> {
+    return this.http.get(`${this.apiUrl}/journal/travaux/${jour}`);
+  }
+
+  cloturerJournal(jour: string, remarque?: string): Observable<any> {
+    const params = createHttpParams({ jour });
+    const body = remarque ? { remarque } : {};
+    return this.http.post(`${this.apiUrl}/journal/travaux/cloturer`, body, { params });
+  }
+
+  listCommissionFiles(): Observable<any> {
+    return this.http.get(`${this.apiUrl}/journal/commissions/files`);
+  }
+
+  genererCommissions(jour: string, format: 'json' | 'csv' | 'pdf' = 'json'): Observable<any> {
+    const params = createHttpParams({ jour, format_fichier: format });
+    return this.http.post(`${this.apiUrl}/journal/commissions/generer`, {}, { params });
+  }
+
+  getCommissions(params?: any): Observable<any> {
+    const httpParams = params ? createHttpParams(params) : new HttpParams();
+    return this.http.get(`${this.apiUrl}/journal/commissions`, httpParams.keys().length > 0 ? { params: httpParams } : {});
+  }
+
+  getCollectesJour(jour: string): Observable<any> {
+    return this.http.get(`${this.apiUrl}/journal/travaux/${jour}/collectes`);
+  }
+
+  getOperationsJour(jour: string): Observable<any> {
+    return this.http.get(`${this.apiUrl}/journal/travaux/${jour}/operations`);
+  }
+
+  getRelancesJour(jour: string): Observable<any> {
+    return this.http.get(`${this.apiUrl}/journal/travaux/${jour}/relances`);
+  }
+
+  getCommissionsDetails(jour: string): Observable<any> {
+    return this.http.get(`${this.apiUrl}/journal/commissions/${jour}/details`);
+  }
+
+  // ==================== RELANCES ====================
+  getRelances(params?: any): Observable<any> {
+    const httpParams = params ? createHttpParams(params) : new HttpParams();
+    return this.http.get(`${this.apiUrl}/relances`, httpParams.keys().length > 0 ? { params: httpParams } : {});
+  }
+
+  getRelance(id: number): Observable<any> {
+    return this.http.get(`${this.apiUrl}/relances/${id}`);
+  }
+
+  createRelance(payload: any): Observable<any> {
+    return this.http.post(`${this.apiUrl}/relances`, payload);
+  }
+
+  updateRelance(id: number, payload: any): Observable<any> {
+    return this.http.put(`${this.apiUrl}/relances/${id}`, payload);
+  }
+
+  createRelancesManuelles(payload: any): Observable<any> {
+    return this.http.post(`${this.apiUrl}/relances/manuelles`, payload);
+  }
+
+  envoyerRelance(id: number): Observable<any> {
+    return this.http.patch(`${this.apiUrl}/relances/${id}/envoyer`, {});
+  }
+
+  getHistoriqueRelancesContribuable(contribuableId: number, limit?: number): Observable<any> {
+    const params: { [key: string]: any } = {};
+    if (limit) params['limit'] = limit;
+    const httpParams = createHttpParams(params);
+    return this.http.get(`${this.apiUrl}/relances/contribuable/${contribuableId}/historique`, httpParams.keys().length > 0 ? { params: httpParams } : {});
+  }
+
+  getStatistiquesRelances(params?: any): Observable<any> {
+    const httpParams = params ? createHttpParams(params) : new HttpParams();
+    return this.http.get(`${this.apiUrl}/relances/statistiques`, httpParams.keys().length > 0 ? { params: httpParams } : {});
+  }
+
+  genererRelancesAutomatiques(body: any): Observable<any> {
+    return this.http.post(`${this.apiUrl}/relances/generer-automatique`, body);
   }
 }
 

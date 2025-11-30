@@ -244,16 +244,23 @@
               class="filter-input"
             />
           </div>
-          <div class="filter-group">
-            <select
-              [(ngModel)]="filterPaye"
-              (change)="applyFilters()"
-              class="filter-select"
-            >
-              <option value="all">Tous les statuts</option>
-              <option value="paye">Payés uniquement</option>
-              <option value="non-paye">Impayés uniquement</option>
-            </select>
+          <div class="filter-group status-toggle">
+            <label class="toggle-option">
+              <input
+                type="checkbox"
+                [(ngModel)]="showPayes"
+                (change)="applyFilters()"
+              />
+              <span class="badge paid">Payés</span>
+            </label>
+            <label class="toggle-option">
+              <input
+                type="checkbox"
+                [(ngModel)]="showNonPayes"
+                (change)="applyFilters()"
+              />
+              <span class="badge unpaid">Impayés</span>
+            </label>
           </div>
           <div class="filter-group">
             <select
@@ -277,6 +284,8 @@
           <app-map-interactive 
             #mapComponent
             [filteredContribuables]="filteredContribuables"
+            [showPayes]="showPayes"
+            [showNonPayes]="showNonPayes"
           />
         </div>
 

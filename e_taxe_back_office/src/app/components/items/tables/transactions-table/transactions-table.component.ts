@@ -148,4 +148,41 @@ export class TransactionsTableComponent implements OnInit {
     const date = new Date(dateStr);
     return date.toLocaleTimeString('fr-FR', {hour: '2-digit', minute: '2-digit'});
   }
+
+  getCollecteLocation(collecte: Collecte): {
+    latitude: number;
+    longitude: number;
+    accuracy?: number;
+    source: 'collecte' | 'contribuable';
+  } | null {
+    const collecteLocation = collecte.location;
+    if (
+      collecteLocation &&
+      this.isValidCoordinate(collecteLocation.latitude) &&
+      this.isValidCoordinate(collecteLocation.longitude)
+    ) {
+      return {
+        latitude: collecteLocation.latitude,
+        longitude: collecteLocation.longitude,
+        accuracy: collecteLocation.accuracy,
+        source: 'collecte'
+      };
+    }
+
+    const contribLat = collecte.contribuable?.latitude;
+    const contribLng = collecte.contribuable?.longitude;
+    if (this.isValidCoordinate(contribLat) && this.isValidCoordinate(contribLng)) {
+      return {
+        latitude: contribLat!,
+        longitude: contribLng!,
+        source: 'contribuable'
+      };
+    }
+
+    return null;
+  }
+
+  private isValidCoordinate(value?: number): boolean {
+    return value !== null && value !== undefined && !Number.isNaN(value);
+  }
 }

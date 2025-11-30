@@ -25,6 +25,14 @@ export interface InfoCollecte {
   contribuable?: Contribuable;
   taxe?: Taxe;
   collecteur?: Collecteur;
+  // Géolocalisation
+  location?: {
+    id: number;
+    latitude: number;
+    longitude: number;
+    accuracy?: number;
+    timestamp?: string;
+  };
 }
 
 export type Collecte = InfoCollecte;

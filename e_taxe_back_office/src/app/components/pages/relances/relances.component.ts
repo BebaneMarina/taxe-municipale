@@ -38,21 +38,24 @@ export class RelancesComponent implements OnInit {
   showCreateModal = false;
   contribuables: any[] = [];
   searchContribuableTerm = '';
-  selectedContribuable: any = null;
-  affectationsTaxes: any[] = [];
-  selectedAffectationTaxe: any = null;
-  
-  // Formulaire de création
+
+  // Formulaire multi-contribuables
   newRelance = {
-    contribuable_id: null as number | null,
-    affectation_taxe_id: null as number | null,
     type_relance: 'sms',
     message: '',
     montant_due: 0,
     date_echeance: '',
     date_planifiee: this.getLocalDateTimeString(),
-    canal_envoi: '',
-    notes: ''
+    notes: '',
+    contribuables: [] as Array<{
+      contribuable?: any;
+      contribuable_id: number | null;
+      telephone_override?: string;
+      montant_due?: number | null;
+      date_echeance?: string;
+      message?: string;
+      notes?: string;
+    }>
   };
 
   ngOnInit(): void {
@@ -211,19 +214,24 @@ export class RelancesComponent implements OnInit {
 
   openCreateModal(): void {
     this.showCreateModal = true;
-    this.selectedContribuable = null;
-    this.selectedAffectationTaxe = null;
     this.searchContribuableTerm = '';
     this.newRelance = {
-      contribuable_id: null,
-      affectation_taxe_id: null,
       type_relance: 'sms',
       message: '',
       montant_due: 0,
       date_echeance: '',
       date_planifiee: this.getLocalDateTimeString(),
-      canal_envoi: '',
-      notes: ''
+      notes: '',
+      contribuables: [
+        {
+          contribuable_id: null,
+          telephone_override: '',
+          montant_due: null,
+          date_echeance: '',
+          message: '',
+          notes: ''
+        }
+      ]
     };
   }
 
@@ -252,86 +260,61 @@ export class RelancesComponent implements OnInit {
     });
   }
 
-  selectContribuable(contribuable: any): void {
-    this.selectedContribuable = contribuable;
-    this.newRelance.contribuable_id = contribuable.id;
-    this.searchContribuableTerm = `${contribuable.nom} ${contribuable.prenom || ''}`.trim();
-    this.contribuables = [];
-    
-    // Charger les affectations de taxes du contribuable
-    this.loadAffectationsTaxes(contribuable.id);
-    
-    // Définir le canal d'envoi selon le type
-    if (this.newRelance.type_relance === 'sms') {
-      this.newRelance.canal_envoi = contribuable.telephone || '';
-    } else if (this.newRelance.type_relance === 'email') {
-      this.newRelance.canal_envoi = contribuable.email || '';
+  addDestinataire(): void {
+    this.newRelance.contribuables.push({
+      contribuable_id: null,
+      telephone_override: '',
+      montant_due: null,
+      date_echeance: '',
+      message: '',
+      notes: ''
+    });
+  }
+
+  removeDestinataire(index: number): void {
+    if (this.newRelance.contribuables.length > 1) {
+      this.newRelance.contribuables.splice(index, 1);
     }
   }
 
-  loadAffectationsTaxes(contribuableId: number): void {
-    // Récupérer les affectations actives du contribuable via l'API des contribuables
-    // Note: Les affectations peuvent ne pas être incluses par défaut, on les récupère séparément si nécessaire
-    this.apiService.getContribuable(contribuableId).subscribe({
-      next: (contribuable) => {
-        // Si les affectations sont déjà dans la réponse
-        if (contribuable.affectations_taxes) {
-          this.affectationsTaxes = contribuable.affectations_taxes.filter((at: any) => at.actif);
-        } else {
-          // Sinon, on peut récupérer les taxes du contribuable via les affectations
-          // Pour l'instant, on laisse vide et l'utilisateur peut saisir manuellement le montant
-          this.affectationsTaxes = [];
-        }
+  searchContribuablesFor(index: number): void {
+    if (!this.searchContribuableTerm || this.searchContribuableTerm.length < 2) {
+      this.contribuables = [];
+      return;
+    }
+
+    this.apiService.getContribuables({
+      search: this.searchContribuableTerm,
+      limit: 20,
+      actif: true
+    }).subscribe({
+      next: (data) => {
+        this.contribuables = Array.isArray(data) ? data : (data.items || []);
       },
-      error: (err) => {
-        console.error('Erreur chargement affectations:', err);
-        this.affectationsTaxes = [];
+      error: () => {
+        this.contribuables = [];
       }
     });
   }
 
-  selectAffectationTaxe(): void {
-    if (this.selectedAffectationTaxe) {
-      this.newRelance.affectation_taxe_id = this.selectedAffectationTaxe.id;
-      this.newRelance.montant_due = this.selectedAffectationTaxe.montant_custom || this.selectedAffectationTaxe.taxe?.montant || 0;
-      
-      // Générer un message par défaut
-      if (!this.newRelance.message) {
-        const taxeNom = this.selectedAffectationTaxe.taxe?.nom || 'taxe';
-        const montant = this.newRelance.montant_due;
-        this.newRelance.message = `Rappel : Vous avez une ${taxeNom} de ${montant} FCFA à payer.`;
-      }
-    } else {
-      this.newRelance.affectation_taxe_id = null;
+  selectContribuableFor(index: number, contribuable: any): void {
+    const destinataire = this.newRelance.contribuables[index];
+    destinataire.contribuable = contribuable;
+    destinataire.contribuable_id = contribuable.id;
+    destinataire.telephone_override = contribuable.telephone || '';
+    destinataire.montant_due = destinataire.montant_due ?? this.newRelance.montant_due ?? 0;
+
+    if (!destinataire.message && this.newRelance.message) {
+      destinataire.message = this.newRelance.message;
     }
+
+    this.searchContribuableTerm = `${contribuable.nom} ${contribuable.prenom || ''}`.trim();
+    this.contribuables = [];
   }
 
-  onTypeRelanceChange(): void {
-    if (this.selectedContribuable) {
-      if (this.newRelance.type_relance === 'sms') {
-        this.newRelance.canal_envoi = this.selectedContribuable.telephone || '';
-      } else if (this.newRelance.type_relance === 'email') {
-        this.newRelance.canal_envoi = this.selectedContribuable.email || '';
-      } else {
-        this.newRelance.canal_envoi = '';
-      }
-    }
-  }
-
-  createRelance(): void {
-    // Validation
-    if (!this.newRelance.contribuable_id) {
-      this.error = 'Veuillez sélectionner un contribuable';
-      return;
-    }
-
+  createRelancesManuelles(): void {
     if (!this.newRelance.type_relance) {
       this.error = 'Veuillez sélectionner un type de relance';
-      return;
-    }
-
-    if (!this.newRelance.montant_due || this.newRelance.montant_due <= 0) {
-      this.error = 'Le montant dû doit être supérieur à 0';
       return;
     }
 
@@ -340,38 +323,53 @@ export class RelancesComponent implements OnInit {
       return;
     }
 
+    if (!this.newRelance.contribuables.length) {
+      this.error = 'Ajoutez au moins un destinataire';
+      return;
+    }
+
+    const payload = {
+      type_relance: this.newRelance.type_relance,
+      message: this.newRelance.message || undefined,
+      montant_due: this.newRelance.montant_due || undefined,
+      date_echeance: this.newRelance.date_echeance ? new Date(this.newRelance.date_echeance).toISOString() : undefined,
+      date_planifiee: new Date(this.newRelance.date_planifiee).toISOString(),
+      notes: this.newRelance.notes || undefined,
+      contribuables: this.newRelance.contribuables.map((dest) => {
+        if (!dest.contribuable_id) {
+          throw new Error('Un destinataire n’a pas de contribuable sélectionné');
+        }
+        return {
+          contribuable_id: dest.contribuable_id,
+          telephone_override: dest.telephone_override || undefined,
+          montant_due: dest.montant_due || this.newRelance.montant_due,
+          date_echeance: dest.date_echeance ? new Date(dest.date_echeance).toISOString() : undefined,
+          message: dest.message || this.newRelance.message,
+          notes: dest.notes || undefined,
+        };
+      }),
+    };
+
     this.loading = true;
     this.error = '';
 
-    const relanceData = {
-      contribuable_id: this.newRelance.contribuable_id,
-      affectation_taxe_id: this.newRelance.affectation_taxe_id || null,
-      type_relance: this.newRelance.type_relance,
-      message: this.newRelance.message || undefined,
-      montant_due: this.newRelance.montant_due,
-      date_echeance: this.newRelance.date_echeance
-        ? new Date(this.newRelance.date_echeance).toISOString()
-        : undefined,
-      date_planifiee: this.newRelance.date_planifiee
-        ? new Date(this.newRelance.date_planifiee).toISOString()
-        : new Date().toISOString(),
-      canal_envoi: this.newRelance.canal_envoi || undefined,
-      notes: this.newRelance.notes || undefined
-    };
-
-    this.apiService.createRelance(relanceData).subscribe({
+    this.apiService.createRelancesManuelles(payload).subscribe({
       next: () => {
         this.loading = false;
         this.closeCreateModal();
         this.loadRelances();
         this.loadStats();
-        alert('Relance créée avec succès !');
+        alert('Relances créées avec succès !');
       },
       error: (err) => {
-        this.error = err.error?.detail || 'Erreur lors de la création de la relance';
+        this.error = err.error?.detail || 'Erreur lors de la création des relances';
         this.loading = false;
-      }
+      },
     });
+  }
+
+  hasSelectedContribuables(): boolean {
+    return this.newRelance.contribuables.some((dest) => !!dest.contribuable);
   }
 
   private getLocalDateTimeString(date: Date = new Date()): string {

@@ -17,16 +17,21 @@ class BambooPayService:
     
     def __init__(self):
         self.base_url = os.getenv("BAMBOOPAY_BASE_URL", "https://client.bamboopay-ga.com/api")
-        self.merchant_id = os.getenv("BAMBOOPAY_MERCHANT_ID", "")
-        self.merchant_secret = os.getenv("BAMBOOPAY_MERCHANT_SECRET", "")
+        # Par convention BambooPay : le « Numéro du marchand » sert également de username Basic Auth
+        default_merchant_number = "6008889"
+        default_password = "12345678"
+        self.merchant_id = os.getenv("BAMBOOPAY_MERCHANT_ID", default_merchant_number)
+        self.merchant_secret = os.getenv("BAMBOOPAY_MERCHANT_SECRET", default_password)
+        self.merchant_username = os.getenv("BAMBOOPAY_MERCHANT_USERNAME", self.merchant_id)
         self.debug_mode = os.getenv("BAMBOOPAY_DEBUG", "false").lower() == "true"
         
-        if not self.merchant_id or not self.merchant_secret:
-            logger.warning(" BAMBOOPAY_MERCHANT_ID ou BAMBOOPAY_MERCHANT_SECRET non configurés")
+        # Version correcte (celle du repo)
+        if (not os.getenv("BAMBOOPAY_MERCHANT_ID") or not os.getenv("BAMBOOPAY_MERCHANT_SECRET")):
+            logger.warning("⚠️ Identifiants BambooPay non fournis dans l'environnement, utilisation des valeurs ITAXE par défaut.")
     
     def _get_auth_header(self) -> str:
         """Génère l'en-tête d'authentification Basic"""
-        credentials = f"{self.merchant_id}:{self.merchant_secret}"
+        credentials = f"{self.merchant_username}:{self.merchant_secret}"
         encoded = base64.b64encode(credentials.encode()).decode()
         return f"Basic {encoded}"
     
@@ -50,19 +55,6 @@ class BambooPayService:
     ) -> Dict[str, Any]:
         """
         Initie une transaction de paiement via BambooPay
-        
-        Args:
-            payer_name: Nom du payeur
-            matricule: Matricule du payeur
-            billing_id: ID facture côté marchand
-            transaction_amount: Montant à payer (en string)
-            phone: Numéro de téléphone du client
-            raison_sociale: Raison sociale (optionnel)
-            return_url: URL de redirection finale (optionnel)
-            update_status_url: URL callback pour mises à jour (optionnel)
-        
-        Returns:
-            Dict avec redirect_url en cas de succès
         """
         url = f"{self.base_url}/send"
         
@@ -143,17 +135,6 @@ class BambooPayService:
     ) -> Dict[str, Any]:
         """
         Effectue un paiement instantané via mobile money
-        
-        Args:
-            phone: Numéro du payeur
-            amount: Montant (en string)
-            payer_name: Nom du payeur
-            reference: Référence marchande
-            callback_url: URL callback
-            operateur: moov_money ou airtel_money (optionnel)
-        
-        Returns:
-            Dict avec reference_bp et status
         """
         url = f"{self.base_url}/mobile/instant-payment"
         
@@ -224,12 +205,6 @@ class BambooPayService:
     async def verifier_statut(self, transaction_id: str) -> Dict[str, Any]:
         """
         Vérifie le statut d'une transaction
-        
-        Args:
-            transaction_id: ID de la transaction BambooPay
-        
-        Returns:
-            Dict avec le statut de la transaction
         """
         url = f"{self.base_url}/check-status/{transaction_id}"
         
@@ -287,4 +262,3 @@ class BambooPayService:
 
 # Instance globale du service
 bamboopay_service = BambooPayService()
-

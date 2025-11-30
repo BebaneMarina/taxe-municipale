@@ -15,12 +15,18 @@ export class MapInteractiveComponent implements OnInit, AfterViewInit, OnDestroy
   private apiService: ApiService = inject(ApiService);
   
   private map: L.Map | null = null;
-  private markerLayer: L.LayerGroup | null = null;
-  private markers: L.Marker[] = [];
+  private payesLayer: L.LayerGroup | null = null;
+  private nonPayesLayer: L.LayerGroup | null = null;
+  private markersPayes: L.Marker[] = [];
+  private markersNonPayes: L.Marker[] = [];
   private hasInitialFit = false;
-  private readonly librevilleBounds = L.latLngBounds([0.15, 9.2], [0.6, 9.8]);
+  private readonly gabonBounds = L.latLngBounds([-3.5, 8.2], [2.5, 15]);
+  private readonly librevilleBounds = L.latLngBounds([0.2, 9.2], [0.6, 9.7]);
+  private readonly librevilleCenter = L.latLng(0.39, 9.45);
   
   @Input() filteredContribuables: any[] | null = null;
+  @Input() showPayes = true;
+  @Input() showNonPayes = true;
   
   @Output() contribuablesLoaded = new EventEmitter<any[]>();
   
@@ -45,6 +51,11 @@ export class MapInteractiveComponent implements OnInit, AfterViewInit, OnDestroy
         this.setFilteredContribuables(value);
       }
     }
+
+    if ((changes['showPayes'] && !changes['showPayes'].firstChange) ||
+        (changes['showNonPayes'] && !changes['showNonPayes'].firstChange)) {
+      this.updateLayerVisibility();
+    }
   }
 
   ngAfterViewInit(): void {
@@ -64,11 +75,12 @@ export class MapInteractiveComponent implements OnInit, AfterViewInit, OnDestroy
   }
 
   private initMap(): void {
-    // Initialiser la carte centrée sur Libreville
+    // Initialiser la carte centrée sur le Gabon
     this.map = L.map('map', {
-      center: this.librevilleBounds.getCenter(), // Libreville
-      zoom: 13,
-      zoomControl: true
+      center: this.gabonBounds.getCenter(),
+      zoom: 6,
+      zoomControl: true,
+      maxBounds: this.gabonBounds.pad(0.5)
     });
 
     // Ajouter la couche de tuiles
@@ -77,7 +89,9 @@ export class MapInteractiveComponent implements OnInit, AfterViewInit, OnDestroy
       maxZoom: 19
     }).addTo(this.map);
 
-    this.markerLayer = L.layerGroup().addTo(this.map);
+    this.payesLayer = L.layerGroup().addTo(this.map);
+    this.nonPayesLayer = L.layerGroup().addTo(this.map);
+    this.map.on('click', () => this.zoomToLibreville());
     this.hasInitialFit = false;
   }
 
@@ -124,11 +138,13 @@ export class MapInteractiveComponent implements OnInit, AfterViewInit, OnDestroy
   }
 
   private updateMarkers(): void {
-    if (!this.map || !this.markerLayer) return;
+    if (!this.map || !this.payesLayer || !this.nonPayesLayer) return;
 
     // Nettoyer les anciens marqueurs
-    this.markerLayer.clearLayers();
-    this.markers = [];
+    this.payesLayer.clearLayers();
+    this.nonPayesLayer.clearLayers();
+    this.markersPayes = [];
+    this.markersNonPayes = [];
 
     // Créer des marqueurs stylisés avec popup
     for (const contrib of this.contribuables) {
@@ -170,23 +186,49 @@ export class MapInteractiveComponent implements OnInit, AfterViewInit, OnDestroy
         className: 'custom-popup'
       });
 
-      this.markers.push(marker);
-      this.markerLayer.addLayer(marker);
+      if (aPaye) {
+        this.markersPayes.push(marker);
+        this.payesLayer.addLayer(marker);
+      } else {
+        this.markersNonPayes.push(marker);
+        this.nonPayesLayer.addLayer(marker);
+      }
     }
 
+    this.updateLayerVisibility();
+
+    const allMarkers = [...this.markersPayes, ...this.markersNonPayes];
     if (this.map) {
-      if (this.markers.length === 1) {
-        const point = this.markers[0].getLatLng();
+      if (allMarkers.length === 1) {
+        const point = allMarkers[0].getLatLng();
         this.map.setView(point, 16, { animate: this.hasInitialFit });
         this.hasInitialFit = true;
-      } else if (this.markers.length > 1) {
-        const bounds = L.featureGroup(this.markers).getBounds().pad(0.15);
-        const safeBounds = bounds.isValid() ? bounds : this.librevilleBounds;
+      } else if (allMarkers.length > 1) {
+        const bounds = L.featureGroup(allMarkers).getBounds().pad(0.15);
+        const safeBounds = bounds.isValid() ? bounds : this.gabonBounds;
         this.map.fitBounds(safeBounds, { animate: this.hasInitialFit, maxZoom: 16 });
         this.hasInitialFit = true;
       } else {
-        this.map.fitBounds(this.librevilleBounds, { animate: this.hasInitialFit });
+        this.map.fitBounds(this.gabonBounds, { animate: this.hasInitialFit });
       }
+    }
+  }
+
+  private updateLayerVisibility(): void {
+    if (!this.map || !this.payesLayer || !this.nonPayesLayer) return;
+
+    if (this.map.hasLayer(this.payesLayer)) {
+      this.map.removeLayer(this.payesLayer);
+    }
+    if (this.map.hasLayer(this.nonPayesLayer)) {
+      this.map.removeLayer(this.nonPayesLayer);
+    }
+
+    if (this.showPayes) {
+      this.map.addLayer(this.payesLayer);
+    }
+    if (this.showNonPayes) {
+      this.map.addLayer(this.nonPayesLayer);
     }
   }
 
@@ -236,6 +278,13 @@ export class MapInteractiveComponent implements OnInit, AfterViewInit, OnDestroy
   zoomToPoint(latitude: number, longitude: number, zoom: number = 16): void {
     if (this.map) {
       this.map.setView([latitude, longitude], zoom, { animate: true });
+    }
+  }
+
+  zoomToLibreville(): void {
+    if (this.map) {
+      this.map.fitBounds(this.librevilleBounds, { maxZoom: 14, animate: true });
+      this.hasInitialFit = true;
     }
   }
 

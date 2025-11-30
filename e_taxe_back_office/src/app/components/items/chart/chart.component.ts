@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, Input, OnInit, OnChanges, SimpleChanges, OnDestroy, HostListener } from '@angular/core';
 import {Chart, ChartConfiguration, registerables} from 'chart.js';
 import {ContenerComponent} from '../contener/contener.component';
 import {H1Component} from '../texts/h1/h1.component';
@@ -17,7 +17,7 @@ Chart.register(...registerables);
   templateUrl: './chart.component.html',
   styleUrl: './chart.component.scss'
 })
-export class ChartComponent implements OnInit, OnChanges {
+export class ChartComponent implements OnInit, OnChanges, OnDestroy {
   @Input() chartData: any = null;
   
   config : ChartConfiguration = {
@@ -35,6 +35,8 @@ export class ChartComponent implements OnInit, OnChanges {
       ]
     },
     options : {
+      responsive: true,
+      maintainAspectRatio: false,
       backgroundColor :function(context : any) {
         const chart = context.chart;
         const {ctx, chartArea} = chart;
@@ -60,21 +62,59 @@ export class ChartComponent implements OnInit, OnChanges {
             display : false,
           }
         }
+      },
+      plugins: {
+        legend: {
+          display: true
+        }
       }
     }
   };
   chart : any;
+  private resizeObserver?: ResizeObserver;
   
   ngOnInit(){
-    this.chart = new Chart("Chart", this.config);
-    if (this.chartData) {
-      this.updateChart();
-    }
+    // Attendre que le DOM soit prêt
+    setTimeout(() => {
+      this.chart = new Chart("Chart", this.config);
+      if (this.chartData) {
+        this.updateChart();
+      }
+      this.setupResizeObserver();
+    }, 100);
   }
   
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['chartData'] && this.chart && this.chartData) {
       this.updateChart();
+    }
+  }
+  
+  ngOnDestroy(): void {
+    if (this.chart) {
+      this.chart.destroy();
+    }
+    if (this.resizeObserver) {
+      this.resizeObserver.disconnect();
+    }
+  }
+  
+  @HostListener('window:resize', ['$event'])
+  onResize(): void {
+    if (this.chart) {
+      this.chart.resize();
+    }
+  }
+  
+  setupResizeObserver(): void {
+    const canvas = document.getElementById('Chart');
+    if (canvas && 'ResizeObserver' in window) {
+      this.resizeObserver = new ResizeObserver(() => {
+        if (this.chart) {
+          this.chart.resize();
+        }
+      });
+      this.resizeObserver.observe(canvas);
     }
   }
   
@@ -91,7 +131,7 @@ export class ChartComponent implements OnInit, OnChanges {
         this.chart.options.scales.y.max = maxValue * 1.2;
       }
       
-      this.chart.update();
+      this.chart.update('none'); // 'none' pour éviter l'animation qui peut causer des problèmes
     }
   }
 }

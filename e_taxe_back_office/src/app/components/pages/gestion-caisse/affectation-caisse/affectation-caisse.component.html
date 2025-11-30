@@ -1,0 +1,59 @@
+<div class="affectation-page">
+  <header class="affectation-header">
+    <div>
+      <p class="kicker">Gestion caisse</p>
+      <h1>Affectation des caisses aux collecteurs</h1>
+      <p>Affectez ou ré-affectez les caisses disponibles vers les collecteurs autorisés. Les changements sont appliqués en temps réel.</p>
+    </div>
+    <button class="btn secondary" (click)="rafraichir()" [disabled]="loading()">Rafraîchir</button>
+  </header>
+
+  <p class="message" *ngIf="message()">{{ message() }}</p>
+
+  <section class="table-card" *ngIf="!loading(); else loadingState">
+    <table>
+      <thead>
+        <tr>
+          <th>Code</th>
+          <th>Collecteur actuel</th>
+          <th>Nouvelle affectation</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let caisse of caisses(); trackBy: trackById">
+          <td>
+            <p class="code">{{ caisse.code }}</p>
+            <p class="etat" [class.ouverte]="caisse.etat === 'ouverte'">{{ caisse.etat }}</p>
+          </td>
+          <td>
+            <p class="collecteur">{{ caisse.collecteur?.nom }} {{ caisse.collecteur?.prenom }}</p>
+            <p class="info">{{ caisse.collecteur?.telephone }}</p>
+          </td>
+          <td>
+            <select [(ngModel)]="caisse.new_collecteur_id">
+              <option [ngValue]="undefined">Sélectionner un collecteur</option>
+              <option *ngFor="let col of collecteurs()" [ngValue]="col.id">
+                {{ col.nom }} {{ col.prenom }}
+              </option>
+            </select>
+          </td>
+          <td>
+            <button class="btn primary" (click)="affecter(caisse)" [disabled]="!caisse.new_collecteur_id || processingId === caisse.id">
+              {{ processingId === caisse.id ? 'En cours...' : 'Affecter' }}
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <p class="empty" *ngIf="!caisses().length">Aucune caisse disponible pour affectation.</p>
+  </section>
+
+  <ng-template #loadingState>
+    <div class="loading">
+      <span class="spinner"></span>
+      Chargement des caisses...
+    </div>
+  </ng-template>
+</div>
+

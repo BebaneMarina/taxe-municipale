@@ -1,0 +1,84 @@
+<div class="coupures-page">
+  <header class="coupures-header">
+    <div>
+      <p class="kicker">Gestion caisse</p>
+      <h1>Paramétrage des coupures</h1>
+      <p>Activez les billets et pièces acceptés lors des opérations de caisse, ajustez l’ordre d’affichage ou ajoutez de nouvelles coupures.</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn secondary" (click)="loadCoupures()" [disabled]="loading">Rafraîchir</button>
+    </div>
+  </header>
+
+  <section class="create-card">
+    <h2>Ajouter une coupure</h2>
+    <form (ngSubmit)="addCoupure()" class="create-form">
+      <label>
+        Valeur (FCFA)
+        <input type="number" min="1" step="50" [(ngModel)]="newCoupure.valeur" name="valeur" required>
+      </label>
+
+      <label>
+        Type
+        <select [(ngModel)]="newCoupure.type_coupure" name="type">
+          <option *ngFor="let type of typeOptions" [value]="type.value">{{ type.label }}</option>
+        </select>
+      </label>
+
+      <label class="description">
+        Description (optionnel)
+        <input type="text" maxlength="255" [(ngModel)]="newCoupure.description" name="description" placeholder="Ex: Coupure dédiée aux dépôts">
+      </label>
+
+      <button class="btn primary" type="submit" [disabled]="creating">
+        {{ creating ? 'Ajout en cours...' : 'Ajouter' }}
+      </button>
+    </form>
+  </section>
+
+  <section class="coupures-list" *ngIf="!loading; else loadingState">
+    <p class="error" *ngIf="errorMessage(); else coupuresContent">{{ errorMessage() }}</p>
+    <ng-template #coupuresContent>
+      <div class="coupure-card" *ngFor="let c of coupures; trackBy: trackById" [class.disabled]="!c.actif">
+        <div class="card-main">
+          <div>
+            <p class="value">{{ c.valeur | number:'1.0-0' }} <span class="devise">{{ c.devise }}</span></p>
+            <p class="type" [class.billet]="c.type_coupure === 'billet'" [class.piece]="c.type_coupure === 'piece'">
+              {{ c.type_coupure === 'billet' ? 'Billet' : 'Pièce' }}
+            </p>
+          </div>
+          <p class="state" [class.active]="c.actif">{{ c.actif ? 'Activée' : 'Désactivée' }}</p>
+        </div>
+        <p class="description" *ngIf="c.description">{{ c.description }}</p>
+        <div class="card-actions">
+          <div class="order-actions">
+            <button type="button" class="icon-btn" (click)="move(c, 'up')" [disabled]="processingId === c.id || coupures[0]?.id === c.id">
+              ↑
+            </button>
+            <button type="button" class="icon-btn" (click)="move(c, 'down')" [disabled]="processingId === c.id || coupures[coupures.length-1]?.id === c.id">
+              ↓
+            </button>
+          </div>
+          <div class="status-actions">
+            <button type="button" class="btn toggle" [disabled]="processingId === c.id" (click)="toggle(c)">
+              {{ c.actif ? 'Désactiver' : 'Activer' }}
+            </button>
+            <button type="button" class="btn danger" [disabled]="processingId === c.id" (click)="deleteCoupure(c)">
+              Supprimer
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <p class="empty" *ngIf="!coupures.length">Aucune coupure paramétrée pour l’instant.</p>
+    </ng-template>
+  </section>
+
+  <ng-template #loadingState>
+    <div class="loading">
+      <span class="spinner"></span>
+      Chargement des coupures...
+    </div>
+  </ng-template>
+</div>
+

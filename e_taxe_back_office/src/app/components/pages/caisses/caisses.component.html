@@ -1,0 +1,164 @@
+<div class="caisses-page">
+  <header class="caisses-header">
+    <div>
+      <p class="caisses-kicker">Finance & opérations</p>
+      <h1>Gestion des caisses des collecteurs</h1>
+      <p class="caisses-subtitle">
+        Visualisez en temps réel l’état des caisses physiques et en ligne, leurs soldes et les dix dernières opérations.
+      </p>
+    </div>
+    <div class="caisses-actions">
+      <label>
+        Type de caisse
+        <select [(ngModel)]="filters.type_caisse" (change)="loadCaisses()">
+          <option value="all">Toutes</option>
+          <option value="physique">Physique</option>
+          <option value="en_ligne">En ligne</option>
+        </select>
+      </label>
+      <label>
+        Etat
+        <select [(ngModel)]="filters.etat" (change)="loadCaisses()">
+          <option value="all">Tous</option>
+          <option value="ouverte">Ouverte</option>
+          <option value="fermee">Fermée</option>
+          <option value="cloturee">Clôturée</option>
+        </select>
+      </label>
+      <button class="btn btn-secondary" (click)="loadCaisses()">
+        Rafraîchir
+      </button>
+    </div>
+  </header>
+
+  <section class="caisses-grid">
+    <article class="caisses-card">
+      <h2>Résumé global</h2>
+      <div class="caisses-summary">
+        <div>
+          <p class="label">Caisses actives</p>
+          <p class="value">{{ totalActives }}</p>
+        </div>
+        <div>
+          <p class="label">Solde total</p>
+          <p class="value">{{ totalSolde | number:'1.0-0' }} FCFA</p>
+        </div>
+        <div>
+          <p class="label">Sélection</p>
+          <p class="value">{{ selectedCaisse?.code || 'Aucune' }}</p>
+        </div>
+      </div>
+      <p class="caisses-info error" *ngIf="errorMessage">
+        {{ errorMessage }}
+      </p>
+      <p class="caisses-info" *ngIf="!errorMessage">
+        {{ caisses.length }} caisse(s) chargée(s). Cliquez sur une ligne pour afficher le détail et les opérations.
+      </p>
+    </article>
+
+    <article class="caisses-card caisses-list" *ngIf="!loading; else loadingState">
+      <div class="card-header">
+        <h3>Liste des caisses</h3>
+      </div>
+      <table>
+        <thead>
+        <tr>
+          <th>Code</th>
+          <th>Collecteur</th>
+          <th>Type</th>
+          <th>Etat</th>
+          <th>Solde</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr *ngFor="let caisse of caisses"
+            (click)="selectCaisse(caisse)"
+            [class.active]="selectedCaisse?.id === caisse.id">
+          <td><strong>{{ caisse.code }}</strong></td>
+          <td>{{ caisse.collecteur?.nom }} {{ caisse.collecteur?.prenom }}</td>
+          <td>
+            <span [class]="'type-badge ' + (caisse.type_caisse === 'physique' ? 'physique' : 'en-ligne')">
+              {{ caisse.type_caisse === 'physique' ? 'Physique' : 'En ligne' }}
+            </span>
+          </td>
+          <td><span class="etat" [class]="caisse.etat">{{ caisse.etat }}</span></td>
+          <td><strong>{{ caisse.solde_actuel | number:'1.0-0' }} FCFA</strong></td>
+        </tr>
+        <tr *ngIf="!caisses.length">
+          <td colspan="5">Aucune caisse trouvée avec ces filtres.</td>
+        </tr>
+        </tbody>
+      </table>
+    </article>
+  </section>
+
+  <section class="caisses-details" *ngIf="selectedCaisse">
+    <article class="caisses-card">
+      <div class="detail-header">
+        <div>
+          <p class="label">Caisse sélectionnée</p>
+          <h2>{{ selectedCaisse.nom || selectedCaisse.code }}</h2>
+          <p class="caisses-subtitle">
+            Collecteur : {{ selectedCaisse.collecteur?.nom }} {{ selectedCaisse.collecteur?.prenom }} •
+            Type : {{ selectedCaisse.type_caisse === 'physique' ? 'Physique' : 'En ligne' }}
+          </p>
+        </div>
+        <div class="detail-summary">
+          <div>
+            <p class="label">Solde actuel</p>
+            <p class="value">{{ selectedCaisse.solde_actuel | number:'1.0-0' }} FCFA</p>
+          </div>
+          <div>
+            <p class="label">Etat</p>
+            <p class="value">{{ selectedCaisse.etat }}</p>
+          </div>
+          <div>
+            <p class="label">Ouverture</p>
+            <p class="value">{{ selectedCaisse.date_ouverture ? (selectedCaisse.date_ouverture | date:'short') : '—' }}</p>
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <article class="caisses-card">
+      <div class="card-header">
+        <h3>Dernières opérations</h3>
+      </div>
+      <div *ngIf="operationsLoading" class="loading-message">
+        <span>Chargement des opérations...</span>
+      </div>
+      <table *ngIf="!operationsLoading">
+        <thead>
+        <tr>
+          <th>Date</th>
+          <th>Type</th>
+          <th>Libellé</th>
+          <th>Montant</th>
+          <th>Solde après</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr *ngFor="let op of etatCaisse?.operations_recentes">
+          <td>{{ op.date_operation | date:'short' }}</td>
+          <td>{{ op.type_operation }}</td>
+          <td>{{ op.libelle }}</td>
+          <td>{{ op.montant | number:'1.0-0' }} FCFA</td>
+          <td>{{ op.solde_apres | number:'1.0-0' }} FCFA</td>
+        </tr>
+        <tr *ngIf="!etatCaisse?.operations_recentes?.length">
+          <td colspan="5">Aucune opération récente.</td>
+        </tr>
+        </tbody>
+      </table>
+    </article>
+  </section>
+
+  <ng-template #loadingState>
+    <article class="caisses-card">
+      <div class="loading-message">
+        <span>Chargement des caisses...</span>
+      </div>
+    </article>
+  </ng-template>
+</div>
+

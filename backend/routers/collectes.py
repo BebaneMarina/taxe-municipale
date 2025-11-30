@@ -41,10 +41,13 @@ def get_collectes(
     from sqlalchemy.orm import joinedload
     from database.models import Contribuable
     
+    from database.models import CollecteLocation
+    
     query = db.query(InfoCollecte).options(
         joinedload(InfoCollecte.contribuable),
         joinedload(InfoCollecte.taxe),
-        joinedload(InfoCollecte.collecteur)
+        joinedload(InfoCollecte.collecteur),
+        joinedload(InfoCollecte.location)
     )
     
     if collecteur_id:
@@ -76,10 +79,13 @@ def get_collecte(collecte_id: int, db: Session = Depends(get_db)):
     """Récupère une collecte par son ID avec toutes les relations"""
     from sqlalchemy.orm import joinedload
     
+    from database.models import CollecteLocation
+    
     collecte = db.query(InfoCollecte).options(
         joinedload(InfoCollecte.contribuable),
         joinedload(InfoCollecte.taxe),
-        joinedload(InfoCollecte.collecteur)
+        joinedload(InfoCollecte.collecteur),
+        joinedload(InfoCollecte.location)
     ).filter(InfoCollecte.id == collecte_id).first()
     
     if not collecte:

@@ -1,0 +1,169 @@
+<div class="travaux-page" *ngIf="journal() as data">
+  <header class="travaux-header">
+    <div>
+      <p class="kicker">Travaux quotidiens</p>
+      <h1>Suivi de la journée du {{ selectedDate }}</h1>
+      <p>Contrôle des collectes validées, opérations de caisse, relances et impayés traités.</p>
+    </div>
+    <div class="actions">
+      <label>
+        Date
+        <input type="date" [(ngModel)]="selectedDate" (change)="loadJournal()">
+      </label>
+      <button class="btn secondary" (click)="loadJournal()" [disabled]="loading()">Actualiser</button>
+      <button class="btn primary"
+              (click)="cloturerJournee()"
+              [disabled]="closing() || !data.toutes_caisses_fermees || data.statut === 'cloture'">
+        {{ closing() ? 'Clôture en cours...' : 'Clôturer la journée' }}
+      </button>
+    </div>
+  </header>
+
+  <section class="summary-grid">
+    <article>
+      <h3>Collectes</h3>
+      <p class="value">{{ data.nb_collectes }}</p>
+      <p class="label">Nombre de collectes validées</p>
+      <p class="montant">{{ data.montant_collectes | number:'1.0-0' }} FCFA</p>
+    </article>
+    <article>
+      <h3>Opérations de caisse</h3>
+      <p class="value">{{ data.nb_operations_caisse }}</p>
+      <p class="label">Entrées/Soties ({{ data.total_entrees_caisse | number:'1.0-0' }} / {{ data.total_sorties_caisse | number:'1.0-0' }} FCFA)</p>
+    </article>
+    <article>
+      <h3>Relances envoyées</h3>
+      <p class="value">{{ data.relances_envoyees }}</p>
+      <p class="label">SMS / Emails envoyés</p>
+    </article>
+    <article>
+      <h3>Impayés réglés</h3>
+      <p class="value">{{ data.impayes_regles }}</p>
+      <p class="label">Dossiers clôturés</p>
+    </article>
+  </section>
+
+  <section class="status-card">
+    <div>
+      <p class="label">Statut de la journée</p>
+      <p class="status-badge" [class.closed]="data.statut === 'cloture'" [class.open]="data.statut !== 'cloture'">
+        {{ data.statut === 'cloture' ? 'Clôturée' : 'En cours' }}
+      </p>
+    </div>
+    <div>
+      <p class="label">Caisses ouvertes</p>
+      <p class="value">{{ data.caisses_ouvertes }}</p>
+      <p class="helper-text" [class.success]="data.toutes_caisses_fermees" [class.warning]="!data.toutes_caisses_fermees">
+        {{ data.toutes_caisses_fermees ? 'Toutes les caisses sont fermées' : 'Veuillez fermer les caisses avant la clôture' }}
+      </p>
+    </div>
+  </section>
+
+  <p class="message page-message" *ngIf="message()">{{ message() }}</p>
+
+  <section class="details-section" *ngIf="!loadingDetails()">
+    <article class="details-card">
+      <h3>Collectes validées ({{ collectes().length }})</h3>
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Contribuable</th>
+              <th>Taxe</th>
+              <th>Collecteur</th>
+              <th>Montant</th>
+              <th>Commission</th>
+              <th>Type paiement</th>
+              <th>Date</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let c of collectes()">
+              <td>{{ c.contribuable?.nom }} {{ c.contribuable?.prenom }}</td>
+              <td>{{ c.taxe?.nom }}</td>
+              <td>{{ c.collecteur?.nom }} {{ c.collecteur?.prenom }}</td>
+              <td>{{ c.montant | number:'1.0-0' }} FCFA</td>
+              <td>{{ c.commission | number:'1.0-0' }} FCFA</td>
+              <td>{{ c.type_paiement }}</td>
+              <td>{{ c.date_collecte | date:'short' }}</td>
+            </tr>
+            <tr *ngIf="!collectes().length" class="empty-row">
+              <td colspan="7">Aucune collecte validée pour cette date.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </article>
+
+    <article class="details-card">
+      <h3>Opérations de caisse ({{ operations().length }})</h3>
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Type</th>
+              <th>Libellé</th>
+              <th>Montant</th>
+              <th>Solde avant</th>
+              <th>Solde après</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let op of operations()">
+              <td>{{ op.date_operation | date:'short' }}</td>
+              <td>{{ op.type_operation }}</td>
+              <td>{{ op.libelle }}</td>
+              <td>{{ op.montant | number:'1.0-0' }} FCFA</td>
+              <td>{{ op.solde_avant | number:'1.0-0' }} FCFA</td>
+              <td>{{ op.solde_apres | number:'1.0-0' }} FCFA</td>
+            </tr>
+            <tr *ngIf="!operations().length" class="empty-row">
+              <td colspan="6">Aucune opération pour cette date.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </article>
+
+    <article class="details-card">
+      <h3>Relances envoyées ({{ relances().length }})</h3>
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Contribuable</th>
+              <th>Type</th>
+              <th>Statut</th>
+              <th>Montant dû</th>
+              <th>Date envoi</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let r of relances()">
+              <td>{{ r.contribuable_nom }}</td>
+              <td>{{ r.type_relance }}</td>
+              <td>{{ r.statut }}</td>
+              <td>{{ r.montant_due | number:'1.0-0' }} FCFA</td>
+              <td>{{ r.date_envoi | date:'short' }}</td>
+            </tr>
+            <tr *ngIf="!relances().length" class="empty-row">
+              <td colspan="5">Aucune relance envoyée pour cette date.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </article>
+  </section>
+
+  <div *ngIf="loadingDetails()" class="loading-details">
+    <div class="loading-spinner"></div>
+    <span>Chargement des détails...</span>
+  </div>
+</div>
+
+<div class="travaux-page loading-state" *ngIf="loading()">
+  <div class="loading-spinner"></div>
+  <span>Chargement...</span>
+</div>
+

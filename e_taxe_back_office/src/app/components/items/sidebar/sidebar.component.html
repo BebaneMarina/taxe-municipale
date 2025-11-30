@@ -6,9 +6,12 @@
       <img class="h-14 w-auto object-cover" src="/assets/logo/logo_app.png" alt="Your Company">
     </div>
     <nav class="flex flex-1 flex-col sidebar-nav overflow-hidden">
-      <ul role="list" class="flex flex-1 flex-col gap-y-7 sidebar-menu overflow-y-auto">
-        <li class="">
-          <ul role="list" class="-mx-2 space-y-1">
+      <ul role="list" class="flex flex-1 flex-col gap-y-5 sidebar-menu overflow-y-auto">
+
+        <li class="sidebar-dropdown">
+          <details open>
+            <summary>Pilotage</summary>
+            <ul>
             <li class="{{isCurrentUrl('')}} [&.active]:bg-main hover:bg-gray-50 px-6 rounded-lg py-3 mx-3 [&.active]:text-secondary">
               <a routerLink="/" class="group flex gap-x-3 items-center rounded-md text-sm/6 font-semibold">
                 <svg class="size-4 shrink-0" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24">
@@ -18,7 +21,37 @@
                 Tableau de bord
               </a>
             </li>
-            
+            <li class="{{isCurrentUrl('rapports')}} [&.active]:bg-main hover:bg-gray-50 px-6 rounded-lg py-3 mx-3 [&.active]:text-secondary">
+              <a routerLink="/rapports" class="group flex gap-x-3 items-center rounded-md text-sm/6 font-semibold">
+                <svg class="size-4 shrink-0" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24">
+                  <path fill="currentColor" fill-rule="evenodd" d="M3.25 6c0-1.542 1.23-2.736 2.758-3.5C7.58 1.716 9.7 1.25 12 1.25s4.42.465 5.992 1.25c1.528.764 2.758 1.958 2.758 3.5v12c0 1.542-1.23 2.735-2.758 3.5c-1.572.785-3.692 1.25-5.992 1.25s-4.42-.465-5.992-1.25C4.48 20.734 3.25 19.541 3.25 18zm1.5 0c0-.667.56-1.474 1.929-2.158C8.002 3.181 9.882 2.75 12 2.75s3.998.43 5.321 1.092C18.69 4.526 19.25 5.332 19.25 6s-.56 1.474-1.929 2.158C15.998 8.819 14.118 9.25 12 9.25s-3.998-.43-5.321-1.092C5.31 7.474 4.75 6.668 4.75 6m0 12c0 .667.56 1.474 1.929 2.158c1.323.661 3.203 1.092 5.321 1.092s3.998-.43 5.321-1.092c1.368-.684 1.929-1.49 1.929-2.158v-3.293c-.377.3-.804.565-1.258.792C16.42 16.285 14.3 16.75 12 16.75s-4.42-.465-5.992-1.25a7 7 0 0 1-1.258-.793zm14.5-9.293V12c0 .667-.56 1.474-1.929 2.158c-1.323.661-3.203 1.092-5.321 1.092s-3.998-.43-5.321-1.092C5.31 13.474 4.75 12.668 4.75 12V8.707c.377.3.804.565 1.258.792C7.58 10.285 9.7 10.75 12 10.75s4.42-.465 5.992-1.25a7 7 0 0 0 1.258-.793" clip-rule="evenodd"/>
+                </svg>
+                Rapports & statistiques
+              </a>
+            </li>
+            <li class="{{isCurrentUrl('travaux')}} [&.active]:bg-main hover:bg-gray-50 px-6 rounded-lg py-3 mx-3 [&.active]:text-secondary">
+              <a routerLink="/travaux" class="group flex gap-x-3 items-center rounded-md text-sm/6 font-semibold">
+                <svg class="size-4 shrink-0" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24">
+                  <path fill="currentColor" d="M4 4h7v7H4zm0 9h7v7H4zm9-9h7v7h-7zm0 9h7v7h-7z"/>
+                </svg>
+                Travaux du jour
+              </a>
+            </li>
+            <li class="{{isCurrentUrl('cartographie')}} [&.active]:bg-main hover:bg-gray-50 px-6 rounded-lg py-3 mx-3 [&.active]:text-secondary">
+              <a routerLink="/cartographie" class="group flex gap-x-3 items-center rounded-md text-sm/6 font-semibold">
+                <svg class="size-4 shrink-0" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24">
+                  <path fill="currentColor" d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7m0 9.5a2.5 2.5 0 0 1 0-5a2.5 2.5 0 0 1 0 5"/>
+                </svg>
+                Cartographie
+              </a>
+            </li>
+            </ul>
+          </details>
+        </li>
+
+        <li class="sidebar-dropdown">
+          <details>
+            <summary>Collecteurs & terrain</summary>
             <li class="{{isCurrentUrl('clients')}} [&.active]:bg-main hover:bg-gray-50 px-6 rounded-lg py-3 mx-3 [&.active]:text-secondary">
               <a routerLink="/clients" class="group flex gap-x-3 rounded-md items-center text-sm/6 font-semibold">
                 <svg class="size-4 shrink-0" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24">
@@ -27,17 +60,7 @@
                 Gestion des contribuables
               </a>
             </li>
-            <li class="{{isCurrentUrl('taxes')}} [&.active]:bg-main hover:bg-gray-50 px-6 rounded-lg py-3 mx-3 [&.active]:text-secondary">
-              <a routerLink="/taxes" class="group flex gap-x-3 rounded-md items-center text-sm/6 font-semibold">
-                <svg class="size-4 shrink-0" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24">
-                  <path fill="currentColor" d="M9 7H6C5.46957 7 4.96086 7.21071 4.58579 7.58579C4.21071 7.96086 4 8.46957 4 9V18C4 18.5304 4.21071 19.0391 4.58579 19.4142C4.96086 19.7893 5.46957 20 6 20H15C15.5304 20 16.0391 19.7893 16.4142 19.4142C16.7893 19.0391 17 18.5304 17 18V15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                  <path d="M9 15H12L20 7C20.2652 6.73478 20.4249 6.38239 20.4249 6C20.4249 5.61761 20.2652 5.26522 20 5L18 3C17.7348 2.73478 17.3824 2.57507 17 2.57507C16.6176 2.57507 16.2652 2.73478 16 3L9 10V15Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                  <path d="M16 6L18 8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-                Gestion de taxes
-              </a>
-            </li>
-             <li class="{{isCurrentUrl('collecteurs')}} [&.active]:bg-main hover:bg-gray-50 px-6 rounded-lg py-3 mx-3 [&.active]:text-secondary">
+            <li class="{{isCurrentUrl('collecteurs')}} [&.active]:bg-main hover:bg-gray-50 px-6 rounded-lg py-3 mx-3 [&.active]:text-secondary">
               <a routerLink="/collecteurs" class="group flex gap-x-3 rounded-md items-center text-sm/6 font-semibold">
                 <svg class="size-4 shrink-0" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24">
                   <path fill="currentColor" fill-rule="evenodd" d="M12 1.25a4.75 4.75 0 1 0 0 9.5a4.75 4.75 0 0 0 0-9.5M8.75 6a3.25 3.25 0 1 1 6.5 0a3.25 3.25 0 0 1-6.5 0M12 12.25c-2.313 0-4.445.526-6.024 1.414C4.42 14.54 3.25 15.866 3.25 17.5v.102c-.001 1.162-.002 2.62 1.277 3.662c.629.512 1.51.877 2.7 1.117c1.192.242 2.747.369 4.773.369s3.58-.127 4.774-.369c1.19-.24 2.07-.605 2.7-1.117c1.279-1.042 1.277-2.5 1.276-3.662V17.5c0-1.634-1.17-2.96-2.725-3.836c-1.58-.888-3.711-1.414-6.025-1.414M4.75 17.5c0-.851.622-1.775 1.961-2.528c1.316-.74 3.184-1.222 5.29-1.222c2.104 0 3.972.482 5.288 1.222c1.34.753 1.961 1.677 1.961 2.528c0 1.308-.04 2.044-.724 2.6c-.37.302-.99.597-2.05.811c-1.057.214-2.502.339-4.476.339s-3.42-.125-4.476-.339c-1.06-.214-1.68-.509-2.05-.81c-.684-.557-.724-1.293-.724-2.601" clip-rule="evenodd"/>
@@ -45,31 +68,7 @@
                 Gestion des collecteurs
               </a>
             </li>
-             <li class="{{isCurrentUrl('transactions')}} [&.active]:bg-main hover:bg-gray-50 px-6 rounded-lg py-3 mx-3 [&.active]:text-secondary">
-              <a routerLink="/transactions" class="group flex gap-x-3 items-center rounded-md text-sm/6 font-semibold">
-                <svg class="size-4 shrink-0" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24">
-                  <path fill="currentColor" fill-rule="evenodd" d="M3.25 6c0-1.542 1.23-2.736 2.758-3.5C7.58 1.716 9.7 1.25 12 1.25s4.42.465 5.992 1.25c1.528.764 2.758 1.958 2.758 3.5v12c0 1.542-1.23 2.735-2.758 3.5c-1.572.785-3.692 1.25-5.992 1.25s-4.42-.465-5.992-1.25C4.48 20.734 3.25 19.541 3.25 18zm1.5 0c0-.667.56-1.474 1.929-2.158C8.002 3.181 9.882 2.75 12 2.75s3.998.43 5.321 1.092C18.69 4.526 19.25 5.332 19.25 6s-.56 1.474-1.929 2.158C15.998 8.819 14.118 9.25 12 9.25s-3.998-.43-5.321-1.092C5.31 7.474 4.75 6.668 4.75 6m0 12c0 .667.56 1.474 1.929 2.158c1.323.661 3.203 1.092 5.321 1.092s3.998-.43 5.321-1.092c1.368-.684 1.929-1.49 1.929-2.158v-3.293c-.377.3-.804.565-1.258.792C16.42 16.285 14.3 16.75 12 16.75s-4.42-.465-5.992-1.25a7 7 0 0 1-1.258-.793zm14.5-9.293V12c0 .667-.56 1.474-1.929 2.158c-1.323.661-3.203 1.092-5.321 1.092s-3.998-.43-5.321-1.092C5.31 13.474 4.75 12.668 4.75 12V8.707c.377.3.804.565 1.258.792C7.58 10.285 9.7 10.75 12 10.75s4.42-.465 5.992-1.25a7 7 0 0 0 1.258-.793" clip-rule="evenodd"/>
-                </svg>
-                Collectes
-              </a>
-            </li>
-             <li class="{{isCurrentUrl('rapports')}} [&.active]:bg-main hover:bg-gray-50 px-6 rounded-lg py-3 mx-3 [&.active]:text-secondary">
-              <a routerLink="/rapports" class="group flex gap-x-3 items-center rounded-md text-sm/6 font-semibold">
-                <svg class="size-4 shrink-0" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24">
-                  <path fill="currentColor" fill-rule="evenodd" d="M3.25 6c0-1.542 1.23-2.736 2.758-3.5C7.58 1.716 9.7 1.25 12 1.25s4.42.465 5.992 1.25c1.528.764 2.758 1.958 2.758 3.5v12c0 1.542-1.23 2.735-2.758 3.5c-1.572.785-3.692 1.25-5.992 1.25s-4.42-.465-5.992-1.25C4.48 20.734 3.25 19.541 3.25 18zm1.5 0c0-.667.56-1.474 1.929-2.158C8.002 3.181 9.882 2.75 12 2.75s3.998.43 5.321 1.092C18.69 4.526 19.25 5.332 19.25 6s-.56 1.474-1.929 2.158C15.998 8.819 14.118 9.25 12 9.25s-3.998-.43-5.321-1.092C5.31 7.474 4.75 6.668 4.75 6m0 12c0 .667.56 1.474 1.929 2.158c1.323.661 3.203 1.092 5.321 1.092s3.998-.43 5.321-1.092c1.368-.684 1.929-1.49 1.929-2.158v-3.293c-.377.3-.804.565-1.258.792C16.42 16.285 14.3 16.75 12 16.75s-4.42-.465-5.992-1.25a7 7 0 0 1-1.258-.793zm14.5-9.293V12c0 .667-.56 1.474-1.929 2.158c-1.323.661-3.203 1.092-5.321 1.092s-3.998-.43-5.321-1.092C5.31 13.474 4.75 12.668 4.75 12V8.707c.377.3.804.565 1.258.792C7.58 10.285 9.7 10.75 12 10.75s4.42-.465 5.992-1.25a7 7 0 0 0 1.258-.793" clip-rule="evenodd"/>
-                </svg>
-                Rapports
-              </a>
-            </li>
-             <li class="{{isCurrentUrl('cartographie')}} [&.active]:bg-main hover:bg-gray-50 px-6 rounded-lg py-3 mx-3 [&.active]:text-secondary">
-              <a routerLink="/cartographie" class="group flex gap-x-3 items-center rounded-md text-sm/6 font-semibold">
-                <svg class="size-4 shrink-0" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24">
-                  <path fill="currentColor" d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7m0 9.5a2.5 2.5 0 0 1 0-5a2.5 2.5 0 0 1 0 5"/>
-                </svg>
-                Cartographie
-              </a>
-            </li>
-             <li class="{{isCurrentUrl('relances')}} [&.active]:bg-main hover:bg-gray-50 px-6 rounded-lg py-3 mx-3 [&.active]:text-secondary">
+            <li class="{{isCurrentUrl('relances')}} [&.active]:bg-main hover:bg-gray-50 px-6 rounded-lg py-3 mx-3 [&.active]:text-secondary">
               <a routerLink="/relances" class="group flex gap-x-3 items-center rounded-md text-sm/6 font-semibold">
                 <svg class="size-4 shrink-0" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24">
                   <path fill="currentColor" d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2m0 4l-8 5l-8-5V6l8 5l8-5z"/>
@@ -78,7 +77,7 @@
                 Relances
               </a>
             </li>
-             <li class="{{isCurrentUrl('impayes')}} [&.active]:bg-main hover:bg-gray-50 px-6 rounded-lg py-3 mx-3 [&.active]:text-secondary">
+            <li class="{{isCurrentUrl('impayes')}} [&.active]:bg-main hover:bg-gray-50 px-6 rounded-lg py-3 mx-3 [&.active]:text-secondary">
               <a routerLink="/impayes" class="group flex gap-x-3 items-center rounded-md text-sm/6 font-semibold">
                 <svg class="size-4 shrink-0" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24">
                   <path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10s10-4.48 10-10S17.52 2 12 2m1 15h-2v-2h2zm0-4h-2V7h2z"/>
@@ -86,7 +85,33 @@
                 Impayés
               </a>
             </li>
-          </ul>
+            <li class="{{isCurrentUrl('transactions')}} [&.active]:bg-main hover:bg-gray-50 px-6 rounded-lg py-3 mx-3 [&.active]:text-secondary">
+              <a routerLink="/transactions" class="group flex gap-x-3 items-center rounded-md text-sm font-semibold">
+                Collectes & historiques
+              </a>
+            </li>
+            <li class="{{isCurrentUrl('commissions')}} [&.active]:bg-main hover:bg-gray-50 px-6 rounded-lg py-3 mx-3 [&.active]:text-secondary">
+              <a routerLink="/commissions" class="group flex gap-x-3 items-center rounded-md text-sm font-semibold">
+                Fichiers commissions
+              </a>
+            </li>
+          </details>
+        </li>
+
+        <li class="sidebar-dropdown">
+          <details>
+            <summary>Référentiels</summary>
+            <li class="{{isCurrentUrl('taxes')}} [&.active]:bg-main hover:bg-gray-50 px-6 rounded-lg py-3 mx-3 [&.active]:text-secondary">
+              <a routerLink="/taxes" class="group flex gap-x-3 rounded-md items-center text-sm/6 font-semibold">
+                <svg class="size-4 shrink-0" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24">
+                  <path fill="currentColor" d="M9 7H6C5.46957 7 4.96086 7.21071 4.58579 7.58579C4.21071 7.96086 4 8.46957 4 9V18C4 18.5304 4.21071 19.0391 4.58579 19.4142C4.96086 19.7893 5.46957 20 6 20H15C15.5304 20 16.0391 19.7893 16.4142 19.4142C16.7893 19.0391 17 18.5304 17 18V15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M9 15H12L20 7C20.2652 6.73478 20.4249 6.38239 20.4249 6C20.4249 5.61761 20.2652 5.26522 20 5L18 3C17.7348 2.73478 17.3824 2.57507 17 2.57507C16.6176 2.57507 16.2652 2.73478 16 3L9 10V15Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M16 6L18 8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                Gestion des taxes
+              </a>
+            </li>
+          </details>
         </li>
 <!--        <li></li>-->
         <li class="mt-auto sidebar-footer">

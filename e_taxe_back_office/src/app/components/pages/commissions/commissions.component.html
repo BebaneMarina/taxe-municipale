@@ -1,0 +1,66 @@
+<div class="commissions-page">
+  <header>
+    <div>
+      <p class="kicker">Commissions</p>
+      <h1>Suivi global des commissions collecteurs</h1>
+      <p>Visualisez toutes les commissions enregistrées dans la plateforme et appliquez des filtres temporels ou par statut.</p>
+    </div>
+  </header>
+
+  <section class="filters-card">
+    <div class="filter-group">
+      <label>
+        Date début
+        <input type="date" [(ngModel)]="filters.dateDebut">
+      </label>
+      <label>
+        Date fin
+        <input type="date" [(ngModel)]="filters.dateFin">
+      </label>
+    </div>
+    <div class="filter-actions">
+      <button class="btn primary" (click)="refreshCommissions()" [disabled]="loadingCommissions()">
+        {{ loadingCommissions() ? 'Chargement...' : 'Filtrer' }}
+      </button>
+      <button class="btn ghost" (click)="resetFilters()" [disabled]="loadingCommissions()">
+        Réinitialiser
+      </button>
+    </div>
+  </section>
+
+  <p class="message" *ngIf="message()">{{ message() }}</p>
+
+  <section class="commissions-card" *ngIf="!loadingCommissions(); else loadingCommissionsState">
+    <h2>Commissions enregistrées ({{ commissions().length }} lignes)</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Collecteur</th>
+          <th>Matricule</th>
+          <th>Montant collecté</th>
+          <th>Commission</th>
+          <th>Pourcentage</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let c of commissions()">
+          <td>{{ c.date_jour | date:'dd/MM/yyyy' }}</td>
+          <td>{{ c.collecteur_nom || ('#' + c.collecteur_id) }}</td>
+          <td>{{ c.collecteur_matricule || '—' }}</td>
+          <td>{{ formatCurrency(c.montant_collecte) }}</td>
+          <td>{{ formatCurrency(c.commission_montant) }}</td>
+          <td>{{ c.commission_pourcentage | number:'1.2-2' }}%</td>
+        </tr>
+        <tr *ngIf="!commissions().length">
+          <td colspan="6">Aucune commission ne correspond aux filtres sélectionnés.</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <ng-template #loadingCommissionsState>
+    <p>Chargement des commissions...</p>
+  </ng-template>
+</div>
+

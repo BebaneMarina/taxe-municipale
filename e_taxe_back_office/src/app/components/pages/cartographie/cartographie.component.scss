@@ -124,6 +124,45 @@
   font-weight: 500;
 }
 
+// Map filter toggles
+.status-toggle {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  background: #fff;
+  padding: 0.35rem 0.65rem;
+  border-radius: 0.75rem;
+  border: 1px solid #e5e7eb;
+
+  .toggle-option {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-weight: 600;
+    color: #475569;
+
+    input {
+      accent-color: #4ade80;
+      width: 16px;
+      height: 16px;
+    }
+
+    .badge {
+      padding: 0.15rem 0.65rem;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      &.paid {
+        background: #dcfce7;
+        color: #065f46;
+      }
+      &.unpaid {
+        background: #fee2e2;
+        color: #991b1b;
+      }
+    }
+  }
+}
+
 // Dashboard View
 .dashboard-view {
   display: flex;

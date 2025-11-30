@@ -1,0 +1,52 @@
+<div class="validation-page">
+  <header class="validation-header">
+    <div>
+      <p class="kicker">Gestion caisse</p>
+      <h1>Validation / forçage d'arrêt</h1>
+      <p>Liste des caisses encore ouvertes. Fermez-les (ou forcez la fermeture) avant la clôture globale de fin de journée.</p>
+    </div>
+    <button class="btn secondary" (click)="refresh()" [disabled]="loading()">Rafraîchir</button>
+  </header>
+
+  <p class="message" *ngIf="message()">{{ message() }}</p>
+
+  <section class="table-card" *ngIf="!loading(); else loadingState">
+    <table>
+      <thead>
+      <tr>
+        <th>Code</th>
+        <th>Collecteur</th>
+        <th>Solde actuel</th>
+        <th></th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr *ngFor="let caisse of caisses()">
+        <td>
+          <p class="code">{{ caisse.code }}</p>
+          <p class="etat">Ouverte depuis {{ caisse.date_ouverture | date:'short' }}</p>
+        </td>
+        <td>
+          <p class="collecteur">{{ caisse.collecteur?.nom }} {{ caisse.collecteur?.prenom }}</p>
+          <p class="info">{{ caisse.collecteur?.telephone }}</p>
+        </td>
+        <td class="solde">{{ caisse.solde_actuel | number:'1.0-0' }} FCFA</td>
+        <td>
+          <button class="btn danger" (click)="forcerFermeture(caisse)">Forcer la fermeture</button>
+        </td>
+      </tr>
+      <tr *ngIf="!caisses().length">
+        <td colspan="4" class="empty">Toutes les caisses sont fermées ✅</td>
+      </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <ng-template #loadingState>
+    <div class="loading">
+      <span class="spinner"></span>
+      Chargement des caisses...
+    </div>
+  </ng-template>
+</div>
+
