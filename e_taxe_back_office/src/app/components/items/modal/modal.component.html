@@ -1,18 +1,16 @@
-<div class="fixed modal {{active() ? 'active' : ''}} flex justify-end left-0 p-2 w-screen h-screen top-0 z-[1000]">
-  <div (click)="toggleActive()" class="absolute left-0 top-0 w-screen h-screen"></div>
-  <div class="modal-content relative translate-x-[150%]">
-
-      <div class="h-full bg-secondary rounded-2xl gap-3 grid grid-rows-[auto_1fr] min-h-0 overflow-hidden">
-        <div class="flex items-center flex-shrink-0 px-4 pt-4 pb-2">
-          <button (click)="toggleActive()" class="border shadow px-1 py-1 rounded cursor-pointer hover:bg-gray-100 transition-colors">
-            <svg class="size-6" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="currentColor" d="M6.4 19L5 17.6l5.6-5.6L5 6.4L6.4 5l5.6 5.6L17.6 5L19 6.4L13.4 12l5.6 5.6l-1.4 1.4l-5.6-5.6z"/></svg>
-          </button>
-          <p class="px-4 font-semibold text-gray-900">{{title}}</p>
-        </div>
-        <div class="modal-scrollable-content min-h-0 pb-4">
-          <ng-content/>
-        </div>
+<div class="modal {{active() ? 'active' : ''}} z-[1000]">
+  <div (click)="toggleActive()" class="absolute left-0 top-0 w-full h-full"></div>
+  <div class="modal-content">
+    <div class="bg-secondary rounded-2xl gap-3 grid grid-rows-[auto_1fr] min-h-0 overflow-hidden shadow-2xl">
+      <div class="flex items-center flex-shrink-0 px-4 pt-4 pb-2 border-b border-gray-200">
+        <button (click)="toggleActive()" class="border shadow px-1 py-1 rounded cursor-pointer hover:bg-gray-100 transition-colors">
+          <svg class="size-6" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="currentColor" d="M6.4 19L5 17.6l5.6-5.6L5 6.4L6.4 5l5.6 5.6L17.6 5L19 6.4L13.4 12l5.6 5.6l-1.4 1.4l-5.6-5.6z"/></svg>
+        </button>
+        <p class="px-4 font-semibold text-gray-900">{{title}}</p>
       </div>
+      <div class="modal-scrollable-content min-h-0 pb-4">
+        <ng-content/>
+      </div>
+    </div>
   </div>
-
 </div>

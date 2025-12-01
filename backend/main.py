@@ -15,6 +15,7 @@ from routers import (
     collectes,
     references,
     auth,
+    utilisateurs,
     zones_geographiques,
     uploads,
     parametrage,
@@ -70,6 +71,7 @@ app.add_middleware(
 
 # Inclusion des routers
 app.include_router(auth.router)
+app.include_router(utilisateurs.router)
 app.include_router(taxes.router)
 app.include_router(contribuables.router)
 app.include_router(collecteurs.router)

@@ -31,6 +31,15 @@ export class GestionRolesComponent implements OnInit {
     actif: true
   };
 
+  // Rôles disponibles dans le système
+  availableRoles = [
+    { value: 'admin', label: 'Administrateur', code: 'admin' },
+    { value: 'agent_back_office', label: 'Agent Back Office', code: 'agent_back_office' },
+    { value: 'agent_front_office', label: 'Agent Front Office', code: 'agent_front_office' },
+    { value: 'controleur_interne', label: 'Contrôleur Interne', code: 'controleur_interne' },
+    { value: 'collecteur', label: 'Collecteur', code: 'collecteur' }
+  ];
+
   // Permissions disponibles
   availablePermissions = [
     { value: 'read_users', label: 'Lire les utilisateurs' },
@@ -128,6 +137,29 @@ export class GestionRolesComponent implements OnInit {
 
   isPermissionSelected(permission: string): boolean {
     return this.roleForm.permissions.includes(permission);
+  }
+
+  onRoleNameChange(): void {
+    // Mettre à jour automatiquement le code quand le nom change
+    const selectedRole = this.availableRoles.find(r => r.value === this.roleForm.nom);
+    if (selectedRole && !this.isEditMode) {
+      this.roleForm.code = selectedRole.code;
+    }
+  }
+
+  allPermissionsSelected(): boolean {
+    return this.availablePermissions.length > 0 && 
+           this.availablePermissions.every(perm => this.isPermissionSelected(perm.value));
+  }
+
+  toggleAllPermissions(): void {
+    if (this.allPermissionsSelected()) {
+      // Désélectionner toutes les permissions
+      this.roleForm.permissions = [];
+    } else {
+      // Sélectionner toutes les permissions
+      this.roleForm.permissions = this.availablePermissions.map(perm => perm.value);
+    }
   }
 
   saveRole(): void {

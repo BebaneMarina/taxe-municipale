@@ -13,6 +13,9 @@ ALTER TABLE contribuable
 ALTER TABLE collecteur
     ADD COLUMN IF NOT EXISTS geom geometry(Point, 4326);
 
+ALTER TABLE quartier
+    ADD COLUMN IF NOT EXISTS geom geometry(Point, 4326);
+
 -- 3. Synchroniser les anciennes données
 -- Zones : convertir le GeoJSON stocké en JSON vers geometry
 UPDATE zone_geographique
@@ -26,6 +29,11 @@ WHERE latitude IS NOT NULL AND longitude IS NOT NULL;
 
 -- Collecteurs
 UPDATE collecteur
+SET geom = ST_SetSRID(ST_MakePoint(longitude::float, latitude::float), 4326)
+WHERE latitude IS NOT NULL AND longitude IS NOT NULL;
+
+-- Quartiers : utiliser latitude/longitude si disponibles, sinon NULL
+UPDATE quartier
 SET geom = ST_SetSRID(ST_MakePoint(longitude::float, latitude::float), 4326)
 WHERE latitude IS NOT NULL AND longitude IS NOT NULL;
 

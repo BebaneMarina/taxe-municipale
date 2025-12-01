@@ -91,4 +91,3 @@ LEFT JOIN collectes_stats cs ON cs.contribuable_id = bc.id
 LEFT JOIN taxes_impayees ti ON ti.contribuable_id = bc.id
 WHERE bc.latitude IS NOT NULL
   AND bc.longitude IS NOT NULL;
-

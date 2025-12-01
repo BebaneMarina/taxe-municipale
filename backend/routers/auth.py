@@ -7,7 +7,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from datetime import datetime, timedelta
 from database.database import get_db
-from database.models import Utilisateur
+from database.models import Utilisateur, RoleEnum
 from auth.security import (
     verify_password,
     get_password_hash,
@@ -85,9 +85,12 @@ def register(
     db: Session = Depends(get_db),
     current_user: Utilisateur = Depends(get_current_active_user)
 ):
-    """Créer un nouvel utilisateur (nécessite authentification)"""
+    """
+    Créer un nouvel utilisateur (nécessite authentification).
+    ⚠️ DEPRECATED: Utilisez plutôt POST /api/utilisateurs
+    """
     # Vérifier que seul un admin peut créer des utilisateurs
-    if current_user.role != "admin":
+    if current_user.role != RoleEnum.ADMIN.value:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Seuls les administrateurs peuvent créer des utilisateurs"

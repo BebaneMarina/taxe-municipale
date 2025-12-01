@@ -3,6 +3,7 @@ Routes pour la gestion des contribuables
 """
 
 from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from typing import List, Optional, Tuple
@@ -11,6 +12,7 @@ from database.models import Contribuable
 from schemas.contribuable import ContribuableCreate, ContribuableUpdate, ContribuableResponse
 from datetime import datetime
 from auth.security import get_current_active_user
+from services.qr_code_service import generate_qr_code_string, generate_qr_code_image, generate_qr_code_with_info
 
 router = APIRouter(
     prefix="/api/contribuables",
@@ -320,4 +322,113 @@ def delete_contribuable(contribuable_id: int, db: Session = Depends(get_db)):
     db_contribuable.updated_at = datetime.utcnow()
     db.commit()
     return None
+
+
+@router.post("/{contribuable_id}/qr-code/generate")
+def generate_qr_code_for_contribuable(
+    contribuable_id: int,
+    db: Session = Depends(get_db)
+):
+    """
+    Génère un QR code pour un contribuable et le sauvegarde dans la base de données
+    """
+    contribuable = db.query(Contribuable).filter(Contribuable.id == contribuable_id).first()
+    
+    if not contribuable:
+        raise HTTPException(status_code=404, detail="Contribuable non trouvé")
+    
+    # Générer un nouveau QR code si n'existe pas
+    if not contribuable.qr_code:
+        contribuable.qr_code = generate_qr_code_string(contribuable.id)
+        contribuable.updated_at = datetime.utcnow()
+        db.commit()
+        db.refresh(contribuable)
+    
+    return {
+        "contribuable_id": contribuable.id,
+        "qr_code": contribuable.qr_code,
+        "message": "QR code généré avec succès"
+    }
+
+
+@router.get("/{contribuable_id}/qr-code/image")
+def get_qr_code_image(
+    contribuable_id: int,
+    size: int = Query(300, ge=100, le=1000),
+    with_details: bool = Query(False),
+    db: Session = Depends(get_db)
+):
+    """
+    Récupère l'image du QR code d'un contribuable
+    """
+    from sqlalchemy.orm import joinedload
+    
+    contribuable = db.query(Contribuable).options(
+        joinedload(Contribuable.type_contribuable)
+    ).filter(Contribuable.id == contribuable_id).first()
+    
+    if not contribuable:
+        raise HTTPException(status_code=404, detail="Contribuable non trouvé")
+    
+    # Générer le QR code s'il n'existe pas
+    if not contribuable.qr_code:
+        contribuable.qr_code = generate_qr_code_string(contribuable.id)
+        contribuable.updated_at = datetime.utcnow()
+        db.commit()
+        db.refresh(contribuable)
+    
+    # Générer l'image
+    if with_details:
+        img_buffer = generate_qr_code_with_info(contribuable, size=size, include_details=True)
+    else:
+        img_buffer = generate_qr_code_image(contribuable.qr_code, size=size)
+    
+    return StreamingResponse(
+        img_buffer,
+        media_type="image/png",
+        headers={
+            "Content-Disposition": f'inline; filename="qr_code_{contribuable_id}.png"'
+        }
+    )
+
+
+@router.get("/{contribuable_id}/qr-code/download")
+def download_qr_code(
+    contribuable_id: int,
+    size: int = Query(400, ge=100, le=1000),
+    with_details: bool = Query(True),
+    db: Session = Depends(get_db)
+):
+    """
+    Télécharge l'image du QR code d'un contribuable avec les détails
+    """
+    from sqlalchemy.orm import joinedload
+    
+    contribuable = db.query(Contribuable).options(
+        joinedload(Contribuable.type_contribuable)
+    ).filter(Contribuable.id == contribuable_id).first()
+    
+    if not contribuable:
+        raise HTTPException(status_code=404, detail="Contribuable non trouvé")
+    
+    # Générer le QR code s'il n'existe pas
+    if not contribuable.qr_code:
+        contribuable.qr_code = generate_qr_code_string(contribuable.id)
+        contribuable.updated_at = datetime.utcnow()
+        db.commit()
+        db.refresh(contribuable)
+    
+    # Générer l'image avec détails
+    img_buffer = generate_qr_code_with_info(contribuable, size=size, include_details=with_details)
+    
+    nom_complet = f"{contribuable.nom}_{contribuable.prenom or ''}".strip().replace(' ', '_')
+    filename = f"QR_Code_{nom_complet}_{contribuable_id}.png"
+    
+    return StreamingResponse(
+        img_buffer,
+        media_type="image/png",
+        headers={
+            "Content-Disposition": f'attachment; filename="{filename}"'
+        }
+    )
 

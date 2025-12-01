@@ -64,6 +64,23 @@ export class ApiService {
     return this.http.patch(`${this.apiUrl}/contribuables/${id}/transfert?nouveau_collecteur_id=${nouveauCollecteurId}`, {});
   }
 
+  // QR Code pour contribuables
+  generateQRCode(contribuableId: number): Observable<any> {
+    return this.http.post(`${this.apiUrl}/contribuables/${contribuableId}/qr-code/generate`, {});
+  }
+
+  getQRCodeImage(contribuableId: number, size: number = 300, withDetails: boolean = false): Observable<Blob> {
+    return this.http.get(`${this.apiUrl}/contribuables/${contribuableId}/qr-code/image?size=${size}&with_details=${withDetails}`, {
+      responseType: 'blob'
+    });
+  }
+
+  downloadQRCode(contribuableId: number, size: number = 400, withDetails: boolean = true): Observable<Blob> {
+    return this.http.get(`${this.apiUrl}/contribuables/${contribuableId}/qr-code/download?size=${size}&with_details=${withDetails}`, {
+      responseType: 'blob'
+    });
+  }
+
   deleteContribuable(id: number): Observable<any> {
     return this.http.delete(`${this.apiUrl}/contribuables/${id}`);
   }
@@ -409,6 +426,24 @@ export class ApiService {
     return this.http.get(`${this.apiUrl}/rapports/complet`, httpParams.keys().length > 0 ? { params: httpParams } : {});
   }
 
+  // Export CSV
+  exportRapportCSV(params?: any): Observable<Blob> {
+    const httpParams = params ? createHttpParams(params) : new HttpParams();
+    return this.http.get(`${this.apiUrl}/rapports/export/csv`, {
+      params: httpParams.keys().length > 0 ? httpParams : undefined,
+      responseType: 'blob'
+    });
+  }
+
+  // Export PDF
+  exportRapportPDF(params?: any): Observable<Blob> {
+    const httpParams = params ? createHttpParams(params) : new HttpParams();
+    return this.http.get(`${this.apiUrl}/rapports/export/pdf`, {
+      params: httpParams.keys().length > 0 ? httpParams : undefined,
+      responseType: 'blob'
+    });
+  }
+
   // Impayés
   getImpayes(params?: any): Observable<any> {
     const httpParams = params ? createHttpParams(params) : new HttpParams();
@@ -500,6 +535,40 @@ export class ApiService {
 
   getStatsGlobales(): Observable<any> {
     return this.http.get(`${this.apiUrl}/cartographie/stats-globales`);
+  }
+
+  // ==================== UTILISATEURS ====================
+  getUtilisateurs(params?: any): Observable<any> {
+    const httpParams = params ? createHttpParams(params) : new HttpParams();
+    return this.http.get(`${this.apiUrl}/utilisateurs`, httpParams.keys().length > 0 ? { params: httpParams } : {});
+  }
+
+  getUtilisateur(id: number): Observable<any> {
+    return this.http.get(`${this.apiUrl}/utilisateurs/${id}`);
+  }
+
+  createUtilisateur(utilisateur: any): Observable<any> {
+    return this.http.post(`${this.apiUrl}/utilisateurs`, utilisateur);
+  }
+
+  updateUtilisateur(id: number, utilisateur: any): Observable<any> {
+    return this.http.put(`${this.apiUrl}/utilisateurs/${id}`, utilisateur);
+  }
+
+  deleteUtilisateur(id: number): Observable<any> {
+    return this.http.delete(`${this.apiUrl}/utilisateurs/${id}`);
+  }
+
+  activateUtilisateur(id: number): Observable<any> {
+    return this.http.patch(`${this.apiUrl}/utilisateurs/${id}/activate`, {});
+  }
+
+  deactivateUtilisateur(id: number): Observable<any> {
+    return this.http.patch(`${this.apiUrl}/utilisateurs/${id}/deactivate`, {});
+  }
+
+  getRolesList(): Observable<any> {
+    return this.http.get(`${this.apiUrl}/utilisateurs/roles/list`);
   }
 
   // ==================== CAISSES ====================

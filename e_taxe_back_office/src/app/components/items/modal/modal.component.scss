@@ -1,21 +1,39 @@
 .modal{
   pointer-events: none;
-  transition: .4s;
+  transition: opacity 0.3s ease;
+  opacity: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  
   .modal-content{
-    transition: .4s;
-    max-height: 100vh;
-    height: 100vh;
-    width: 500px;
-    max-width: 90vw;
+    transition: transform 0.3s ease, opacity 0.3s ease;
+    max-height: calc(100vh - 4rem);
+    width: 90%;
+    max-width: 600px;
     overflow: hidden;
     display: flex;
     flex-direction: column;
+    z-index: 1001;
+    transform: scale(0.9) translateY(-20px);
+    opacity: 0;
+    position: relative;
+    margin: 0.5rem auto 2rem auto;
   }
+  
   &.active{
     pointer-events: auto;
-    background: rgb(0,0,0,.5);
+    opacity: 1;
+    background: rgba(0, 0, 0, 0.5);
+    
     .modal-content {
-      transform: translateX(0);
+      transform: scale(1) translateY(-15%);
+      opacity: 1;
     }
   }
 }
@@ -24,11 +42,10 @@
 .modal-scrollable-content {
   overflow-y: auto;
   overflow-x: hidden;
-  max-height: calc(100vh - 80px);
+  max-height: calc(100vh - 200px);
   min-height: 0;
   padding: 1.5rem;
-  padding-right: 1.75rem;
-  margin-right: -0.5rem;
+  box-sizing: border-box;
   
   // Scrollbar personnalisée pour WebKit (Chrome, Safari, Edge)
   &::-webkit-scrollbar {

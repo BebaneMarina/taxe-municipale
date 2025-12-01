@@ -16,6 +16,8 @@ export class RapportsComponent implements OnInit {
   private apiService = inject(ApiService);
   
   loading: boolean = true;
+  exportingCSV: boolean = false;
+  exportingPDF: boolean = false;
   
   // Filtres
   dateDebut: string = '';
@@ -184,27 +186,92 @@ export class RapportsComponent implements OnInit {
   }
 
   exportExcel(): void {
-    // TODO: Implémenter l'export Excel avec les données du rapport
+    if (this.exportingCSV) return; // Éviter les doubles clics
+    
+    this.exportingCSV = true;
     const params: any = {};
     if (this.dateDebut) params.date_debut = this.dateDebut;
     if (this.dateFin) params.date_fin = this.dateFin;
     if (this.collecteurId) params.collecteur_id = this.collecteurId;
     if (this.taxeId) params.taxe_id = this.taxeId;
     
-    alert('Export Excel - Fonctionnalité à implémenter');
-    console.log('Paramètres pour export:', params);
+    this.apiService.exportRapportCSV(params).subscribe({
+      next: (blob: Blob) => {
+        // Créer un lien de téléchargement
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        
+        // Générer le nom de fichier avec la date
+        const dateStr = new Date().toISOString().split('T')[0];
+        link.download = `rapport_collecte_${dateStr}.csv`;
+        
+        // Déclencher le téléchargement
+        document.body.appendChild(link);
+        link.click();
+        
+        // Nettoyer
+        setTimeout(() => {
+          document.body.removeChild(link);
+          window.URL.revokeObjectURL(url);
+          this.exportingCSV = false;
+        }, 100);
+      },
+      error: (err) => {
+        console.error('Erreur lors de l\'export CSV:', err);
+        this.exportingCSV = false;
+        const errorMsg = err.error?.detail || err.message || 'Erreur lors de l\'export CSV. Veuillez réessayer.';
+        alert(errorMsg);
+      }
+    });
   }
 
   exportPDF(): void {
-    // TODO: Implémenter l'export PDF avec les données du rapport
+    if (this.exportingPDF) return; // Éviter les doubles clics
+    
+    this.exportingPDF = true;
     const params: any = {};
     if (this.dateDebut) params.date_debut = this.dateDebut;
     if (this.dateFin) params.date_fin = this.dateFin;
     if (this.collecteurId) params.collecteur_id = this.collecteurId;
     if (this.taxeId) params.taxe_id = this.taxeId;
     
-    alert('Export PDF - Fonctionnalité à implémenter');
-    console.log('Paramètres pour export:', params);
+    this.apiService.exportRapportPDF(params).subscribe({
+      next: (blob: Blob) => {
+        // Vérifier que le blob n'est pas vide
+        if (blob.size === 0) {
+          this.exportingPDF = false;
+          alert('Le fichier PDF généré est vide. Veuillez réessayer.');
+          return;
+        }
+        
+        // Créer un lien de téléchargement
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        
+        // Générer le nom de fichier avec la date
+        const dateStr = new Date().toISOString().split('T')[0];
+        link.download = `rapport_collecte_${dateStr}.pdf`;
+        
+        // Déclencher le téléchargement
+        document.body.appendChild(link);
+        link.click();
+        
+        // Nettoyer
+        setTimeout(() => {
+          document.body.removeChild(link);
+          window.URL.revokeObjectURL(url);
+          this.exportingPDF = false;
+        }, 100);
+      },
+      error: (err) => {
+        console.error('Erreur lors de l\'export PDF:', err);
+        this.exportingPDF = false;
+        const errorMsg = err.error?.detail || err.message || 'Erreur lors de l\'export PDF. Veuillez réessayer.';
+        alert(errorMsg);
+      }
+    });
   }
 
   formatNumber(value: number | string | null | undefined): string {

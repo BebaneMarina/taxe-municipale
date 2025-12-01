@@ -30,23 +30,27 @@
   <!-- Modal de création/édition -->
   <app-modal [(active)]="activeModal" [title]="isEditMode ? 'Modifier le rôle' : 'Nouveau rôle'">
     <div class="w-full max-w-full">
-      <h2 class="text-2xl text-main font-medium">{{ isEditMode ? 'Modification du rôle' : 'Ajout du rôle' }}</h2>
-      <p>Saisissez les informations complementaire pour <br> {{ isEditMode ? 'modifier' : 'ajouter' }} un nouveau rôle</p>
-      <form (ngSubmit)="saveRole()" class="w-full grid gap-4 mt-8">
+      <h2 class="text-xl text-main font-medium mb-2">{{ isEditMode ? 'Modification du rôle' : 'Ajout du rôle' }}</h2>
+      <p class="text-sm text-gray-600 mb-4">Saisissez les informations complémentaires pour {{ isEditMode ? 'modifier' : 'ajouter' }} un nouveau rôle</p>
+      <form (ngSubmit)="saveRole()" class="w-full grid gap-4">
         <div>
           <label for="nom" class="block text-sm/6 font-medium text-gray-900">
             Nom du rôle <sup>*</sup>
           </label>
           <div class="mt-2">
-            <input
-              type="text"
+            <select
               id="nom"
               name="nom"
               [(ngModel)]="roleForm.nom"
+              (change)="onRoleNameChange()"
               required
               class="block w-full rounded-lg px-3 py-3 bg-background text-base text-gray-900 placeholder:text-gray-400 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-main sm:text-sm/6"
-              placeholder="Ex: Administrateur"
-            />
+            >
+              <option value="" disabled selected>Sélectionnez un rôle</option>
+              @for (role of availableRoles; track role.value) {
+                <option [value]="role.value">{{ role.label }}</option>
+              }
+            </select>
           </div>
         </div>
 
@@ -61,9 +65,11 @@
               name="code"
               [(ngModel)]="roleForm.code"
               required
-              class="block w-full rounded-lg px-3 py-3 bg-background text-base text-gray-900 placeholder:text-gray-400 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-main sm:text-sm/6"
+              [readonly]="!isEditMode"
+              class="block w-full rounded-lg px-3 py-3 bg-background text-base text-gray-900 placeholder:text-gray-400 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-main sm:text-sm/6 bg-gray-50"
               placeholder="Ex: admin"
             />
+            <p class="mt-1 text-xs text-gray-500">Le code est généré automatiquement</p>
           </div>
         </div>
 
@@ -84,10 +90,19 @@
         </div>
 
         <div>
-          <label class="block text-sm/6 font-medium text-gray-900 mb-2">
-            Permissions
-          </label>
-          <div class="mt-2 max-h-[200px] overflow-y-auto border border-gray-200 rounded-lg p-3 bg-gray-50">
+          <div class="flex items-center justify-between mb-2">
+            <label class="block text-sm/6 font-medium text-gray-900">
+              Permissions
+            </label>
+            <button
+              type="button"
+              (click)="toggleAllPermissions()"
+              class="text-xs text-main hover:text-main/80 font-medium underline"
+            >
+              {{ allPermissionsSelected() ? 'Tout désélectionner' : 'Tout sélectionner' }}
+            </button>
+          </div>
+          <div class="mt-2 max-h-[180px] overflow-y-auto border border-gray-200 rounded-lg p-3 bg-gray-50">
             <div class="grid grid-cols-2 gap-2">
               @for (perm of availablePermissions; track perm.value) {
                 <label class="flex items-center gap-2 cursor-pointer hover:bg-gray-100 p-1 rounded">

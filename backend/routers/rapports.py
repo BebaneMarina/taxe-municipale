@@ -3,6 +3,7 @@ Routes pour les rapports et statistiques
 """
 
 from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 from sqlalchemy import func, extract
 from typing import Optional, List
@@ -14,6 +15,7 @@ from pydantic import BaseModel
 from auth.security import get_current_active_user
 from schemas.statistiques_collecteur import StatistiquesCollecteurResponse
 from services.statistiques_collecteur import compute_statistiques_collecteur
+from services.export_rapport import generate_csv_rapport, generate_pdf_rapport
 
 router = APIRouter(
     prefix="/api/rapports",
@@ -445,4 +447,92 @@ def get_collecteur_stats_via_rapports(collecteur_id: int, db: Session = Depends(
     if not stats:
         raise HTTPException(status_code=404, detail="Collecteur non trouvé")
     return stats
+
+
+@router.get("/export/csv")
+def export_rapport_csv(
+    date_debut: Optional[date] = Query(None, description="Date de début du rapport"),
+    date_fin: Optional[date] = Query(None, description="Date de fin du rapport"),
+    collecteur_id: Optional[int] = Query(None, description="ID du collecteur pour filtrer"),
+    taxe_id: Optional[int] = Query(None, description="ID de la taxe pour filtrer"),
+    top_limit: int = Query(10, ge=1, le=50),
+    db: Session = Depends(get_db)
+):
+    """Exporte le rapport complet en format CSV"""
+    try:
+        # Récupérer le rapport complet
+        rapport_complet = get_rapport_complet(date_debut, date_fin, collecteur_id, taxe_id, top_limit, db)
+        
+        # Convertir en dictionnaire
+        rapport_dict = rapport_complet.model_dump() if hasattr(rapport_complet, 'model_dump') else rapport_complet.dict()
+        
+        # Ajouter les dates de filtrage si disponibles
+        if date_debut:
+            rapport_dict['date_debut'] = date_debut.strftime('%d/%m/%Y') if isinstance(date_debut, date) else str(date_debut)
+        if date_fin:
+            rapport_dict['date_fin'] = date_fin.strftime('%d/%m/%Y') if isinstance(date_fin, date) else str(date_fin)
+        
+        # Générer le CSV
+        csv_buffer = generate_csv_rapport(rapport_dict)
+        
+        # Générer le nom de fichier
+        date_str = datetime.now().strftime('%Y%m%d_%H%M%S')
+        filename = f"rapport_collecte_{date_str}.csv"
+        
+        return StreamingResponse(
+            csv_buffer,
+            media_type="text/csv; charset=utf-8",
+            headers={
+                "Content-Disposition": f'attachment; filename="{filename}"',
+                "Content-Type": "text/csv; charset=utf-8"
+            }
+        )
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Erreur lors de l'export CSV: {str(e)}")
+
+
+@router.get("/export/pdf")
+def export_rapport_pdf(
+    date_debut: Optional[date] = Query(None, description="Date de début du rapport"),
+    date_fin: Optional[date] = Query(None, description="Date de fin du rapport"),
+    collecteur_id: Optional[int] = Query(None, description="ID du collecteur pour filtrer"),
+    taxe_id: Optional[int] = Query(None, description="ID de la taxe pour filtrer"),
+    top_limit: int = Query(10, ge=1, le=50),
+    db: Session = Depends(get_db)
+):
+    """Exporte le rapport complet en format PDF avec logo"""
+    try:
+        # Récupérer le rapport complet
+        rapport_complet = get_rapport_complet(date_debut, date_fin, collecteur_id, taxe_id, top_limit, db)
+        
+        # Convertir en dictionnaire
+        rapport_dict = rapport_complet.model_dump() if hasattr(rapport_complet, 'model_dump') else rapport_complet.dict()
+        
+        # Ajouter les dates de filtrage si disponibles
+        if date_debut:
+            rapport_dict['date_debut'] = date_debut.strftime('%d/%m/%Y') if isinstance(date_debut, date) else str(date_debut)
+        if date_fin:
+            rapport_dict['date_fin'] = date_fin.strftime('%d/%m/%Y') if isinstance(date_fin, date) else str(date_fin)
+        
+        # Générer le PDF
+        pdf_buffer = generate_pdf_rapport(rapport_dict)
+        
+        # Générer le nom de fichier
+        date_str = datetime.now().strftime('%Y%m%d_%H%M%S')
+        filename = f"rapport_collecte_{date_str}.pdf"
+        
+        return StreamingResponse(
+            pdf_buffer,
+            media_type="application/pdf",
+            headers={
+                "Content-Disposition": f'attachment; filename="{filename}"',
+                "Content-Type": "application/pdf"
+            }
+        )
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Erreur lors de l'export PDF: {str(e)}")
 

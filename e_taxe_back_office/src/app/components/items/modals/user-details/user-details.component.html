@@ -1,31 +1,64 @@
-<div class="h-full w-full max-w-full flex flex-col justify-between">
-  <div>
-    <div class="flex items-center gap-3">
-      <div class="size-[80px] rounded-full overflow-hidden border">
-        <img src="/assets/images/client.png" alt="client">
+@if (utilisateur) {
+  <div class="h-full w-full max-w-full flex flex-col justify-between">
+    <div>
+      <div class="flex items-center gap-3 mb-4">
+        <div class="size-[80px] rounded-full overflow-hidden border bg-main/10 flex items-center justify-center">
+          <span class="text-2xl font-bold text-main">
+            {{ utilisateur.prenom.charAt(0) }}{{ utilisateur.nom.charAt(0) }}
+          </span>
+        </div>
+        <div>
+          <p class="text-xl font-semibold">{{ utilisateur.prenom }} {{ utilisateur.nom }}</p>
+          @if (utilisateur.actif) {
+            <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-green-100 text-green-800">
+              Actif
+            </span>
+          } @else {
+            <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-red-100 text-red-800">
+              Inactif
+            </span>
+          }
+        </div>
       </div>
-      <p class="text-xl">Jacob Jones</p>
+      <app-contener-gray>
+        <p class="mb-2 border-b-2 pb-2 w-full font-medium">Détails de l'utilisateur</p>
+        <ul class="flex flex-col gap-3">
+          <li class="flex justify-between text-[14px]">
+            <span>Dernière connexion</span>
+            <span class="font-medium">{{ formatDate(utilisateur.derniere_connexion) }}</span>
+          </li>
+          <li class="flex justify-between text-[14px]">
+            <span>E-mail</span>
+            <span class="font-medium">{{ utilisateur.email }}</span>
+          </li>
+          @if (utilisateur.telephone) {
+            <li class="flex justify-between text-[14px]">
+              <span>Téléphone</span>
+              <span class="font-medium">{{ utilisateur.telephone }}</span>
+            </li>
+          }
+          <li class="flex justify-between text-[14px]">
+            <span>Rôle</span>
+            <span class="font-medium px-5 py-1 rounded-lg bg-main text-white">{{ formatRole(utilisateur.role) }}</span>
+          </li>
+          <li class="flex justify-between text-[14px]">
+            <span>Date de création</span>
+            <span class="font-medium">{{ formatCreatedDate(utilisateur.created_at) }}</span>
+          </li>
+        </ul>
+      </app-contener-gray>
     </div>
-    <app-contener-gray>
-      <p class="mb-2 border-b-2 pb-2 w-full font-medium">Détails de l'utilisateur</p>
-      <ul class="flex flex-col gap-3">
-        <li class="flex justify-between text-[14px]">
-          <span>Dernière connexion</span>
-          <span class="font-medium">Il y a 16 minutes</span>
-        </li>
-        <li class="flex justify-between text-[14px]">
-          <span>E-mail</span>
-          <span class="font-medium">jacobjones&#64;exdrashop.com</span>
-        </li>
-        <li class="flex justify-between text-[14px]">
-          <span>Roles</span>
-          <span class="font-medium px-5 py-1 rounded-lg bg-main text-white">Service client</span>
-        </li>
-      </ul>
-    </app-contener-gray>
+    <div class="grid grid-cols-2 gap-3 mt-4">
+      <button class="rounded-lg py-2 bg-red-600 text-white font-medium hover:bg-red-700 transition-colors">
+        Supprimer le membre
+      </button>
+      <button class="rounded-lg py-2 border-main border-2 text-main font-medium hover:bg-main/5 transition-colors">
+        Changer le rôle
+      </button>
+    </div>
   </div>
-  <div class="grid grid-cols-2 gap-3">
-    <button class="rounded-lg py-2 bg-red-600 text-white font-medium">Supprimer le membre</button>
-    <button class="rounded-lg py-2 border-main border-2 text-main font-medium">Changer le role</button>
+} @else {
+  <div class="text-center py-8">
+    <p class="text-gray-500">Chargement des détails...</p>
   </div>
-</div>
+}

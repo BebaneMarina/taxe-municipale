@@ -268,74 +268,279 @@ class SecteurActiviteResponse(SecteurActiviteBase):
         from_attributes = True
 
 # ==================== ENDPOINTS RÔLES ====================
-@router.get("/roles", response_model=List[dict])
+import json
+
+@router.get("/roles", response_model=List[RoleResponse])
 def get_roles(
     actif: Optional[bool] = Query(None),
     db: Session = Depends(get_db),
     current_user: Utilisateur = Depends(get_current_active_user)
 ):
-    """Récupère la liste des rôles"""
+    """Récupère la liste des rôles depuis la table role"""
     try:
-        # Pour l'instant, retourner les rôles existants du système
-        roles = []
-        for role_enum in RoleEnum:
-            roles.append({
-                "id": role_enum.value,
-                "nom": role_enum.value.replace("_", " ").title(),
-                "code": role_enum.value,
-                "description": f"Rôle {role_enum.value}",
-                "permissions": [],  # À implémenter selon les besoins
-                "actif": True,
-                "created_at": datetime.utcnow().isoformat(),
-                "updated_at": datetime.utcnow().isoformat()
-            })
+        from sqlalchemy import inspect
+        inspector = inspect(db.bind)
+        tables = inspector.get_table_names()
         
-        if actif is not None:
-            # Filtrer si nécessaire
-            pass
+        if "role" in tables:
+            query = db.query(RoleParametrage)
+            if actif is not None:
+                query = query.filter(RoleParametrage.actif == actif)
+            roles = query.order_by(RoleParametrage.created_at.desc()).all()
             
-        return roles
+            result = []
+            for role in roles:
+                # Parser les permissions depuis le TEXT JSON
+                permissions = []
+                if role.permissions:
+                    try:
+                        permissions = json.loads(role.permissions)
+                    except (json.JSONDecodeError, TypeError):
+                        permissions = []
+                
+                result.append({
+                    "id": role.id,
+                    "nom": role.nom,
+                    "code": role.code,
+                    "description": role.description,
+                    "permissions": permissions if isinstance(permissions, list) else [],
+                    "actif": role.actif,
+                    "created_at": role.created_at if role.created_at else datetime.utcnow(),
+                    "updated_at": role.updated_at if role.updated_at else datetime.utcnow()
+                })
+            
+            return result
+        else:
+            # Si la table n'existe pas, retourner les rôles par défaut depuis l'enum
+            roles = []
+            for role_enum in RoleEnum:
+                roles.append({
+                    "id": hash(role_enum.value) % 1000000,  # ID temporaire
+                    "nom": role_enum.value.replace("_", " ").title(),
+                    "code": role_enum.value,
+                    "description": f"Rôle {role_enum.value}",
+                    "permissions": [],
+                    "actif": True,
+                    "created_at": datetime.utcnow(),
+                    "updated_at": datetime.utcnow()
+                })
+            return roles
     except Exception as e:
         import traceback
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Erreur lors de la récupération des rôles: {str(e)}")
 
-@router.get("/roles/{role_id}")
-def get_role(role_id: str, db: Session = Depends(get_db), current_user: Utilisateur = Depends(get_current_active_user)):
+@router.get("/roles/{role_id}", response_model=RoleResponse)
+def get_role(
+    role_id: int,
+    db: Session = Depends(get_db),
+    current_user: Utilisateur = Depends(get_current_active_user)
+):
     """Récupère un rôle par son ID"""
     try:
-        role_enum = RoleEnum(role_id)
-        return {
-            "id": role_enum.value,
-            "nom": role_enum.value.replace("_", " ").title(),
-            "code": role_enum.value,
-            "description": f"Rôle {role_enum.value}",
-            "permissions": [],
-            "actif": True,
-            "created_at": datetime.utcnow().isoformat(),
-            "updated_at": datetime.utcnow().isoformat()
-        }
-    except ValueError:
-        raise HTTPException(status_code=404, detail="Rôle non trouvé")
+        from sqlalchemy import inspect
+        inspector = inspect(db.bind)
+        tables = inspector.get_table_names()
+        
+        if "role" in tables:
+            role = db.query(RoleParametrage).filter(RoleParametrage.id == role_id).first()
+            if not role:
+                raise HTTPException(status_code=404, detail="Rôle non trouvé")
+            
+            # Parser les permissions
+            permissions = []
+            if role.permissions:
+                try:
+                    permissions = json.loads(role.permissions)
+                except (json.JSONDecodeError, TypeError):
+                    permissions = []
+            
+            return {
+                "id": role.id,
+                "nom": role.nom,
+                "code": role.code,
+                "description": role.description,
+                "permissions": permissions if isinstance(permissions, list) else [],
+                "actif": role.actif,
+                "created_at": role.created_at if role.created_at else datetime.utcnow(),
+                "updated_at": role.updated_at if role.updated_at else datetime.utcnow()
+            }
+        else:
+            raise HTTPException(status_code=404, detail="Rôle non trouvé")
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Erreur: {str(e)}")
 
-@router.post("/roles")
-def create_role(role: RoleCreate, db: Session = Depends(get_db), current_user: Utilisateur = Depends(require_role(["admin"]))):
+@router.post("/roles", response_model=RoleResponse, status_code=201)
+def create_role(
+    role: RoleCreate,
+    db: Session = Depends(get_db),
+    current_user: Utilisateur = Depends(require_role(["admin"]))
+):
     """Crée un nouveau rôle (admin uniquement)"""
-    # Note: Dans la version actuelle, les rôles sont définis par enum
-    # Cette fonctionnalité pourrait être étendue pour permettre des rôles personnalisés
-    raise HTTPException(status_code=501, detail="Création de rôles personnalisés non encore implémentée")
+    try:
+        from sqlalchemy import inspect
+        inspector = inspect(db.bind)
+        tables = inspector.get_table_names()
+        
+        # Vérifier si la table existe, sinon la créer
+        if "role" not in tables:
+            Base.metadata.create_all(bind=db.bind, tables=[RoleParametrage.__table__])
+        
+        # Vérifier l'unicité du nom et du code
+        existing_nom = db.query(RoleParametrage).filter(RoleParametrage.nom == role.nom).first()
+        if existing_nom:
+            raise HTTPException(status_code=400, detail="Un rôle avec ce nom existe déjà")
+        
+        existing_code = db.query(RoleParametrage).filter(RoleParametrage.code == role.code).first()
+        if existing_code:
+            raise HTTPException(status_code=400, detail="Un rôle avec ce code existe déjà")
+        
+        # Convertir les permissions en JSON string
+        permissions_json = json.dumps(role.permissions) if role.permissions else None
+        
+        # Créer le rôle
+        db_role = RoleParametrage(
+            nom=role.nom,
+            code=role.code,
+            description=role.description,
+            permissions=permissions_json,
+            actif=role.actif if role.actif is not None else True
+        )
+        
+        db.add(db_role)
+        db.commit()
+        db.refresh(db_role)
+        
+        # Parser les permissions pour la réponse
+        permissions = []
+        if db_role.permissions:
+            try:
+                permissions = json.loads(db_role.permissions)
+            except (json.JSONDecodeError, TypeError):
+                permissions = []
+        
+        return {
+            "id": db_role.id,
+            "nom": db_role.nom,
+            "code": db_role.code,
+            "description": db_role.description,
+            "permissions": permissions if isinstance(permissions, list) else [],
+            "actif": db_role.actif,
+            "created_at": db_role.created_at if db_role.created_at else datetime.utcnow(),
+            "updated_at": db_role.updated_at if db_role.updated_at else datetime.utcnow()
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Erreur lors de la création du rôle: {str(e)}")
 
-@router.put("/roles/{role_id}")
-def update_role(role_id: str, role: RoleUpdate, db: Session = Depends(get_db), current_user: Utilisateur = Depends(require_role(["admin"]))):
+@router.put("/roles/{role_id}", response_model=RoleResponse)
+def update_role(
+    role_id: int,
+    role: RoleUpdate,
+    db: Session = Depends(get_db),
+    current_user: Utilisateur = Depends(require_role(["admin"]))
+):
     """Met à jour un rôle (admin uniquement)"""
-    raise HTTPException(status_code=501, detail="Modification de rôles non encore implémentée")
+    try:
+        db_role = db.query(RoleParametrage).filter(RoleParametrage.id == role_id).first()
+        if not db_role:
+            raise HTTPException(status_code=404, detail="Rôle non trouvé")
+        
+        # Vérifier l'unicité du nom si modifié
+        if role.nom and role.nom != db_role.nom:
+            existing_nom = db.query(RoleParametrage).filter(
+                RoleParametrage.nom == role.nom,
+                RoleParametrage.id != role_id
+            ).first()
+            if existing_nom:
+                raise HTTPException(status_code=400, detail="Un rôle avec ce nom existe déjà")
+        
+        # Vérifier l'unicité du code si modifié
+        if role.code and role.code != db_role.code:
+            existing_code = db.query(RoleParametrage).filter(
+                RoleParametrage.code == role.code,
+                RoleParametrage.id != role_id
+            ).first()
+            if existing_code:
+                raise HTTPException(status_code=400, detail="Un rôle avec ce code existe déjà")
+        
+        # Mettre à jour les champs
+        update_data = role.dict(exclude_unset=True)
+        
+        # Gérer les permissions (convertir en JSON string)
+        if "permissions" in update_data:
+            update_data["permissions"] = json.dumps(update_data["permissions"]) if update_data["permissions"] else None
+        
+        for key, value in update_data.items():
+            setattr(db_role, key, value)
+        
+        db_role.updated_at = datetime.utcnow()
+        db.commit()
+        db.refresh(db_role)
+        
+        # Parser les permissions pour la réponse
+        permissions = []
+        if db_role.permissions:
+            try:
+                permissions = json.loads(db_role.permissions)
+            except (json.JSONDecodeError, TypeError):
+                permissions = []
+        
+        return {
+            "id": db_role.id,
+            "nom": db_role.nom,
+            "code": db_role.code,
+            "description": db_role.description,
+            "permissions": permissions if isinstance(permissions, list) else [],
+            "actif": db_role.actif,
+            "created_at": db_role.created_at if db_role.created_at else datetime.utcnow(),
+            "updated_at": db_role.updated_at if db_role.updated_at else datetime.utcnow()
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Erreur lors de la mise à jour: {str(e)}")
 
-@router.delete("/roles/{role_id}")
-def delete_role(role_id: str, db: Session = Depends(get_db), current_user: Utilisateur = Depends(require_role(["admin"]))):
+@router.delete("/roles/{role_id}", status_code=204)
+def delete_role(
+    role_id: int,
+    db: Session = Depends(get_db),
+    current_user: Utilisateur = Depends(require_role(["admin"]))
+):
     """Supprime un rôle (admin uniquement)"""
-    raise HTTPException(status_code=501, detail="Suppression de rôles non encore implémentée")
+    try:
+        db_role = db.query(RoleParametrage).filter(RoleParametrage.id == role_id).first()
+        if not db_role:
+            raise HTTPException(status_code=404, detail="Rôle non trouvé")
+        
+        # Vérifier si le rôle est utilisé par des utilisateurs
+        from database.models import Utilisateur
+        users_with_role = db.query(Utilisateur).filter(Utilisateur.role == db_role.code).count()
+        if users_with_role > 0:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Impossible de supprimer ce rôle car {users_with_role} utilisateur(s) l'utilisent"
+            )
+        
+        db.delete(db_role)
+        db.commit()
+        return None
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Erreur lors de la suppression: {str(e)}")
 
 # ==================== ENDPOINTS VILLES ====================
 @router.get("/villes", response_model=List[dict])
@@ -922,4 +1127,518 @@ def delete_secteur_activite(secteur_id: int, db: Session = Depends(get_db), curr
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=500, detail=f"Erreur lors de la suppression: {str(e)}")
+
+# ==================== PARAMÉTRAGE DES NOTIFICATIONS ====================
+
+class ParametrageNotification(Base):
+    """Paramètres de notification du système"""
+    __tablename__ = "parametrage_notification"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    type_notification = Column(String(100), nullable=False, unique=True)  # 'collecte', 'cloture', 'alerte', etc.
+    nom = Column(String(255), nullable=False)
+    description = Column(Text, nullable=True)
+    actif = Column(Boolean, default=True)
+    envoyer_email = Column(Boolean, default=False)
+    envoyer_sms = Column(Boolean, default=False)
+    envoyer_push = Column(Boolean, default=True)
+    template_email = Column(Text, nullable=True)
+    template_sms = Column(Text, nullable=True)
+    template_push = Column(Text, nullable=True)
+    roles_cibles = Column(Text, nullable=True)  # JSON string des rôles cibles
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+# Schémas Pydantic pour les notifications
+from pydantic import BaseModel as PydanticBaseModel, Field
+
+class ParametrageNotificationBase(PydanticBaseModel):
+    type_notification: str = Field(..., max_length=100, description="Type de notification (unique)")
+    nom: str = Field(..., max_length=255, description="Nom du paramètre")
+    description: Optional[str] = Field(None, description="Description")
+    actif: bool = Field(default=True, description="Actif ou non")
+    envoyer_email: bool = Field(default=False, description="Envoyer par email")
+    envoyer_sms: bool = Field(default=False, description="Envoyer par SMS")
+    envoyer_push: bool = Field(default=True, description="Envoyer par push notification")
+    template_email: Optional[str] = Field(None, description="Template email")
+    template_sms: Optional[str] = Field(None, description="Template SMS")
+    template_push: Optional[str] = Field(None, description="Template push")
+    roles_cibles: Optional[List[str]] = Field(None, description="Rôles cibles pour cette notification")
+
+class ParametrageNotificationCreate(ParametrageNotificationBase):
+    pass
+
+class ParametrageNotificationUpdate(PydanticBaseModel):
+    nom: Optional[str] = Field(None, max_length=255)
+    description: Optional[str] = None
+    actif: Optional[bool] = None
+    envoyer_email: Optional[bool] = None
+    envoyer_sms: Optional[bool] = None
+    envoyer_push: Optional[bool] = None
+    template_email: Optional[str] = None
+    template_sms: Optional[str] = None
+    template_push: Optional[str] = None
+    roles_cibles: Optional[List[str]] = None
+
+class ParametrageNotificationResponse(ParametrageNotificationBase):
+    id: int
+    created_at: datetime
+    updated_at: datetime
+    
+    class Config:
+        from_attributes = True
+
+@router.get("/notifications", response_model=List[ParametrageNotificationResponse])
+def get_parametrage_notifications(
+    actif: Optional[bool] = Query(None, description="Filtrer par statut actif"),
+    db: Session = Depends(get_db),
+    current_user: Utilisateur = Depends(get_current_active_user)
+):
+    """Récupère la liste des paramètres de notification"""
+    try:
+        from sqlalchemy import inspect
+        inspector = inspect(db.bind)
+        tables = inspector.get_table_names()
+        
+        if "parametrage_notification" not in tables:
+            # Si la table n'existe pas, retourner une liste vide
+            return []
+        
+        query = db.query(ParametrageNotification)
+        if actif is not None:
+            query = query.filter(ParametrageNotification.actif == actif)
+        
+        parametres = query.order_by(ParametrageNotification.created_at.desc()).all()
+        
+        result = []
+        for param in parametres:
+            # Parser les roles_cibles depuis le TEXT JSON
+            roles = []
+            if param.roles_cibles:
+                try:
+                    import json
+                    roles = json.loads(param.roles_cibles)
+                except (json.JSONDecodeError, TypeError):
+                    roles = []
+            
+            result.append({
+                "id": param.id,
+                "type_notification": param.type_notification,
+                "nom": param.nom,
+                "description": param.description,
+                "actif": param.actif,
+                "envoyer_email": param.envoyer_email,
+                "envoyer_sms": param.envoyer_sms,
+                "envoyer_push": param.envoyer_push,
+                "template_email": param.template_email,
+                "template_sms": param.template_sms,
+                "template_push": param.template_push,
+                "roles_cibles": roles if isinstance(roles, list) else [],
+                "created_at": param.created_at if param.created_at else datetime.utcnow(),
+                "updated_at": param.updated_at if param.updated_at else datetime.utcnow()
+            })
+        
+        return result
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Erreur lors de la récupération: {str(e)}")
+
+@router.get("/notifications/{param_id}", response_model=ParametrageNotificationResponse)
+def get_parametrage_notification(
+    param_id: int,
+    db: Session = Depends(get_db),
+    current_user: Utilisateur = Depends(get_current_active_user)
+):
+    """Récupère un paramètre de notification spécifique"""
+    try:
+        from sqlalchemy import inspect
+        inspector = inspect(db.bind)
+        tables = inspector.get_table_names()
+        
+        if "parametrage_notification" not in tables:
+            raise HTTPException(status_code=404, detail="Paramètre non trouvé")
+        
+        param = db.query(ParametrageNotification).filter(ParametrageNotification.id == param_id).first()
+        if not param:
+            raise HTTPException(status_code=404, detail="Paramètre non trouvé")
+        
+        # Parser les roles_cibles
+        roles = []
+        if param.roles_cibles:
+            try:
+                import json
+                roles = json.loads(param.roles_cibles)
+            except (json.JSONDecodeError, TypeError):
+                roles = []
+        
+        return {
+            "id": param.id,
+            "type_notification": param.type_notification,
+            "nom": param.nom,
+            "description": param.description,
+            "actif": param.actif,
+            "envoyer_email": param.envoyer_email,
+            "envoyer_sms": param.envoyer_sms,
+            "envoyer_push": param.envoyer_push,
+            "template_email": param.template_email,
+            "template_sms": param.template_sms,
+            "template_push": param.template_push,
+            "roles_cibles": roles if isinstance(roles, list) else [],
+            "created_at": param.created_at if param.created_at else datetime.utcnow(),
+            "updated_at": param.updated_at if param.updated_at else datetime.utcnow()
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erreur: {str(e)}")
+
+@router.post("/notifications", response_model=ParametrageNotificationResponse, status_code=201)
+def create_parametrage_notification(
+    param_data: ParametrageNotificationCreate,
+    db: Session = Depends(get_db),
+    current_user: Utilisateur = Depends(require_role(["admin"]))
+):
+    """Crée un nouveau paramètre de notification"""
+    try:
+        from sqlalchemy import inspect
+        inspector = inspect(db.bind)
+        tables = inspector.get_table_names()
+        
+        # Vérifier si la table existe, sinon la créer
+        if "parametrage_notification" not in tables:
+            Base.metadata.create_all(bind=db.bind, tables=[ParametrageNotification.__table__])
+        
+        # Vérifier l'unicité du type_notification
+        existing = db.query(ParametrageNotification).filter(
+            ParametrageNotification.type_notification == param_data.type_notification
+        ).first()
+        if existing:
+            raise HTTPException(status_code=400, detail="Un paramètre avec ce type de notification existe déjà")
+        
+        # Convertir les roles_cibles en JSON string
+        import json
+        roles_json = json.dumps(param_data.roles_cibles) if param_data.roles_cibles else None
+        
+        # Créer le paramètre
+        db_param = ParametrageNotification(
+            type_notification=param_data.type_notification,
+            nom=param_data.nom,
+            description=param_data.description,
+            actif=param_data.actif if param_data.actif is not None else True,
+            envoyer_email=param_data.envoyer_email if param_data.envoyer_email is not None else False,
+            envoyer_sms=param_data.envoyer_sms if param_data.envoyer_sms is not None else False,
+            envoyer_push=param_data.envoyer_push if param_data.envoyer_push is not None else True,
+            template_email=param_data.template_email,
+            template_sms=param_data.template_sms,
+            template_push=param_data.template_push,
+            roles_cibles=roles_json
+        )
+        
+        db.add(db_param)
+        db.commit()
+        db.refresh(db_param)
+        
+        # Parser les roles pour la réponse
+        roles = []
+        if db_param.roles_cibles:
+            try:
+                roles = json.loads(db_param.roles_cibles)
+            except (json.JSONDecodeError, TypeError):
+                roles = []
+        
+        return {
+            "id": db_param.id,
+            "type_notification": db_param.type_notification,
+            "nom": db_param.nom,
+            "description": db_param.description,
+            "actif": db_param.actif,
+            "envoyer_email": db_param.envoyer_email,
+            "envoyer_sms": db_param.envoyer_sms,
+            "envoyer_push": db_param.envoyer_push,
+            "template_email": db_param.template_email,
+            "template_sms": db_param.template_sms,
+            "template_push": db_param.template_push,
+            "roles_cibles": roles if isinstance(roles, list) else [],
+            "created_at": db_param.created_at if db_param.created_at else datetime.utcnow(),
+            "updated_at": db_param.updated_at if db_param.updated_at else datetime.utcnow()
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Erreur lors de la création: {str(e)}")
+
+@router.put("/notifications/{param_id}", response_model=ParametrageNotificationResponse)
+def update_parametrage_notification(
+    param_id: int,
+    param_data: ParametrageNotificationUpdate,
+    db: Session = Depends(get_db),
+    current_user: Utilisateur = Depends(require_role(["admin"]))
+):
+    """Met à jour un paramètre de notification"""
+    try:
+        from sqlalchemy import inspect
+        inspector = inspect(db.bind)
+        tables = inspector.get_table_names()
+        
+        if "parametrage_notification" not in tables:
+            raise HTTPException(status_code=404, detail="Paramètre non trouvé")
+        
+        db_param = db.query(ParametrageNotification).filter(ParametrageNotification.id == param_id).first()
+        if not db_param:
+            raise HTTPException(status_code=404, detail="Paramètre non trouvé")
+        
+        # Mettre à jour les champs fournis
+        if param_data.nom is not None:
+            db_param.nom = param_data.nom
+        if param_data.description is not None:
+            db_param.description = param_data.description
+        if param_data.actif is not None:
+            db_param.actif = param_data.actif
+        if param_data.envoyer_email is not None:
+            db_param.envoyer_email = param_data.envoyer_email
+        if param_data.envoyer_sms is not None:
+            db_param.envoyer_sms = param_data.envoyer_sms
+        if param_data.envoyer_push is not None:
+            db_param.envoyer_push = param_data.envoyer_push
+        if param_data.template_email is not None:
+            db_param.template_email = param_data.template_email
+        if param_data.template_sms is not None:
+            db_param.template_sms = param_data.template_sms
+        if param_data.template_push is not None:
+            db_param.template_push = param_data.template_push
+        if param_data.roles_cibles is not None:
+            import json
+            db_param.roles_cibles = json.dumps(param_data.roles_cibles)
+        
+        db_param.updated_at = datetime.utcnow()
+        db.commit()
+        db.refresh(db_param)
+        
+        # Parser les roles pour la réponse
+        roles = []
+        if db_param.roles_cibles:
+            try:
+                import json
+                roles = json.loads(db_param.roles_cibles)
+            except (json.JSONDecodeError, TypeError):
+                roles = []
+        
+        return {
+            "id": db_param.id,
+            "type_notification": db_param.type_notification,
+            "nom": db_param.nom,
+            "description": db_param.description,
+            "actif": db_param.actif,
+            "envoyer_email": db_param.envoyer_email,
+            "envoyer_sms": db_param.envoyer_sms,
+            "envoyer_push": db_param.envoyer_push,
+            "template_email": db_param.template_email,
+            "template_sms": db_param.template_sms,
+            "template_push": db_param.template_push,
+            "roles_cibles": roles if isinstance(roles, list) else [],
+            "created_at": db_param.created_at if db_param.created_at else datetime.utcnow(),
+            "updated_at": db_param.updated_at if db_param.updated_at else datetime.utcnow()
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Erreur lors de la mise à jour: {str(e)}")
+
+@router.delete("/notifications/{param_id}")
+def delete_parametrage_notification(
+    param_id: int,
+    db: Session = Depends(get_db),
+    current_user: Utilisateur = Depends(require_role(["admin"]))
+):
+    """Supprime un paramètre de notification"""
+    try:
+        from sqlalchemy import inspect
+        inspector = inspect(db.bind)
+        tables = inspector.get_table_names()
+        
+        if "parametrage_notification" not in tables:
+            raise HTTPException(status_code=404, detail="Paramètre non trouvé")
+        
+        db_param = db.query(ParametrageNotification).filter(ParametrageNotification.id == param_id).first()
+        if not db_param:
+            raise HTTPException(status_code=404, detail="Paramètre non trouvé")
+        
+        db.delete(db_param)
+        db.commit()
+        return {"message": "Paramètre de notification supprimé avec succès"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Erreur lors de la suppression: {str(e)}")
+
+
+@router.get("/notifications/types/list")
+def get_types_notifications_disponibles(
+    db: Session = Depends(get_db),
+    current_user: Utilisateur = Depends(get_current_active_user)
+):
+    """
+    Retourne la liste des types de notifications disponibles dans le système
+    """
+    types_disponibles = [
+        {
+            "type": "collecte_nouvelle",
+            "nom": "Nouvelle collecte",
+            "description": "Notification envoyée lorsqu'une nouvelle collecte est effectuée",
+            "variables": ["montant", "collecteur_nom", "contribuable_nom", "taxe_nom", "date_collecte"]
+        },
+        {
+            "type": "collecte_cloturee",
+            "nom": "Collecte clôturée",
+            "description": "Notification envoyée lorsqu'une collecte est clôturée",
+            "variables": ["montant_total", "nombre_transactions", "date_cloture"]
+        },
+        {
+            "type": "relance_envoyee",
+            "nom": "Relance envoyée",
+            "description": "Notification envoyée lorsqu'une relance est envoyée à un contribuable",
+            "variables": ["contribuable_nom", "montant_du", "date_relance", "type_relance"]
+        },
+        {
+            "type": "paiement_reçu",
+            "nom": "Paiement reçu",
+            "description": "Notification envoyée lorsqu'un paiement est reçu",
+            "variables": ["montant", "contribuable_nom", "moyen_paiement", "date_paiement"]
+        },
+        {
+            "type": "alerte_impaye",
+            "nom": "Alerte impayé",
+            "description": "Notification envoyée lorsqu'un impayé est détecté",
+            "variables": ["contribuable_nom", "montant_du", "jours_retard", "taxe_nom"]
+        },
+        {
+            "type": "caisse_ouverte",
+            "nom": "Caisse ouverte",
+            "description": "Notification envoyée lorsqu'une caisse est ouverte",
+            "variables": ["caisse_nom", "solde_initial", "date_ouverture", "utilisateur_nom"]
+        },
+        {
+            "type": "caisse_fermee",
+            "nom": "Caisse fermée",
+            "description": "Notification envoyée lorsqu'une caisse est fermée",
+            "variables": ["caisse_nom", "solde_final", "date_fermeture", "utilisateur_nom"]
+        },
+        {
+            "type": "utilisateur_cree",
+            "nom": "Utilisateur créé",
+            "description": "Notification envoyée lorsqu'un nouvel utilisateur est créé",
+            "variables": ["utilisateur_nom", "utilisateur_email", "role", "date_creation"]
+        },
+        {
+            "type": "rapport_genere",
+            "nom": "Rapport généré",
+            "description": "Notification envoyée lorsqu'un rapport est généré",
+            "variables": ["type_rapport", "date_debut", "date_fin", "utilisateur_nom"]
+        }
+    ]
+    
+    return {
+        "types": types_disponibles,
+        "total": len(types_disponibles)
+    }
+
+
+@router.post("/notifications/{param_id}/test")
+def tester_parametrage_notification(
+    param_id: int,
+    db: Session = Depends(get_db),
+    current_user: Utilisateur = Depends(require_role(["admin"]))
+):
+    """
+    Teste un paramètre de notification en envoyant une notification de test
+    """
+    try:
+        from sqlalchemy import inspect
+        inspector = inspect(db.bind)
+        tables = inspector.get_table_names()
+        
+        if "parametrage_notification" not in tables:
+            raise HTTPException(status_code=404, detail="Paramètre non trouvé")
+        
+        param = db.query(ParametrageNotification).filter(ParametrageNotification.id == param_id).first()
+        if not param:
+            raise HTTPException(status_code=404, detail="Paramètre non trouvé")
+        
+        if not param.actif:
+            raise HTTPException(status_code=400, detail="Le paramètre de notification n'est pas actif")
+        
+        # Données de test
+        test_data = {
+            "montant": "50000",
+            "collecteur_nom": "Test Collecteur",
+            "contribuable_nom": "Test Contribuable",
+            "taxe_nom": "Taxe de test",
+            "date_collecte": datetime.now().strftime("%d/%m/%Y %H:%M"),
+            "caisse_nom": "Caisse Test",
+            "utilisateur_nom": current_user.nom + " " + current_user.prenom
+        }
+        
+        # Remplacer les variables dans les templates
+        def remplacer_variables(template: Optional[str]) -> Optional[str]:
+            if not template:
+                return None
+            result = template
+            for key, value in test_data.items():
+                result = result.replace(f"{{{key}}}", str(value))
+            return result
+        
+        result = {
+            "parametre_id": param.id,
+            "type_notification": param.type_notification,
+            "nom": param.nom,
+            "test_envoye": False,
+            "messages": []
+        }
+        
+        # Tester chaque canal activé
+        if param.envoyer_email and param.template_email:
+            email_content = remplacer_variables(param.template_email)
+            result["messages"].append({
+                "canal": "email",
+                "contenu": email_content,
+                "status": "prêt à envoyer"
+            })
+        
+        if param.envoyer_sms and param.template_sms:
+            sms_content = remplacer_variables(param.template_sms)
+            result["messages"].append({
+                "canal": "sms",
+                "contenu": sms_content,
+                "status": "prêt à envoyer"
+            })
+        
+        if param.envoyer_push and param.template_push:
+            push_content = remplacer_variables(param.template_push)
+            result["messages"].append({
+                "canal": "push",
+                "contenu": push_content,
+                "status": "prêt à envoyer"
+            })
+        
+        if not result["messages"]:
+            result["messages"].append({
+                "canal": "aucun",
+                "contenu": "Aucun canal activé pour ce paramètre",
+                "status": "erreur"
+            })
+        else:
+            result["test_envoye"] = True
+        
+        return result
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erreur lors du test: {str(e)}")
 

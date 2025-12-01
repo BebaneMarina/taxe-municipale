@@ -1,44 +1,166 @@
-<div class="h-full flex flex-col justify-between">
-  <div>
-    <h1 class="text-main text-2xl font-bold w-full max-w-[450px]">Envoyer une invitation aux nouveaux membres</h1>
-    <p class="w-full max-w-[500px]">
-      Saisissez les informations de l'utilisateur que vous souhaitez inviter et choisissez le rôle qu'il doit avoir.
-    </p>
-    <form class="w-full grid gap-3 mt-8">
-      <!--    Input sans icone -->
-      <div>
-        <label for="name" class="block text-sm/6 font-medium text-gray-900">
-          Nom de l'utilisateur <sup>*</sup>
-        </label>
-        <div class="mt-2">
-          <input required type="text" name="name" id="name" class="block w-full rounded-lg px-3 py-3 bg-background text-base text-gray-900 placeholder:text-gray-400 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-main sm:text-sm/6" placeholder="Cliquez pour saisir">
-        </div>
+<div class="w-full max-w-full">
+  <h2 class="text-xl text-main font-medium mb-2">Créer un nouvel utilisateur</h2>
+  <p class="text-sm text-gray-600 mb-4">Saisissez les informations de l'utilisateur et choisissez son rôle</p>
+  
+  @if (error) {
+    <div class="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg text-sm">
+      {{ error }}
+    </div>
+  }
+  
+  @if (success) {
+    <div class="mb-4 p-3 bg-green-100 border border-green-400 text-green-700 rounded-lg text-sm">
+      Utilisateur créé avec succès !
+    </div>
+  }
+  
+  <form (ngSubmit)="onSubmit()" class="w-full grid gap-4">
+    <!-- Nom -->
+    <div>
+      <label for="nom" class="block text-sm/6 font-medium text-gray-900">
+        Nom <sup>*</sup>
+      </label>
+      <div class="mt-2">
+        <input
+          type="text"
+          id="nom"
+          name="nom"
+          [(ngModel)]="userForm.nom"
+          required
+          class="block w-full rounded-lg px-3 py-3 bg-background text-base text-gray-900 placeholder:text-gray-400 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-main sm:text-sm/6"
+          placeholder="Nom de l'utilisateur"
+        />
       </div>
-      <!--    Fin input sans icone-->
-      <!--    Input sans icone -->
-      <div>
-        <label for="email" class="block text-sm/6 font-medium text-gray-900">
-          E-mail
-        </label>
-        <div class="mt-2">
-          <input required type="email" name="name" id="email" class="block w-full rounded-lg px-3 py-3 bg-background text-base text-gray-900 placeholder:text-gray-400 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-main sm:text-sm/6" placeholder="Cliquez pour saisir">
-        </div>
+    </div>
+
+    <!-- Prénom -->
+    <div>
+      <label for="prenom" class="block text-sm/6 font-medium text-gray-900">
+        Prénom
+      </label>
+      <div class="mt-2">
+        <input
+          type="text"
+          id="prenom"
+          name="prenom"
+          [(ngModel)]="userForm.prenom"
+          class="block w-full rounded-lg px-3 py-3 bg-background text-base text-gray-900 placeholder:text-gray-400 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-main sm:text-sm/6"
+          placeholder="Prénom de l'utilisateur"
+        />
       </div>
-      <!--    Fin input sans icone-->
-      <!--    Input sans icone -->
-      <div>
-        <label for="adress" class="block text-sm/6 font-medium text-gray-900">
-          Rôle
-        </label>
-        <div class="mt-2">
-          <input required type="text" name="name" id="adress" class="block w-full rounded-lg px-3 py-3 bg-background text-base text-gray-900 placeholder:text-gray-400 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-main sm:text-sm/6" placeholder="Cliquez pour saisir">
-        </div>
+    </div>
+
+    <!-- Email -->
+    <div>
+      <label for="email" class="block text-sm/6 font-medium text-gray-900">
+        Email <sup>*</sup>
+      </label>
+      <div class="mt-2">
+        <input
+          type="email"
+          id="email"
+          name="email"
+          [(ngModel)]="userForm.email"
+          required
+          class="block w-full rounded-lg px-3 py-3 bg-background text-base text-gray-900 placeholder:text-gray-400 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-main sm:text-sm/6"
+          placeholder="exemple@mairie.ga"
+        />
       </div>
-      <!--    Fin input sans icone-->
-    </form>
-  </div>
-  <div class="grid grid-cols-2 gap-3">
-    <button class="rounded-lg py-2 border-main border-2 text-main font-medium">Annuler</button>
-    <button class="rounded-lg py-2 bg-main text-white font-medium">Inviter l’utilisateur</button>
-  </div>
+    </div>
+
+    <!-- Téléphone -->
+    <div>
+      <label for="telephone" class="block text-sm/6 font-medium text-gray-900">
+        Téléphone
+      </label>
+      <div class="mt-2">
+        <input
+          type="tel"
+          id="telephone"
+          name="telephone"
+          [(ngModel)]="userForm.telephone"
+          class="block w-full rounded-lg px-3 py-3 bg-background text-base text-gray-900 placeholder:text-gray-400 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-main sm:text-sm/6"
+          placeholder="+241 01 23 45 67"
+        />
+      </div>
+    </div>
+
+    <!-- Mot de passe -->
+    <div>
+      <label for="password" class="block text-sm/6 font-medium text-gray-900">
+        Mot de passe <sup>*</sup>
+      </label>
+      <div class="mt-2">
+        <input
+          type="password"
+          id="password"
+          name="password"
+          [(ngModel)]="userForm.password"
+          required
+          minlength="6"
+          class="block w-full rounded-lg px-3 py-3 bg-background text-base text-gray-900 placeholder:text-gray-400 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-main sm:text-sm/6"
+          placeholder="Minimum 6 caractères"
+        />
+      </div>
+      <p class="mt-1 text-xs text-gray-500">Le mot de passe doit contenir au moins 6 caractères</p>
+    </div>
+
+    <!-- Rôle -->
+    <div>
+      <label for="role" class="block text-sm/6 font-medium text-gray-900">
+        Rôle <sup>*</sup>
+      </label>
+      <div class="mt-2">
+        <select
+          id="role"
+          name="role"
+          [(ngModel)]="userForm.role"
+          required
+          class="block w-full rounded-lg px-3 py-3 bg-background text-base text-gray-900 placeholder:text-gray-400 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-main sm:text-sm/6"
+        >
+          <option value="" disabled selected>Sélectionnez un rôle</option>
+          @if (loadingRoles) {
+            <option value="" disabled>Chargement des rôles...</option>
+          } @else if (availableRoles.length > 0) {
+            @for (role of availableRoles; track role.code) {
+              <option [value]="role.code">{{ role.label }}</option>
+            }
+          } @else {
+            <option value="" disabled>Aucun rôle disponible</option>
+          }
+        </select>
+      </div>
+      <p class="mt-1 text-xs text-gray-500">
+        @if (availableRoles.length > 0) {
+          {{ availableRoles.length }} rôle(s) disponible(s)
+        } @else {
+          Chargement des rôles...
+        }
+      </p>
+      <p class="mt-1 text-xs text-gray-400">Le rôle sera créé automatiquement s'il n'existe pas</p>
+    </div>
+
+    <!-- Boutons -->
+    <div class="grid grid-cols-2 gap-3 mt-5">
+      <button
+        type="button"
+        (click)="resetForm()"
+        class="rounded-lg py-2 border-main border-2 text-main font-medium hover:bg-main/5 transition-colors"
+        [disabled]="loading"
+      >
+        Annuler
+      </button>
+      <button
+        type="submit"
+        class="rounded-lg py-2 bg-main text-white font-medium hover:bg-main/90 transition-colors"
+        [disabled]="loading"
+      >
+        @if (loading) {
+          <span>Création...</span>
+        } @else {
+          <span>Créer l'utilisateur</span>
+        }
+      </button>
+    </div>
+  </form>
 </div>
