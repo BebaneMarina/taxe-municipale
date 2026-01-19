@@ -2,7 +2,7 @@
 Configuration de la base de données PostgreSQL
 """
 
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 import os
@@ -96,5 +96,20 @@ def get_db():
 def init_db():
     """Initialise la base de données (crée les tables)"""
     from database.models import Base
+    
+    # Activer PostGIS avant de créer les tables (nécessaire pour les colonnes geometry)
+    try:
+        with engine.begin() as conn:
+            # Activer l'extension PostGIS si elle n'existe pas
+            conn.execute(text("CREATE EXTENSION IF NOT EXISTS postgis;"))
+        print("✅ Extension PostGIS activée ou déjà présente")
+    except Exception as e:
+        # Si l'activation échoue (droits insuffisants, etc.), on continue quand même
+        # car PostGIS pourrait être déjà activé ou les tables pourraient ne pas nécessiter PostGIS
+        print(f"⚠️ Avertissement: Impossible d'activer PostGIS automatiquement: {e}")
+        print("   Si vous avez des colonnes geometry, vous devrez activer PostGIS manuellement:")
+        print("   CREATE EXTENSION IF NOT EXISTS postgis;")
+    
+    # Créer les tables
     Base.metadata.create_all(bind=engine)
 
