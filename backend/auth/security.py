@@ -13,7 +13,8 @@ from database.database import get_db
 from database.models import Utilisateur
 
 # Configuration JWT
-SECRET_KEY = "votre-secret-key-tres-securisee-changez-moi-en-production"  # À changer en production
+import os
+SECRET_KEY = os.getenv("SECRET_KEY", "votre-secret-key-tres-securisee-changez-moi-en-production")  # À changer en production
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30 * 24 * 60  # 30 jours
 

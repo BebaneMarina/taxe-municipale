@@ -2,14 +2,23 @@ services:
   - type: web
     name: e-taxe-api
     env: python
+    region: oregon  # Choisissez votre région (oregon, frankfurt, singapore, etc.)
     buildCommand: pip install -r requirements.txt
     startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
     envVars:
       - key: DATABASE_URL
         sync: false
+        # ⚠️ IMPORTANT: Configurez cette variable dans Render Dashboard avec votre Internal Database URL
+        # Format: postgresql://user:password@host:port/database
       - key: SECRET_KEY
         generateValue: true
+        # Clé secrète générée automatiquement pour JWT (vous pouvez aussi la définir manuellement)
       - key: PYTHON_VERSION
         value: 3.11.0
+      - key: ENVIRONMENT
+        value: production
+      - key: CORS_ORIGINS
+        value: https://votre-frontend.onrender.com
+        # Modifiez avec vos URLs frontend réelles (séparées par des virgules)
     healthCheckPath: /health
 
